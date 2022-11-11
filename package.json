@@ -1,7 +1,7 @@
 {
   "name": "@adobe/aio-cli-plugin-aem-rde",
   "description": "Adobe I/O CLI plugin for interacting with AEM Rapid Development Environments",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "author": "Adobe Inc.",
   "dependencies": {
     "@adobe/aio-lib-cloudmanager": "^2.0.0",
@@ -25,8 +25,8 @@
     "type": "git",
     "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
   },
-  "scripts" : {
-    "test" : "echo \"No test specified\" && exit 0"
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0"
   },
   "files": [
     "/src",
