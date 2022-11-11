@@ -20,6 +20,11 @@
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
   },
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
+  },
   "scripts" : {
     "test" : "echo \"No test specified\" && exit 0"
   },
