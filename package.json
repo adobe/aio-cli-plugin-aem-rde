@@ -1,0 +1,44 @@
+{
+  "name": "@adobe/aio-cli-plugin-aem-rde",
+  "description": "Adobe I/O CLI plugin for interacting with AEM Rapid Development Environments",
+  "version": "0.0.1",
+  "author": "Adobe Inc.",
+  "dependencies": {
+    "@adobe/aio-lib-cloudmanager": "^2.0.0",
+    "@adobe/aio-lib-core-errors": "^3.0.1",
+    "@adobe/aio-lib-core-networking": "^2.0.0",
+    "@adobe/aio-lib-ims": "^4.3.0",
+    "@oclif/core": "^1.6.1",
+    "form-data": "^4.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "@azure/storage-file-share": "12.10.0"
+  },
+  "devDependencies": {
+    "@adobe/eslint-config-aio-lib-config": "1.4.0",
+    "@oclif/dev-cli": "1.26.10"
+  },
+  "bin": {
+    "adobe-aem-rde-cli": "./bin/run"
+  },
+  "scripts": {},
+  "files": [
+    "/src",
+    "/bin/run"
+  ],
+  "keywords": [
+    "oclif-plugin"
+  ],
+  "license": "Apache-2.0",
+  "oclif": {
+    "commands": "./src/commands",
+    "bin": "aio",
+    "devPlugins": [
+      "@oclif/plugin-help"
+    ],
+    "topics": {
+      "aem:rde": {
+        "description": "Interact with RapidDev Environments."
+      }
+    }
+  }
+}
