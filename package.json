@@ -20,7 +20,9 @@
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
   },
-  "scripts": {},
+  "scripts" : {
+    "test" : "echo \"No test specified\" && exit 0"
+  },
   "files": [
     "/src",
     "/bin/run"
