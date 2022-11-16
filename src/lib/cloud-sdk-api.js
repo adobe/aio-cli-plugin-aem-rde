@@ -93,8 +93,12 @@ class CloudSdkAPI {
       let url = result.headers.get('Location');
       let changeId = (await result.json()).updateId;
       let client = new ShareFileClient(url);
-      callbackCopy(`0/${fileSize}`);
-      await client.uploadFile(path, {onProgress: (progress) => callbackCopy(`${progress.loadedBytes}/${fileSize}`)});
+      callbackCopy(0, fileSize);
+      await client.uploadFile(path, {
+        onProgress: (progress) => {
+          callbackCopy(progress.loadedBytes, fileSize)
+        }
+      });
 
       let change = await this._doPut(`/runtime/updates/${changeId}`);
 
@@ -124,24 +128,35 @@ class CloudSdkAPI {
         let res = await client.startCopyFromURL(url);
         let copyId = res.copyId;
 
-        let progress = res.copyProgress ? res.copyProgress : `0/${fileSize}`;
-        callbackCopy(progress)
+        let getProgressBytes = (copyProgress) => {
+          return copyProgress ? parseInt(copyProgress.slice(0, copyProgress.indexOf('/'))) : 0
+        }
+
+        let progress = getProgressBytes(res.copyProgress)
+        callbackCopy(progress, fileSize)
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await this.delay(1000);
-          if (time++ > 20 && progress === `0/${fileSize}`) {
+          if (time++ > 20 && progress === 0) {
             await client.abortCopyFromURL(copyId);
           }
           res = await new ShareFileClient(clientUrl).getProperties();
           if (res.copyProgress) {
-            progress = res.copyProgress;
+            progress = getProgressBytes(res.copyProgress);
+
+            // URL deployments have quite large chunk sizes, so it can
+            // be a while before the first chunk is uploaded. Let's indicate
+            // that progress is happening, even though we haven't got the
+            // numbers yet. Fake progress is limited to max 1/3 of the file
+            // size.
+            let fakeProgress = Math.round(time * fileSize / 60);
+            callbackCopy(Math.max(progress, fakeProgress), fileSize);
           }
-          callbackCopy(progress);
         }
 
         if (res.copyStatus !== 'success') {
           let con = await fetch(url);
-          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {onProgress: (progress) => callbackCopy(`${progress.loadedBytes}/${fileSize}`)});
+          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {onProgress: (progress) => callbackCopy(progress.loadedBytes, fileSize)});
         }
 
         let change = await this._doPut(`/runtime/updates/${changeId}`);

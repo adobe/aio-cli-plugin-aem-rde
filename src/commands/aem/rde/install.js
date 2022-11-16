@@ -17,10 +17,12 @@ const fs = require("fs");
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const fetch = createFetch();
 const fileURL = require('url');
+const cliProgress = require('cli-progress');
 
 class DeployCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(DeployCommand)
+    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.rect);
     try {
       let change = await this.withCloudSdk(cloudSdkAPI => {
         let type;
@@ -39,6 +41,16 @@ class DeployCommand extends BaseCommand {
         } else {
           type = args.location.type
         }
+        progressBar.start(args.location.fileSize, 0)
+        let copyProgressCallback = (copiedBytes) => {
+            progressBar.update(copiedBytes)
+        }
+
+        let progressCallback = () => {
+          progressBar.stop()
+          cli.action.start("Applying update")
+        }
+
         if (args.location.url.protocol === 'file:') {
           return cloudSdkAPI.deployFile(
             args.location.fileSize,
@@ -48,8 +60,8 @@ class DeployCommand extends BaseCommand {
             flags.target,
             type === 'osgi-config' ? args.location.name : flags.path,
             flags.force,
-            (progress) => {cli.log(progress)},
-            () => {cli.log('.')});
+            copyProgressCallback,
+            progressCallback);
         } else {
           return cloudSdkAPI.deployURL(
             args.location.fileSize,
@@ -59,10 +71,11 @@ class DeployCommand extends BaseCommand {
             flags.target,
             type === 'osgi-config' ? args.location.name : flags.path,
             flags.force,
-            (progress) => {cli.log(progress)},
-            () => {cli.log('.')});
+            copyProgressCallback,
+            progressCallback);
         }
-      });
+      }).finally(() => cli.action.stop());
+
       this.logChange(change);
 
       let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getLogs(change.updateId));
@@ -84,6 +97,8 @@ class DeployCommand extends BaseCommand {
       }
     } catch (err) {
       cli.log(err);
+      progressBar.stop()
+      cli.action.stop()
     }
   }
 }
