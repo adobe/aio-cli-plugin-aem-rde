@@ -21,7 +21,11 @@ class ChangesCommand extends BaseCommand {
         let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getChanges());
         if (response.status === 200) {
           let json = await response.json();
-          json.items.forEach(this.logChange);
+          if (json.items.length === 0) {
+            cli.log('There are no changes yet.')
+          } else {
+            json.items.forEach(this.logChange);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`)
         }
