@@ -13,6 +13,7 @@ const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const FormData = require('form-data');
 const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
+const { DoRequest } = require("./doRequest");
 
 const fetch = createFetch();
 
@@ -20,137 +21,160 @@ class CloudSdkAPI {
   /**
    * Initializes a CloudSdkAPI object and returns it.
    *
-   * @param {string} cmUrl the cloudmanager api endpoint
+   * @param {string} cloudManagerUrl the cloudmanager api endpoint
+   * @param {string} devConsoleUrl the dev console url for the environment
+   * @param {object} rdeUrl the RDE API endpoint for the environment
    * @param {string} apiKey the cloudmanager api key
    * @param {string} orgId the cloudmanager org id
-   * @param {string} devConsoleUrl the dev console url for the environment
-   * @param {string} rdeApiUrl the base URL to access the API
    * @param {string} programId The ID of the program that contains the environment.
    * @param {string} environmentId The ID of the environment.
    * @param {string} accessToken The bearer token used to authenticate requests to the API.
    */
   constructor(
-    cmUrl,
+    cloudManagerUrl,
+    devConsoleUrl,
+    rdeUrl,
     apiKey,
     orgId,
-    devConsoleUrl,
-    rdeApiUrl,
     programId,
     environmentId,
     accessToken
   ) {
-    this._cmUrl = cmUrl;
-    this._apiKey = apiKey;
-    this._orgId = orgId;
-    this._devConsoleUrl = devConsoleUrl;
-    this._programId = programId;
-    this._environmentId = environmentId;
-    this._rdeApiUrl = `${rdeApiUrl}/program/${programId}/environment/${environmentId}`;
-    this._accessToken = accessToken;
-  }
-
-  async _doGet(path, body) {
-    return await this._doRequest('get', path, body);
-  }
-
-  async _doPost(path, body) {
-    return await this._doRequest('post', path, body);
-  }
-
-  async _doPut(path, body) {
-    return await this._doRequest('put', path, body);
-  }
-
-  async _doDelete(path) {
-    return await this._doRequest('delete', path);
-  }
-
-  async _doRequest(method, path, body) {
-    const url = `${this._rdeApiUrl}${path}`;
-    const options = {
-      method,
-      headers: {
-        Authorization: `Bearer ${this._accessToken}`,
-        accept: 'application/json',
-        body: 'blob',
-      },
+    let authorizationHeaders = {
+      Authorization: `Bearer ${accessToken}`,
+      accept: 'application/json',
+      body: 'blob',
     };
-
-    if (body instanceof FormData) {
-      options.body = body;
-    } else if (body) {
-      options.body = JSON.stringify(body);
-      options.headers['content-type'] = 'application/json';
-    }
-
-    return await fetch(url, options);
+    this._cloudManagerClient = new DoRequest(cloudManagerUrl, Object.assign({
+      'x-api-key': apiKey,
+      'x-gw-ims-org-id': orgId,
+    }, authorizationHeaders));
+    this._devConsoleClient = new DoRequest(devConsoleUrl, authorizationHeaders);
+    this._rdeClient = new DoRequest(rdeUrl, authorizationHeaders);
+    this._cmReleaseId = `cm-p${programId}-e${environmentId}`
   }
 
-  async _doDevConsoleRequest(method, path, body) {
-    const url = `${this._devConsoleUrl}${path}`;
-    const options = {
-      method,
-      headers: {
-        Authorization: `Bearer ${this._accessToken}`,
-        accept: 'application/json',
-        body: 'blob',
-      },
-    };
-
-    if (body instanceof FormData) {
-      options.body = body;
-    } else if (body) {
-      options.body = JSON.stringify(body);
-      options.headers['content-type'] = 'application/json';
-    }
-
-    return await fetch(url, options);
+  async getAemLogs(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs`);
   }
 
-  async _doCMRequest(method, path, body) {
-    const url = `${this._cmUrl}${path}`;
-    const options = {
-      method,
-      headers: {
-        Authorization: `Bearer ${this._accessToken}`,
-        accept: 'application/json',
-        'x-api-key': this._apiKey,
-        'x-gw-ims-org-id': this._orgId,
-        body: 'blob',
-      },
-    };
-
-    if (body instanceof FormData) {
-      options.body = body;
-    } else if (body) {
-      options.body = JSON.stringify(body);
-      options.headers['content-type'] = 'application/json';
-    }
-
-    return await fetch(url, options);
+  async getAemLog(serviceName, id) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs/${id}`);
   }
 
-  async _createError(response) {
-    return `Error: ${response.status} - ${await response.text()}`;
+  async getAemLogTail(serviceName, id) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs/${id}/tail`);
+  }
+
+  async createAemLog(serviceName, data) {
+    return await this._rdeClient.doPost(`/runtime/${serviceName}/logs`, data);
+  }
+
+  async deleteAemLog(serviceName, id) {
+    return await this._rdeClient.doDelete(`/runtime/${serviceName}/logs/${id}`);
+  }
+
+  async getRequestLogs(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs`);
+  }
+
+  async getRequestLog(serviceName, id) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs/${id}`);
+  }
+
+  async enableRequestLogs(serviceName, data) {
+    return await this._rdeClient.doPost(`/runtime/${serviceName}/request-logs`, data);
+  }
+
+  async disableRequestLogs(serviceName) {
+    return await this._rdeClient.doDelete(`/runtime/${serviceName}/request-logs`);
+  }
+
+  async getInventories(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/inventory`);
+  }
+
+  async getInventory(serviceName, id) {
+    return await this._rdeClient.doGet(
+        `/runtime/${serviceName}/status/inventory/${id}`
+    );
+  }
+
+  async getOsgiBundles(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-bundles`);
+  }
+
+  async getOsgiBundle(serviceName, id) {
+    return await this._rdeClient.doGet(
+        `/runtime/${serviceName}/status/osgi-bundles/${id}`
+    );
+  }
+
+  async getOsgiComponents(serviceName) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-components`
+    );
+  }
+
+  async getOsgiComponent(serviceName, componentName) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-components/${componentName}`
+    );
+  }
+
+  async getOsgiConfigurations(serviceName) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations`
+    );
+  }
+
+  async getOsgiConfiguration(serviceName, pId) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations/${pId}`
+    );
+  }
+
+  async getOsgiService(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-services`);
+  }
+
+  async getOsgiService(serviceName, id) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-services/${id}`
+    );
+  }
+
+  async getSlingRequests(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/sling-requests`);
+  }
+
+  async getSlingRequest(serviceName, id) {
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/sling-requests/${id}`
+    );
   }
 
   async getLogs(id) {
-    return await this._doGet(`/runtime/updates/${id}/logs`);
+    return await this._rdeClient.doGet(`/runtime/updates/${id}/logs`);
   }
 
   async getChanges() {
-    return await this._doGet(`/runtime/updates`);
+    return await this._rdeClient.doGet(`/runtime/updates`);
   }
 
   async getChange(id) {
-    return await this._doGet(`/runtime/updates/${id}`);
+    return await this._rdeClient.doGet(`/runtime/updates/${id}`);
+  }
+
+  async getStatus() {
+    return await this._rdeClient.doGet(`/runtime/updates/artifacts`);
   }
 
   async getArtifacts(cursor) {
     const queryString = cursor
-      ? `?${new URLSearchParams({ cursor }).toString()}`
-      : '';
-    return await this._doGet(`/runtime/updates/artifacts${queryString}`);
+        ? `?${new URLSearchParams({ cursor }).toString()}`
+        : '';
+    return await this._rdeClient.doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
   async deployFile(
@@ -202,7 +226,7 @@ class CloudSdkAPI {
   ) {
     if (fileSize > 0) {
       uploadCallbacks.start(fileSize);
-      const result = await this._doPost(`/runtime/updates`, {
+      const result = await this._rdeClient.doPost(`/runtime/updates`, {
         service: target,
         fileSize,
         type,
@@ -269,10 +293,14 @@ class CloudSdkAPI {
     }
   }
 
+  async _createError(response) {
+    return `Error: ${response.status} - ${await response.text()}`;
+  }
+
   async _putUpdate(changeId, callbackProgress) {
     const change = await handleRetryAfter(
-      () => this._doPut(`/runtime/updates/${changeId}`),
-      () => this._doGet(`/runtime/updates/${changeId}`),
+      () => this._rdeClient.doPut(`/runtime/updates/${changeId}`),
+      () => this._rdeClient.doGet(`/runtime/updates/${changeId}`),
       callbackProgress
     );
     if (change.status === 200) {
@@ -284,10 +312,9 @@ class CloudSdkAPI {
 
   async delete(id, force) {
     const change = await handleRetryAfter(
-      () =>
-        this._doDelete(
-          `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
-        ),
+      () => this._rdeClient.doDelete(
+        `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
+      ),
       (previousResponse) =>
         previousResponse
           .json()
@@ -329,27 +356,19 @@ class CloudSdkAPI {
   }
 
   async _waitForEnvRunningOrHibernated(namespace) {
-    return await this._waitForEnv(namespace, 'running', 'hibernated');
+    return await this._waitForEnv(namespace,'running', 'hibernated');
   }
 
-  async _waitForEnv(namespace, state1, state2) {
+  async _waitForEnv(namespace, ...allowedStates) {
     return (
       await this._waitForJson(
-        (status) =>
-          status.releases?.status[
-            `cm-p${this._programId}-e${this._environmentId}`
-          ]?.releaseState === state1 ||
-          status.releases?.status[
-            `cm-p${this._programId}-e${this._environmentId}`
-          ]?.releaseState === state2,
-        async () =>
-          await this._doDevConsoleRequest(
-            `get`,
-            `/api/releases/${namespace}/status`
-          )
+        (releaseState) => allowedStates.includes(releaseState),
+        async () => {
+          let status = await this._devConsoleClient.doGet(`/api/releases/${namespace}/status`);
+          return status.releases?.status[this._cmReleaseId]?.releaseState;
+        }
       )
-    ).releases.status[`cm-p${this._programId}-e${this._environmentId}`]
-      .releaseState;
+    );
   }
 
   async _hibernateEnv(namespace) {
@@ -364,18 +383,14 @@ class CloudSdkAPI {
     await this._waitForJson(
       (status) => status.ok,
       async () =>
-        await this._doDevConsoleRequest(
-          `post`,
-          `/api/releases/${namespace}/${target}/cm-p${this._programId}-e${this._environmentId}`
+        await this._devConsoleClient.doPost(
+          `/api/releases/${namespace}/${target}/${this._cmReleaseId}`
         )
     );
   }
 
   async _getNamespace() {
-    const nameSpaceRequest = await this._doDevConsoleRequest(
-      `get`,
-      `/api/status`
-    );
+    const nameSpaceRequest = await this._devConsoleClient.doGet(`/api/status`);
     if (nameSpaceRequest.status === 200) {
       const nameSpaceStatus = await nameSpaceRequest.json();
       if (
@@ -448,20 +463,13 @@ class CloudSdkAPI {
   }
 
   async _resetEnv() {
-    await this._doCMRequest(
-      `put`,
-      `/api/program/${this._programId}/environment/${this._environmentId}/reset`
-    );
+    await this._cloudManagerClient.doPut(`/reset`);
   }
 
   async _waitForEnvReady() {
     await this._waitForJson(
       (status) => status.status === 'ready',
-      async () =>
-        await this._doCMRequest(
-          'get',
-          `/api/program/${this._programId}/environment/${this._environmentId}`
-        )
+      async () => await this._cloudManagerClient.doGet('')
     );
   }
 }

@@ -16,6 +16,7 @@ const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const configurationCodes = require('../lib/errors');
+const { DoRequest } = require('./doRequest');
 
 /**
  *
@@ -80,14 +81,14 @@ async function getTokenAndKey() {
 /**
  *
  */
-async function initSdk() {
+async function initSdk(cloudManagerUrl, orgId) {
   const { accessToken, apiKey } = await getTokenAndKey();
-  const orgId = getCliOrgId();
-  const baseUrl = getBaseUrl();
-  return await init(orgId, apiKey, accessToken, baseUrl);
+  return await init(orgId, apiKey, accessToken, cloudManagerUrl);
 }
 
 class BaseCommand extends Command {
+  _cloudSdkAPI;
+
   constructor(argv, config) {
     super(argv, config);
     const programId = Config.get('cloudmanager_programid');
@@ -96,8 +97,8 @@ class BaseCommand extends Command {
     this._environmentId = environmentId;
   }
 
-  async getDeveloperConsoleUrl(programId, environmentId) {
-    const sdk = await initSdk();
+  async getDeveloperConsoleUrl(cloudManagerUrl, orgId, programId, environmentId) {
+    const sdk = await initSdk(cloudManagerUrl, orgId);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
@@ -110,23 +111,27 @@ class BaseCommand extends Command {
         throw new Error('No environmentId');
       }
       const { accessToken, apiKey } = await getTokenAndKey();
+      const cloudManagerUrl = getBaseUrl();
+      const orgId = getCliOrgId();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
-        !cacheEntry ||
-        new Date(cacheEntry.expiry).valueOf() < Date.now() ||
-        !cacheEntry.devConsoleUrl
+          !cacheEntry ||
+          new Date(cacheEntry.expiry).valueOf() < Date.now() ||
+          !cacheEntry.devConsoleUrl
       ) {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
-          this._programId,
-          this._environmentId
+            cloudManagerUrl,
+            orgId,
+            this._programId,
+            this._environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
         const devConsoleUrl = url.toString();
         url.pathname = '/api/rde';
-        const rdeApiUrl = url.toString();
+        const rdeApiUrl = `${url.toString()}/program/${programId}/environment/${environmentId}`;
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 1); // cache for at most one day
         cacheEntry = {
@@ -137,17 +142,36 @@ class BaseCommand extends Command {
         Config.set(cacheKey, cacheEntry);
       }
       this._cloudSdkAPI = new CloudSdkAPI(
-        getBaseUrl(),
-        apiKey,
-        getCliOrgId(),
-        cacheEntry.devConsoleUrl,
-        cacheEntry.rdeApiUrl,
-        this._programId,
-        this._environmentId,
-        accessToken
+          `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
+          cacheEntry.devConsoleUrl,
+          cacheEntry.rdeApiUrl,
+          apiKey,
+          orgId,
+          this._programId,
+          this._environmentId,
+          accessToken
       );
     }
     return fn(this._cloudSdkAPI);
+  }
+
+  logChange(change) {
+    CliUx.ux.log(
+        `#${change.updateId}: ${change.action} ${change.status}` +
+        (change.deletedArtifact
+            ? ` for ${change.deletedArtifact.type} ${
+                change.deletedArtifact.type === 'osgi-bundle'
+                    ? change.deletedArtifact.metadata.bundleSymbolicName
+                    : change.deletedArtifact.metadata.configPid
+            }`
+            : `${
+                change.metadata && change.metadata.name
+                    ? ' for ' + change.type + ' ' + change.metadata.name
+                    : ''
+            }`) +
+        (change.services ? ` on ${change.services}` : '') +
+        ` - done by ${change.user} at ${change.timestamps.received}`
+    );
   }
 }
 
@@ -172,7 +196,7 @@ module.exports = {
     target: Flags.string({
       char: 's',
       description:
-        "the target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
+        "The target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
       multiple: false,
       required: false,
       options: ['author', 'publish'],
