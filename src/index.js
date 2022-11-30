@@ -14,10 +14,34 @@ const DeleteCommand = require('./commands/aem/rde/delete')
 const HistoryCommand = require('./commands/aem/rde/history')
 const InstallCommand = require('./commands/aem/rde/install')
 const StatusCommand = require('./commands/aem/rde/status')
+const LogsCommand = require('./commands/aem/rde/logs/index')
+const CreateLogsCommand = require('./commands/aem/rde/logs/create')
+const DeleteLogsCommand = require('./commands/aem/rde/logs/delete')
+const RequestLogsCommand = require('./commands/aem/rde/request-logs/index')
+const EnableRequestLogsCommand = require('./commands/aem/rde/request-logs/enable')
+const DisableRequestLogsCommand = require('./commands/aem/rde/request-logs/delete')
+const InventoryCommand = require('./commands/aem/rde/inventory')
+const OsgiBundlesCommand = require('./commands/aem/rde/osgi-bundles')
+const OsgiComponentsCommand = require('./commands/aem/rde/osgi-components')
+const OsgiConfigurationsCommand = require('./commands/aem/rde/osgi-configurations')
+const OsgiServicesCommand = require('./commands/aem/rde/osgi-services')
+const SlingRequestsCommand = require('./commands/aem/rde/sling-requests')
 
 module.exports = {
   'delete': new DeleteCommand().run,
   'history': new HistoryCommand().run,
   'install': new InstallCommand().run,
   'status': new StatusCommand().run,
+  'logs': new LogsCommand().run,
+  'logs:create': new CreateLogsCommand().run,
+  'logs:delete': new DeleteLogsCommand().run,
+  'request-logs': new RequestLogsCommand().run,
+  'request-logs:enable': new EnableRequestLogsCommand().run,
+  'request-logs:disable': new DisableRequestLogsCommand().run,
+  'inventory': new InventoryCommand().run,
+  'osgi-bundles': new OsgiBundlesCommand().run,
+  'osgi-components': new OsgiComponentsCommand().run,
+  'osgi-configurations': new OsgiConfigurationsCommand().run,
+  'osgi-services': new OsgiServicesCommand().run,
+  'sling-requests': new SlingRequestsCommand().run,
 }

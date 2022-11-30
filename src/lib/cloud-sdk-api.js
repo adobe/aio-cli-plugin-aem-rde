@@ -11,83 +11,151 @@
  */
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
-const FormData = require('form-data');
 
-const fetch = createFetch()
+const fetch = createFetch();
 
 class CloudSdkAPI {
-  /**
-   * The base URL for the API endpoint
-   *
-   * @type {string}
-   */
-  _baseUrl;
+  _request;
 
-  _accessToken;
-
-  /**
-   * Initializes a CloudSdkAPI object and returns it.
-   *
-   * @param {string} baseUrl the base URL to access the API
-   */
-  constructor(baseUrl, programId, environmentId, accessToken) {
-    this._baseUrl = `${baseUrl}/program/${programId}/environment/${environmentId}`;
-    this._accessToken = accessToken;
+  constructor(request) {
+    this._request = request;
   }
 
-  async _doGet(path, body) {
-    return this._doRequest('get', path, body)
+  async getAemLogs(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/logs`);
   }
 
-  async _doPost(path, body) {
-    return this._doRequest('post', path, body)
+  async getAemLog(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/logs/${id}`);
   }
 
-  async _doPut(path, body) {
-    return this._doRequest('put', path, body)
+  async getAemLogTail(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/logs/${id}/tail`);
   }
 
-  async _doDelete(path) {
-    return this._doRequest('delete', path)
+  async createAemLog(serviceName, data) {
+    return this._request.doPost(`/runtime/${serviceName}/logs`, data);
   }
 
-  async _doRequest(method, path, body) {
-    const url = `${this._baseUrl}${path}`
-    const options = {
-      method: method,
-      headers: {
-        Authorization: `Bearer ${this._accessToken}`,
-        accept: 'application/json',
-        body: 'blob'
-      },
-    }
-
-    if (body instanceof FormData) {
-      options.body = body
-    } else if (body) {
-      options.body = JSON.stringify(body)
-      options.headers['content-type'] = 'application/json'
-    }
-
-    return fetch(url, options);
+  async deleteAemLog(serviceName, id) {
+    return this._request.doDelete(`/runtime/${serviceName}/logs/${id}`);
   }
+
+  async getRequestLogs(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/request-logs`);
+  }
+
+  async getRequestLog(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/request-logs/${id}`);
+  }
+
+  async enableRequestLogs(serviceName, data) {
+    return this._request.doPost(`/runtime/${serviceName}/request-logs`, data);
+  }
+
+  async disableRequestLogs(serviceName) {
+    return this._request.doDelete(`/runtime/${serviceName}/request-logs`);
+  }
+
+  async getInventories(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/status/inventory`);
+  }
+
+  async getInventory(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/inventory/${id}`
+    );
+  }
+
+  async getOsgiBundles(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/status/osgi-bundles`);
+  }
+
+  async getOsgiBundle(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-bundles/${id}`
+    );
+  }
+
+  async getOsgiComponents(serviceName) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-components`
+    );
+  }
+
+  async getOsgiComponent(serviceName, componentName) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-components/${componentName}`
+    );
+  }
+
+  async getOsgiConfigurations(serviceName) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations`
+    );
+  }
+
+  async getOsgiConfiguration(serviceName, pId) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations/${pId}`
+    );
+  }
+
+  async getOsgiService(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/status/osgi-services`);
+  }
+
+  async getOsgiService(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-services/${id}`
+    );
+  }
+
+  async getSlingRequests(serviceName) {
+    return this._request.doGet(`/runtime/${serviceName}/status/sling-requests`);
+  }
+
+  async getSlingRequest(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/sling-requests/${id}`
+    );
+  }
+
   async getLogs(id) {
-    return this._doGet(`/runtime/updates/${id}/logs`)
+    return this._request.doGet(`/runtime/updates/${id}/logs`);
   }
+
   async getChanges() {
-    return this._doGet(`/runtime/updates`);
+    return this._request.doGet(`/runtime/updates`);
   }
 
   async getChange(id) {
-    return this._doGet(`/runtime/updates/${id}`);
+    return this._request.doGet(`/runtime/updates/${id}`);
   }
 
   async getStatus() {
-    return this._doGet(`/runtime/updates/artifacts`);
+    return this._request.doGet(`/runtime/updates/artifacts`);
   }
 
-  async deployFile(fileSize, path, name, type, target, contentPath, force, callbackCopy, callbackProgress) {
-    let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
+  async deployFile(
+    fileSize,
+    path,
+    name,
+    type,
+    target,
+    contentPath,
+    force,
+    callbackCopy,
+    callbackProgress
+  ) {
+    let result = await this._request.doPost(`/runtime/updates`, {
+      service: target,
+      fileSize: fileSize,
+      type: type,
+      metadata: { name: name },
+      contentPath: contentPath,
+      force: force,
+    });
 
     if (result.status === 201) {
       let url = result.headers.get('Location');
@@ -96,30 +164,47 @@ class CloudSdkAPI {
       callbackCopy(0, fileSize);
       await client.uploadFile(path, {
         onProgress: (progress) => {
-          callbackCopy(progress.loadedBytes, fileSize)
-        }
+          callbackCopy(progress.loadedBytes, fileSize);
+        },
       });
 
-      let change = await this._doPut(`/runtime/updates/${changeId}`);
+      let change = await this._request.doPut(`/runtime/updates/${changeId}`);
 
       while (change.status === 202) {
         callbackProgress();
         await this.delay(change.headers.get('Retry-After'));
-        change = await this._doGet(`/runtime/updates/${changeId}`);
+        change = await this._request.doGet(`/runtime/updates/${changeId}`);
       }
       if (change.status === 200) {
         return await change.json();
       } else {
-        throw `Error: ${change.status} - ${change.statusText}`
+        throw `Error: ${change.status} - ${change.statusText}`;
       }
     } else {
-      throw `Error: ${result.status} - ${result.statusText}`
+      throw `Error: ${result.status} - ${result.statusText}`;
     }
   }
 
-  async deployURL(fileSize, url, name, type, target, contentPath, force, callbackCopy, callbackProgress) {
+  async deployURL(
+    fileSize,
+    url,
+    name,
+    type,
+    target,
+    contentPath,
+    force,
+    callbackCopy,
+    callbackProgress
+  ) {
     if (fileSize > 0) {
-      let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
+      let result = await this._request.doPost(`/runtime/updates`, {
+        service: target,
+        fileSize: fileSize,
+        type: type,
+        metadata: { name: name },
+        contentPath: contentPath,
+        force: force,
+      });
 
       if (result.status === 201) {
         let clientUrl = result.headers.get('Location');
@@ -129,11 +214,13 @@ class CloudSdkAPI {
         let copyId = res.copyId;
 
         let getProgressBytes = (copyProgress) => {
-          return copyProgress ? parseInt(copyProgress.slice(0, copyProgress.indexOf('/'))) : 0
-        }
+          return copyProgress
+            ? parseInt(copyProgress.slice(0, copyProgress.indexOf('/')))
+            : 0;
+        };
 
-        let progress = getProgressBytes(res.copyProgress)
-        callbackCopy(progress, fileSize)
+        let progress = getProgressBytes(res.copyProgress);
+        callbackCopy(progress, fileSize);
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await this.delay(1000);
@@ -149,55 +236,60 @@ class CloudSdkAPI {
             // that progress is happening, even though we haven't got the
             // numbers yet. Fake progress is limited to max 1/3 of the file
             // size.
-            let fakeProgress = Math.round(time * fileSize / 60);
+            let fakeProgress = Math.round((time * fileSize) / 60);
             callbackCopy(Math.max(progress, fakeProgress), fileSize);
           }
         }
 
         if (res.copyStatus !== 'success') {
           let con = await fetch(url);
-          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {onProgress: (progress) => callbackCopy(progress.loadedBytes, fileSize)});
+          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {
+            onProgress: (progress) =>
+              callbackCopy(progress.loadedBytes, fileSize),
+          });
         }
 
-        let change = await this._doPut(`/runtime/updates/${changeId}`);
+        let change = await this._request.doPut(`/runtime/updates/${changeId}`);
 
         while (change.status === 202) {
           callbackProgress();
           await this.delay(change.headers.get('Retry-After'));
-          change = await this._doGet(`/runtime/updates/${changeId}`);
+          change = await this._request.doGet(`/runtime/updates/${changeId}`);
         }
         if (change.status === 200) {
           return await change.json();
         } else {
-          throw `Error: ${change.status} - ${change.statusText}`
+          throw `Error: ${change.status} - ${change.statusText}`;
         }
       } else {
-        throw `Error: ${result.status} - ${result.statusText}`
+        throw `Error: ${result.status} - ${result.statusText}`;
       }
     } else {
-      throw Error("Can not get file size from head request");
+      throw Error('Can not get file size from head request');
     }
   }
 
   async delete(id, force) {
-    let change = await this._doDelete(`/runtime/updates/artifacts/${id}` + (force ? `?force=true` : ''));
+    let change = await this._request.doDelete(
+      `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
+    );
     while (change.status === 202) {
       await this.delay();
       let changeId = (await change.json()).updateId;
-      change = await this._doGet(`/runtime/updates/${changeId}`);
+      change = await this._request.doGet(`/runtime/updates/${changeId}`);
     }
     if (change.status === 200) {
       return await change.json();
     } else {
-      throw `Error: ${change.status} - ${change.statusText}`
+      throw `Error: ${change.status} - ${change.statusText}`;
     }
   }
 
   delay(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
+    return new Promise((resolve) => setTimeout(resolve, time));
   }
 }
 
 module.exports = {
   CloudSdkAPI: CloudSdkAPI,
-}
+};

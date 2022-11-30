@@ -11,23 +11,25 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command')
+const { BaseCommand, cli } = require('../../../lib/base-command');
 
 class StatusCommand extends BaseCommand {
   async run() {
     try {
-      let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getStatus());
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`)
+      let response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.getStatus()
+      );
+      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
       if (response.status === 200) {
         let json = await response.json();
 
-        cli.log(`Environment: ${json.status}`)
+        cli.log(`Environment: ${json.status}`);
 
         let bundlesAuthor = [];
         let bundlesPublish = [];
         let configsAuthor = [];
         let configsPublish = [];
-        json.items.forEach(artifact => {
+        json.items.forEach((artifact) => {
           if (artifact.service === 'author') {
             if (artifact.type === 'osgi-bundle') {
               bundlesAuthor.push(artifact);
@@ -42,19 +44,30 @@ class StatusCommand extends BaseCommand {
             }
           }
         });
-        cli.log('- Bundles Author:')
-        bundlesAuthor.forEach(bundle => cli.log(` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`))
-        cli.log('- Bundles Publish:')
-        bundlesPublish.forEach(bundle => cli.log(` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`))
+        cli.log('- Bundles Author:');
+        bundlesAuthor.forEach((bundle) =>
+          cli.log(
+            ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+          )
+        );
+        cli.log('- Bundles Publish:');
+        bundlesPublish.forEach((bundle) =>
+          cli.log(
+            ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+          )
+        );
 
-        cli.log('- Configurations Author:')
-        configsAuthor.forEach(config => cli.log(` ${config.metadata.configPid} `))
+        cli.log('- Configurations Author:');
+        configsAuthor.forEach((config) =>
+          cli.log(` ${config.metadata.configPid} `)
+        );
 
-
-        cli.log('- Configurations Publish:')
-        configsPublish.forEach(config => cli.log(` ${config.metadata.configPid} `))
+        cli.log('- Configurations Publish:');
+        configsPublish.forEach((config) =>
+          cli.log(` ${config.metadata.configPid} `)
+        );
       } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`)
+        cli.log(`Error: ${response.status} - ${response.statusText}`);
       }
     } catch (err) {
       cli.log(err);
@@ -63,9 +76,10 @@ class StatusCommand extends BaseCommand {
 }
 
 Object.assign(StatusCommand, {
-  description: 'Get a list of the bundles and configs deployed to the current rde.',
+  description:
+    'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   aliases: [],
-})
+});
 
-module.exports = StatusCommand
+module.exports = StatusCommand;
