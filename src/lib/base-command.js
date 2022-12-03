@@ -114,12 +114,6 @@ class BaseCommand extends Command {
     }
     return fn.call(null, this._cloudSdkAPI)
   }
-
-  logChange(change) {
-    CliUx.ux.log(`#${change.updateId}: ${change.action} ${change.status}` + (change.deletedArtifact ? ` for ${change.deletedArtifact.type} ${change.deletedArtifact.type === 'osgi-bundle' ? change.deletedArtifact.metadata.bundleSymbolicName : change.deletedArtifact.metadata.configPid}` :
-      `${change.metadata && change.metadata.name ? ' for ' + change.type + ' ' + change.metadata.name : ''}`
-    ) + (change.services ? ` on ${change.services}` : '') + ` - done by ${change.user} at ${change.timestamps.received}`)
-  }
 }
 
 module.exports = {

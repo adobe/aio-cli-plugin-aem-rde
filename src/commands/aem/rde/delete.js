@@ -12,94 +12,50 @@
 'use strict';
 
 const { BaseCommand, cli, commonFlags, Flags } = require('../../../lib/base-command')
+const {loadUpdateHistory} = require('../../../lib/rde-utils');
+const {loadAllArtifacts, groupArtifacts} = require("../../../lib/rde-utils");
+const spinner = require('ora')();
 
 class DeleteCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(DeleteCommand)
     try {
-      let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getStatus());
-      if (response.status === 200) {
-        let json = await response.json();
-        let bundlesAuthor = [];
-        let bundlesPublish = [];
-        let configsAuthor = [];
-        let configsPublish = [];
-        json.items.forEach(artifact => {
-          if (artifact.service === 'author') {
-            if (artifact.type === 'osgi-bundle') {
-              bundlesAuthor.push(artifact);
-            } else {
-              configsAuthor.push(artifact);
-            }
-          } else {
-            if (artifact.type === 'osgi-bundle') {
-              bundlesPublish.push(artifact);
-            } else {
-              configsPublish.push(artifact);
-            }
-          }
-        });
-        let artifacts = [];
-        if (!flags.type || flags.type === 'osgi-bundle') {
-          if (!flags.target || flags.target === 'author') {
-            bundlesAuthor.forEach(bundle => {
-              if (bundle.metadata.bundleSymbolicName === args.id ||
-                `${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}` === args.id) {
-                artifacts.push(bundle);
-              }
-            })
-          }
-          if (!flags.target || flags.target === 'publish') {
-            bundlesPublish.forEach(bundle => {
-              if (bundle.metadata.bundleSymbolicName === args.id ||
-                `${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}` === args.id) {
-                artifacts.push(bundle);
-              }
-            })
-          }
-        }
-        if (!flags.type || flags.type === 'osgi-config') {
-          if (!flags.target || flags.target === 'author') {
-            configsAuthor.forEach(bundle => {
-              if (bundle.metadata.configPid === args.id) {
-                artifacts.push(bundle);
-              }
-            })
-          }
-          if (!flags.target || flags.target === 'publish') {
-            configsPublish.forEach(bundle => {
-              if (bundle.metadata.configPid === args.id) {
-                artifacts.push(bundle);
-              }
-            })
-          }
-        }
+      let services = !flags.target ? ['author', 'publish'] : [flags.target ]
+      let types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type]
+      let filters = {
+        'osgi-bundle': bundle => bundle.metadata.bundleSymbolicName === args.id ||
+          `${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}` === args.id,
+        'osgi-config': config => config.metadata.configPid === args.id
+      }
 
-        for (let artifact of artifacts) {
-          let change = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.delete(artifact.id, flags.force));
-          this.logChange(change);
-          let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getLogs(change.updateId));
-          if (response.status == 200) {
-            let log = await response.text();
-            try {
-              let json = JSON.parse(log);
-              if (json.length > 0) {
-                cli.log(`Logs:`)
-                json.forEach((line) => {
-                  cli.log(line)
-                })
-              }
-            } catch (err) {
-              cli.log(log);
-            }
-          } else {
-            cli.log(`Error: ${response.status} - ${response.statusText}`)
-          }
+      spinner.start(`deleting ${args.id}`);
+      let status = await this.withCloudSdk(cloudSdkAPI => loadAllArtifacts(cloudSdkAPI))
+      let grouped = groupArtifacts(status.items)
+      let artifacts = [];
+      for (let target of services) {
+        for (let type of types) {
+          artifacts.push(...grouped[target][type].filter(filters[type]))
         }
-      } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`)
+      }
+
+      for (let artifact of artifacts) {
+        let change = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.delete(artifact.id, flags.force));
+        await this.withCloudSdk(cloudSdkAPI => loadUpdateHistory(
+            cloudSdkAPI,
+            change.updateId,
+            cli,
+            (done, text) => done ? spinner.stop() : spinner.start(text)
+        ));
+      }
+      spinner.stop();
+
+      if (artifacts.length === 0) {
+        let typeInfo = types.length === 1 ? types[0] : 'artifact'
+        let serviceInfo = services.length === 1 ? `the ${services[0]} of ` : ''
+        cli.log(`Could not delete ${typeInfo} "${args.id}". It is not present on ${serviceInfo}this environment.`)
       }
     } catch (err) {
+      spinner.stop()
       cli.log(err);
     }
   }

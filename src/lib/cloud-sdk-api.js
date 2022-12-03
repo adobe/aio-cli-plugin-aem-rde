@@ -12,6 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const FormData = require('form-data');
+const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
 
 const fetch = createFetch()
 
@@ -29,6 +30,9 @@ class CloudSdkAPI {
    * Initializes a CloudSdkAPI object and returns it.
    *
    * @param {string} baseUrl the base URL to access the API
+   * @param {string} programId The ID of the program that contains the environment.
+   * @param {string} environmentId The ID of the environment.
+   * @param {string} accessToken The bearer token used to authenticate requests to the API.
    */
   constructor(baseUrl, programId, environmentId, accessToken) {
     this._baseUrl = `${baseUrl}/program/${programId}/environment/${environmentId}`;
@@ -36,19 +40,19 @@ class CloudSdkAPI {
   }
 
   async _doGet(path, body) {
-    return this._doRequest('get', path, body)
+    return await this._doRequest('get', path, body)
   }
 
   async _doPost(path, body) {
-    return this._doRequest('post', path, body)
+    return await this._doRequest('post', path, body)
   }
 
   async _doPut(path, body) {
-    return this._doRequest('put', path, body)
+    return await this._doRequest('put', path, body)
   }
 
   async _doDelete(path) {
-    return this._doRequest('delete', path)
+    return await this._doRequest('delete', path)
   }
 
   async _doRequest(method, path, body) {
@@ -69,21 +73,23 @@ class CloudSdkAPI {
       options.headers['content-type'] = 'application/json'
     }
 
-    return fetch(url, options);
+    return await fetch(url, options);
   }
+
   async getLogs(id) {
-    return this._doGet(`/runtime/updates/${id}/logs`)
+    return await this._doGet(`/runtime/updates/${id}/logs`)
   }
   async getChanges() {
-    return this._doGet(`/runtime/updates`);
+    return await this._doGet(`/runtime/updates`);
   }
 
   async getChange(id) {
-    return this._doGet(`/runtime/updates/${id}`);
+    return await this._doGet(`/runtime/updates/${id}`);
   }
 
-  async getStatus() {
-    return this._doGet(`/runtime/updates/artifacts`);
+  async getArtifacts(cursor) {
+    let queryString = cursor ? `?${new URLSearchParams({cursor}).toString()}` : '';
+    return await this._doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
   async deployFile(fileSize, path, name, type, target, contentPath, force, callbackCopy, callbackProgress) {
@@ -99,19 +105,7 @@ class CloudSdkAPI {
           callbackCopy(progress.loadedBytes, fileSize)
         }
       });
-
-      let change = await this._doPut(`/runtime/updates/${changeId}`);
-
-      while (change.status === 202) {
-        callbackProgress();
-        await this.delay(change.headers.get('Retry-After'));
-        change = await this._doGet(`/runtime/updates/${changeId}`);
-      }
-      if (change.status === 200) {
-        return await change.json();
-      } else {
-        throw `Error: ${change.status} - ${change.statusText}`
-      }
+      return await this._putUpdate(changeId, callbackProgress);
     } else {
       throw `Error: ${result.status} - ${result.statusText}`
     }
@@ -136,7 +130,7 @@ class CloudSdkAPI {
         callbackCopy(progress, fileSize)
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
-          await this.delay(1000);
+          await sleepSeconds(1);
           if (time++ > 20 && progress === 0) {
             await client.abortCopyFromURL(copyId);
           }
@@ -159,18 +153,7 @@ class CloudSdkAPI {
           await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {onProgress: (progress) => callbackCopy(progress.loadedBytes, fileSize)});
         }
 
-        let change = await this._doPut(`/runtime/updates/${changeId}`);
-
-        while (change.status === 202) {
-          callbackProgress();
-          await this.delay(change.headers.get('Retry-After'));
-          change = await this._doGet(`/runtime/updates/${changeId}`);
-        }
-        if (change.status === 200) {
-          return await change.json();
-        } else {
-          throw `Error: ${change.status} - ${change.statusText}`
-        }
+        return await this._putUpdate(changeId, callbackProgress);
       } else {
         throw `Error: ${result.status} - ${result.statusText}`
       }
@@ -179,13 +162,12 @@ class CloudSdkAPI {
     }
   }
 
-  async delete(id, force) {
-    let change = await this._doDelete(`/runtime/updates/artifacts/${id}` + (force ? `?force=true` : ''));
-    while (change.status === 202) {
-      await this.delay();
-      let changeId = (await change.json()).updateId;
-      change = await this._doGet(`/runtime/updates/${changeId}`);
-    }
+  async _putUpdate(changeId, callbackProgress) {
+    let change = await handleRetryAfter(
+        () => this._doPut(`/runtime/updates/${changeId}`),
+        () => this._doGet(`/runtime/updates/${changeId}`),
+        callbackProgress
+    )
     if (change.status === 200) {
       return await change.json();
     } else {
@@ -193,8 +175,16 @@ class CloudSdkAPI {
     }
   }
 
-  delay(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
+  async delete(id, force) {
+    let change = await handleRetryAfter(
+        () => this._doDelete(`/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')),
+        previousResponse => previousResponse.json()
+            .then(json => this._doGet(`/runtime/updates/${json.updateId}`)))
+    if (change.status === 200) {
+      return await change.json();
+    } else {
+      throw `Error: ${change.status} - ${change.statusText}`
+    }
   }
 }
 
