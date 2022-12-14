@@ -12,4 +12,4 @@ to npmjs.com is automatically performed by the github action
 [.github/workflows/on-push-publish-to-npm.yml](.github/workflows/on-push-publish-to-npm.yml).
 
 The progress and status of the deployment can be inspected on the
-[Actions tab](/adobe/aio-cli-plugin-aem-rde/actions).
+[Actions tab](//github.com/adobe/aio-cli-plugin-aem-rde/actions).
