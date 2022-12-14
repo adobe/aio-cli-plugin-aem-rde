@@ -11,48 +11,42 @@
  */
 'use strict';
 
-const { BaseCommand, cli} = require('../../../lib/base-command')
+const { BaseCommand, cli} = require('../../../lib/base-command');
+const rdeUtils = require('../../../lib/rde-utils');
+const spinner = require('ora')();
 
 class ChangesCommand extends BaseCommand {
   async run() {
     const { args } = await this.parse(ChangesCommand)
     try {
-      if (!args.id) {
+      if (args.id === undefined) {
+        spinner.start('fetching updates');
         let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getChanges());
         if (response.status === 200) {
           let json = await response.json();
-          json.items.forEach(this.logChange);
-        } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`)
-        }
-      } else {
-        let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getChange(args.id));
-        if (response.status === 200) {
-          let change = await response.json();
-          response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getLogs(args.id));
-          if (response.status === 200) {
-            this.logChange(change);
-            let log = await response.text();
-            try {
-              let json = JSON.parse(log);
-              if (json.length > 0) {
-                cli.log(`Logs:`)
-                json.forEach((line) => {
-                  cli.log(line)
-                })
-              }
-            } catch (err) {
-              cli.log(log);
-            }
+          spinner.stop()
+          if (json.items.length === 0) {
+            cli.log('There are no updates yet.')
           } else {
-            cli.log(`Error: ${response.status} - ${response.statusText}`)
+            json.items.forEach(rdeUtils.logChange);
           }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`)
         }
+      } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
+          cli.log(`Invalid update ID "${args.id}". Please use a positive update ID number as the input.`)
+      } else {
+        await this.withCloudSdk(cloudSdkAPI => rdeUtils.loadUpdateHistory(
+            cloudSdkAPI,
+            args.id,
+            cli,
+            (done, text) => done ? spinner.stop() : spinner.start(text)
+        ));
       }
     } catch (err) {
       cli.log(err);
+    } finally {
+      spinner.stop();
     }
   }
 }
@@ -64,7 +58,7 @@ Object.assign(ChangesCommand, {
     description: 'The id of the update to get (including logs)',
     multiple: false,
     required: false
-    }],
+  }],
   aliases: [],
 })
 

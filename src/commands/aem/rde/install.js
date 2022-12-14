@@ -11,95 +11,146 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags, Flags } = require('../../../lib/base-command')
-const { basename } = require("path");
-const fs = require("fs");
-const { createFetch } = require('@adobe/aio-lib-core-networking');
-const fetch = createFetch();
-const fileURL = require('url');
-const cliProgress = require('cli-progress');
+const {BaseCommand, cli, commonFlags, Flags} = require('../../../lib/base-command')
+const {loadUpdateHistory} = require("../../../lib/rde-utils");
+const {basename} = require('path');
+const fs = require('fs');
+const fetch = require('@adobe/aio-lib-core-networking').createFetch();
+const {URL, pathToFileURL} = require('url');
+const spinner = require('ora')();
+const Zip = require('adm-zip');
+
+function createProgressBar() {
+  return cli.progress({
+    format: 'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591',
+    stopOnComplete: true,
+    formatValue: function (v, options, type) {
+      // padding
+      function autopadding(value, length) {
+        return (options.autopaddingChar + value).slice(-length);
+      }
+
+      function toKiloBytes(value) {
+        return Math.round(value / 1024)
+      }
+
+      switch (type) {
+        case 'percentage':
+          // no autopadding ? passthrough
+          if (options.autopadding !== true) {
+            return v;
+          }
+          return autopadding(v, 3);
+        case 'value':
+        case 'total':
+          return toKiloBytes(v);
+        default:
+          return v;
+      }
+    }
+  });
+}
+
+async function computeStats(url) {
+  switch (url.protocol) {
+    case 'http:':
+    case 'https:':
+      let con = (await fetch(url, { method: 'HEAD' }));
+      let effectiveUrl = !!con.url ? new URL(con.url) : url;
+      return {
+        fileSize: parseInt(con.headers.get('content-length')),
+        effectiveUrl,
+        path: effectiveUrl.pathname
+      };
+    case 'file:':
+      let path = fs.realpathSync(url);
+      return {
+        fileSize: fs.statSync(path).size,
+        effectiveUrl: url,
+        path
+      };
+    default:
+      throw `Unsupported protocol ${url.protocol}`
+  }
+}
 
 class DeployCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(DeployCommand)
-    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.rect);
+    const progressBar = createProgressBar();
+
     try {
+      let { fileSize, effectiveUrl, path } = await computeStats(args.location);
+      let fileName = basename(path);
+      let type = flags.type || guessType(fileName, effectiveUrl, flags.path);
+
       let change = await this.withCloudSdk(cloudSdkAPI => {
-        let type;
-        if (flags.path) {
-          if (flags.type) {
-            if (flags.type === 'content-xml') {
-              type = flags.type;
-            } else {
-              type = 'content-file'
-            }
-          } else {
-            type = 'content-file'
-          }
-        } else if (flags.type) {
-          type = flags.type
-        } else {
-          type = args.location.type
-        }
-        progressBar.start(args.location.fileSize, 0)
+        progressBar.start(fileSize, 0)
         let copyProgressCallback = (copiedBytes) => {
             progressBar.update(copiedBytes)
         }
 
         let progressCallback = () => {
-          progressBar.stop()
-          cli.action.start("Applying update")
-        }
-
-        if (args.location.url.protocol === 'file:') {
-          return cloudSdkAPI.deployFile(
-            args.location.fileSize,
-            args.location.path,
-            args.location.name,
-            type,
-            flags.target,
-            type === 'osgi-config' ? args.location.name : flags.path,
-            flags.force,
-            copyProgressCallback,
-            progressCallback);
-        } else {
-          return cloudSdkAPI.deployURL(
-            args.location.fileSize,
-            args.location.url.toString(),
-            args.location.name,
-            type,
-            flags.target,
-            type === 'osgi-config' ? args.location.name : flags.path,
-            flags.force,
-            copyProgressCallback,
-            progressCallback);
-        }
-      }).finally(() => cli.action.stop());
-
-      this.logChange(change);
-
-      let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getLogs(change.updateId));
-      if (response.status === 200) {
-        let log = await response.text();
-        try {
-          let json = JSON.parse(log);
-          if (json.length > 0) {
-            cli.log(`Logs:`)
-            json.forEach((line) => {
-              cli.log(line)
-            })
+          if (!spinner.isSpinning) {
+            spinner.start('applying update')
           }
-        } catch (err) {
-          cli.log(log);
         }
-      } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`)
-      }
+
+        let deploy = effectiveUrl.protocol === 'file:' ? cloudSdkAPI.deployFile : cloudSdkAPI.deployURL;
+        return deploy.call(
+          cloudSdkAPI,
+          fileSize,
+          path,
+          fileName,
+          type,
+          flags.target,
+          type === 'osgi-config' ? fileName : flags.path,
+          flags.force,
+          copyProgressCallback,
+          progressCallback);
+      }).finally(() => spinner.stop());
+
+      await this.withCloudSdk(cloudSdkAPI => loadUpdateHistory(
+          cloudSdkAPI,
+          change.updateId,
+          cli,
+          (done, text) => done ? spinner.stop() : spinner.start(text)
+      ));
     } catch (err) {
+      progressBar.stop();
+      spinner.stop();
       cli.log(err);
-      progressBar.stop()
-      cli.action.stop()
     }
+  }
+}
+
+
+function guessType(name, url, pathFlag) {
+  let extension = name.substring(name.lastIndexOf('.'));
+  switch (extension) {
+    case '.jar':
+      return 'osgi-bundle';
+    case '.json':
+      return 'osgi-config';
+    case '.zip':
+      if (url.protocol === 'file:') {
+        let zip = new Zip(fs.realpathSync(url), {});
+        let isContentPackage = zip.getEntry('jcr_root/') !== null
+        if (isContentPackage) {
+          return 'content-package';
+        }
+        let isDispatcherConfig = zip.getEntry('conf.dispatcher.d/') !== null
+        if (isDispatcherConfig) {
+          return 'dispatcher-config'
+        }
+      }
+      return 'content-package';
+    case '.xml':
+      return pathFlag !== undefined ? 'content-xml' : '';
+    default:
+      return pathFlag !== undefined ? 'content-file' : '';
   }
 }
 
@@ -111,62 +162,13 @@ Object.assign(DeployCommand, {
       description: 'Location (public accessible url or path on local file system) to an artifact',
       required: true,
       parse: async location => {
-        let url;
-        if (location.startsWith('https:') ||
-          location.startsWith('file:') ||
-          location.startsWith('http:') ) {
-            url = new URL(location);
+        if (location.startsWith('https://') || location.startsWith('http://')) {
+          return new URL(location);
         } else {
-          url = fileURL.pathToFileURL(location.replace(/\\ /, ' '));
+          // remove file:// if present
+          let filePath = location.replace(new RegExp("^file://"), '')
+          return  pathToFileURL(filePath);
         }
-        let path;
-        if (url.protocol === 'file:') {
-          path = fs.realpathSync(url);
-        } else {
-          path = url.pathname;
-        }
-        let name = basename(url.pathname);
-        let type = name.endsWith('.jar') ?
-          'osgi-bundle' :
-          name.endsWith('.zip') ?
-            'content-package' :
-            name.endsWith('.json') ?
-              'osgi-config' : '';
-
-        let fileSize;
-        if (url.protocol === 'file:') {
-          fileSize = fs.statSync(path).size;
-        } else {
-          let con = (await fetch(url, { method: 'HEAD' }));
-
-          fileSize = parseInt(con.headers.get('content-length'));
-
-          if (con.url) {
-            url = new URL(con.url);
-            if (type === '') {
-              path = url.pathname;
-              name = basename(url.pathname);
-              type = name.endsWith('.jar') ?
-                'osgi-bundle' :
-                name.endsWith('.zip') ?
-                  'content-package' :
-                  name.endsWith('.json') ?
-                    'osgi-config' : '';
-            }
-          }
-        }
-        return {
-          path: path,
-          url: url,
-          name: name,
-          fileSize: fileSize,
-          type: name.endsWith('.jar') ?
-            'osgi-bundle' :
-            name.endsWith('.zip') ?
-              'content-package' :
-              name.endsWith('.json') ?
-                'osgi-config' : ''
-        };
       }
     }
   ],
