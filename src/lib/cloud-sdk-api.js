@@ -92,27 +92,27 @@ class CloudSdkAPI {
     return await this._doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
-  async deployFile(fileSize, path, name, type, target, contentPath, force, callbackCopy, callbackProgress) {
+  async deployFile(fileSize, path, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
     let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
 
     if (result.status === 201) {
       let url = result.headers.get('Location');
       let changeId = (await result.json()).updateId;
       let client = new ShareFileClient(url);
-      callbackCopy(0, fileSize);
+      uploadCallbacks.start(fileSize)
       await client.uploadFile(path, {
-        onProgress: (progress) => {
-          callbackCopy(progress.loadedBytes, fileSize)
-        }
+        onProgress: (progress) => uploadCallbacks.progress(progress.loadedBytes)
       });
-      return await this._putUpdate(changeId, callbackProgress);
+      return await this._putUpdate(changeId, deploymentCallback);
     } else {
+      uploadCallbacks.abort()
       throw `Error: ${result.status} - ${result.statusText}`
     }
   }
 
-  async deployURL(fileSize, url, name, type, target, contentPath, force, callbackCopy, callbackProgress) {
+  async deployURL(fileSize, url, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
     if (fileSize > 0) {
+      uploadCallbacks.start(fileSize)
       let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
 
       if (result.status === 201) {
@@ -127,12 +127,13 @@ class CloudSdkAPI {
         }
 
         let progress = getProgressBytes(res.copyProgress)
-        callbackCopy(progress, fileSize)
+        uploadCallbacks.progress(progress)
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await sleepSeconds(1);
           if (time++ > 20 && progress === 0) {
             await client.abortCopyFromURL(copyId);
+            break;
           }
           res = await new ShareFileClient(clientUrl).getProperties();
           if (res.copyProgress) {
@@ -144,17 +145,21 @@ class CloudSdkAPI {
             // numbers yet. Fake progress is limited to max 1/3 of the file
             // size.
             let fakeProgress = Math.round(time * fileSize / 60);
-            callbackCopy(Math.max(progress, fakeProgress), fileSize);
+            uploadCallbacks.progress(Math.max(progress, fakeProgress));
           }
         }
 
         if (res.copyStatus !== 'success') {
+          uploadCallbacks.abort()
+          uploadCallbacks.start(fileSize, 'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.')
           let con = await fetch(url);
-          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {onProgress: (progress) => callbackCopy(progress.loadedBytes, fileSize)});
+          await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {
+            onProgress: (progress) => uploadCallbacks.progress(progress.loadedBytes)
+          });
         }
-
-        return await this._putUpdate(changeId, callbackProgress);
+        return await this._putUpdate(changeId, deploymentCallback);
       } else {
+        uploadCallbacks.abort()
         throw `Error: ${result.status} - ${result.statusText}`
       }
     } else {

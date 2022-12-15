@@ -63,13 +63,13 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
             if (lines.length > 0) {
                 cli.log(`Logs:`)
                 lines.forEach((line) => {
-                    cli.log(`  ${line}`)
+                    cli.log(`> ${line}`)
                 })
             } else {
-                cli.log('No logs available for this update')
+                cli.log('No logs available for this update.')
             }
         } else {
-            cli.log(` ----- Error: ${response.status} - ${response.statusText}`)
+            cli.log(`Error: ${response.status} - ${response.statusText}`)
         }
     } else if (response.status === 404) {
         cli.log(`An update with ID ${updateId} does not exist.`);
