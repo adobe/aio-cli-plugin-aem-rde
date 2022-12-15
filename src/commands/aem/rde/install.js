@@ -62,14 +62,16 @@ async function computeStats(url) {
       return {
         fileSize: parseInt(con.headers.get('content-length')),
         effectiveUrl,
-        path: effectiveUrl.pathname
+        path: effectiveUrl.pathname,
+        isLocalFile: false
       };
     case 'file:':
       let path = fs.realpathSync(url);
       return {
         fileSize: fs.statSync(path).size,
         effectiveUrl: url,
-        path
+        path,
+        isLocalFile: true
       };
     default:
       throw `Unsupported protocol ${url.protocol}`
@@ -98,11 +100,11 @@ class DeployCommand extends BaseCommand {
           }
         }
 
-        let deploy = effectiveUrl.protocol === 'file:' ? cloudSdkAPI.deployFile : cloudSdkAPI.deployURL;
+        let deploy = isLocalFile ? cloudSdkAPI.deployFile : cloudSdkAPI.deployURL;
         return deploy.call(
           cloudSdkAPI,
           fileSize,
-          path,
+          isLocalFile ? path : effectiveUrl.toString(),
           fileName,
           type,
           flags.target,
