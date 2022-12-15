@@ -117,12 +117,18 @@ class DeployCommand extends BaseCommand {
 
     try {
       let change = await this.withCloudSdk(cloudSdkAPI => {
-        progressBar.start(fileSize, 0)
-        let copyProgressCallback = (copiedBytes) => {
-            progressBar.update(copiedBytes)
+        let uploadCallbacks = {
+          progress: (copiedBytes) => progressBar.update(copiedBytes),
+          abort: () => progressBar.stop(),
+          start: (size, msg) => {
+            if (msg) {
+              cli.log(msg)
+            }
+            progressBar.start(size, 0)
+          }
         }
 
-        let progressCallback = () => {
+        let deploymentCallbacks = () => {
           if (!spinner.isSpinning) {
             spinner.start('applying update')
           }
@@ -138,8 +144,8 @@ class DeployCommand extends BaseCommand {
           flags.target,
           type === 'osgi-config' ? fileName : flags.path,
           flags.force,
-          copyProgressCallback,
-          progressCallback);
+          uploadCallbacks,
+          deploymentCallbacks);
       }).finally(() => spinner.stop());
 
       await this.withCloudSdk(cloudSdkAPI => loadUpdateHistory(
