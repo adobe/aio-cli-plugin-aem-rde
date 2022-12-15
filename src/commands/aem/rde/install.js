@@ -20,6 +20,15 @@ const {URL, pathToFileURL} = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
 
+const deploymentTypes = [
+  'osgi-bundle',
+  'osgi-config',
+  'content-package',
+  'content-file',
+  'content-xml',
+  'dispatcher-config'
+];
+
 function createProgressBar() {
   return cli.progress({
     format: 'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
@@ -83,11 +92,30 @@ class DeployCommand extends BaseCommand {
     const { args, flags } = await this.parse(DeployCommand)
     const progressBar = createProgressBar();
 
-    try {
-      let { fileSize, effectiveUrl, path } = await computeStats(args.location);
-      let fileName = basename(path);
-      let type = flags.type || guessType(fileName, effectiveUrl, flags.path);
+    let originalUrl = args.location;
+    let { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(originalUrl);
+    let fileName = basename(path);
+    let type = flags.type;
+    if (!type) {
+      let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
+      if (!isLocalFile && guessedTypes === deploymentTypes && effectiveUrl !== originalUrl) {
+        // when there was a redirect, it is possible that the original URL
+        // has a file extension, but not the effective URL, so we try again
+        fileName = basename(originalUrl.pathname)
+        guessedTypes = guessType(fileName, originalUrl, flags.path);
+      }
+      if (guessedTypes.length > 1) {
+        cli.log(`Could not infer the type of the deployed artifact.`)
+        cli.log(`Please specify the -t option with one of the following types: ${guessedTypes.join(', ')}`)
+        return
+      } else if (guessedTypes.length === 1) {
+        type = guessedTypes[0]
+      } else {
+        throw new Error("guessedTypes is empty")
+      }
+    }
 
+    try {
       let change = await this.withCloudSdk(cloudSdkAPI => {
         progressBar.start(fileSize, 0)
         let copyProgressCallback = (copiedBytes) => {
@@ -128,31 +156,30 @@ class DeployCommand extends BaseCommand {
   }
 }
 
-
 function guessType(name, url, pathFlag) {
   let extension = name.substring(name.lastIndexOf('.'));
   switch (extension) {
     case '.jar':
-      return 'osgi-bundle';
+      return ['osgi-bundle'];
     case '.json':
-      return 'osgi-config';
+      return ['osgi-config'];
     case '.zip':
       if (url.protocol === 'file:') {
         let zip = new Zip(fs.realpathSync(url), {});
         let isContentPackage = zip.getEntry('jcr_root/') !== null
         if (isContentPackage) {
-          return 'content-package';
+          return ['content-package'];
         }
         let isDispatcherConfig = zip.getEntry('conf.dispatcher.d/') !== null
         if (isDispatcherConfig) {
-          return 'dispatcher-config'
+          return ['dispatcher-config']
         }
       }
-      return 'content-package';
+      return ['content-package', 'dispatcher-config'];
     case '.xml':
-      return pathFlag !== undefined ? 'content-xml' : '';
+      return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
     default:
-      return pathFlag !== undefined ? 'content-file' : '';
+      return pathFlag !== undefined ? ['content-file'] : deploymentTypes;
   }
 }
 
@@ -181,14 +208,7 @@ Object.assign(DeployCommand, {
       description: 'the type to deploy',
       multiple: false,
       required: false,
-      options: [
-        'osgi-bundle',
-        'osgi-config',
-        'content-package',
-        'content-file',
-        'content-xml',
-        'dispatcher-config'
-      ]
+      options: deploymentTypes
     }),
     path: Flags.string({
       char: 'p',
