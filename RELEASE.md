@@ -4,7 +4,7 @@ In order to build a new alpha release and push it to npmjs.com, run the followin
                                       
     # inside your git clone with the "main" branch checked out
     npm version --preid alpha prerelease
-    git push --tags
+    git push && git push --tags
 
 The `npm version` command updates the version number, creates a new git commit
 and tags it. Once the commit is pushed to the upstream repository, deployment
