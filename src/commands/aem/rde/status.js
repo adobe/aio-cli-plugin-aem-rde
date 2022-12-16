@@ -46,9 +46,10 @@ class StatusCommand extends BaseCommand {
 }
 
 Object.assign(StatusCommand, {
-  description: 'Get a list of the bundles and configs deployed to the current rde.',
+  description:
+    'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   aliases: [],
-})
+});
 
-module.exports = StatusCommand
+module.exports = StatusCommand;
