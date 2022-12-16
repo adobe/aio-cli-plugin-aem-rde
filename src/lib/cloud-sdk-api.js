@@ -56,7 +56,7 @@ class CloudSdkAPI {
   }
 
   async disableRequestLogs(serviceName) {
-    return this._request.doDelete(`runtime/${serviceName}/request-logs`);
+    return this._request.doDelete(`/runtime/${serviceName}/request-logs`);
   }
 
   async getInventories(serviceName) {
