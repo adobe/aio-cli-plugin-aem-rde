@@ -18,8 +18,12 @@ class OsgiServicesCommand extends BaseCommand {
     const { args, flags } = await this.parse(OsgiServicesCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.scope = flags.scope;
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiServices(flags.target)
+          cloudSdkAPI.getOsgiServices(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -60,6 +64,8 @@ Object.assign(OsgiServicesCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    scope: commonFlags.scope,
+    include: commonFlags.include,
   },
 });
 

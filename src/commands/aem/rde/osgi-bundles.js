@@ -18,8 +18,12 @@ class OsgiBundlesCommand extends BaseCommand {
     const { args, flags } = await this.parse(OsgiBundlesCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.scope = flags.scope;
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiBundles(flags.target)
+          cloudSdkAPI.getOsgiBundles(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -59,6 +63,8 @@ Object.assign(OsgiBundlesCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    scope: commonFlags.scope,
+    include: commonFlags.include,
   },
 });
 

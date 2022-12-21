@@ -23,8 +23,9 @@ class CloudSdkAPI {
     this._request = request;
   }
 
-  async getAemLogs(serviceName) {
-    return this._request.doGet(`/runtime/${serviceName}/logs`);
+  async getAemLogs(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/logs${queryString}`);
   }
 
   async getAemLog(serviceName, id) {
@@ -43,8 +44,9 @@ class CloudSdkAPI {
     return this._request.doDelete(`/runtime/${serviceName}/logs/${id}`);
   }
 
-  async getRequestLogs(serviceName) {
-    return this._request.doGet(`/runtime/${serviceName}/request-logs`);
+  async getRequestLogs(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/request-logs${queryString}`);
   }
 
   async getRequestLog(serviceName, id) {
@@ -59,8 +61,9 @@ class CloudSdkAPI {
     return this._request.doDelete(`/runtime/${serviceName}/request-logs`);
   }
 
-  async getInventories(serviceName) {
-    return this._request.doGet(`/runtime/${serviceName}/status/inventory`);
+  async getInventories(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/status/inventory${queryString}`);
   }
 
   async getInventory(serviceName, id) {
@@ -69,8 +72,9 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiBundles(serviceName) {
-    return this._request.doGet(`/runtime/${serviceName}/status/osgi-bundles`);
+  async getOsgiBundles(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/status/osgi-bundles${queryString}`);
   }
 
   async getOsgiBundle(serviceName, id) {
@@ -79,9 +83,10 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiComponents(serviceName) {
+  async getOsgiComponents(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
     return this._request.doGet(
-      `/runtime/${serviceName}/status/osgi-components`
+      `/runtime/${serviceName}/status/osgi-components${queryString}`
     );
   }
 
@@ -91,9 +96,10 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiConfigurations(serviceName) {
+  async getOsgiConfigurations(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
     return this._request.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations`
+      `/runtime/${serviceName}/status/osgi-configurations${queryString}`
     );
   }
 
@@ -103,9 +109,10 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiServices(serviceName) {
+  async getOsgiServices(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
     return this._request.doGet(
-      `/runtime/${serviceName}/status/osgi-services`
+      `/runtime/${serviceName}/status/osgi-services${queryString}`
     );
   }
 
@@ -115,8 +122,9 @@ class CloudSdkAPI {
     );
   }
 
-  async getSlingRequests(serviceName) {
-    return this._request.doGet(`/runtime/${serviceName}/status/sling-requests`);
+  async getSlingRequests(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/status/sling-requests${queryString}`);
   }
 
   async getSlingRequest(serviceName, id) {
@@ -138,7 +146,7 @@ class CloudSdkAPI {
   }
 
   async getArtifacts(cursor) {
-    let queryString = cursor ? `?${new URLSearchParams({cursor}).toString()}` : '';
+    let queryString = this.createUrlQueryStr({ cursor });
     return await this._request.doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
@@ -206,7 +214,8 @@ class CloudSdkAPI {
           uploadCallbacks.start(fileSize, 'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.')
           let con = await fetch(url);
           await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {
-            onProgress: (progress) => uploadCallbacks.progress(progress.loadedBytes)
+            onProgress: (progress) =>
+              uploadCallbacks.progress(progress.loadedBytes),
           });
         }
         return await this._putUpdate(changeId, deploymentCallback);
@@ -242,6 +251,16 @@ class CloudSdkAPI {
     } else {
       throw `Error: ${change.status} - ${change.statusText}`
     }
+  }
+
+  createUrlQueryStr(params) {
+    let queryString = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value) {
+        queryString.append(key,value);
+      }
+    }
+    return `?${queryString}`;
   }
 }
 
