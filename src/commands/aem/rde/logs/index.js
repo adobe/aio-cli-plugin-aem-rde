@@ -23,8 +23,11 @@ class LogsCommand extends BaseCommand {
     const { args, flags } = await this.parse(LogsCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getAemLogs(flags.target)
+          cloudSdkAPI.getAemLogs(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -89,6 +92,7 @@ Object.assign(LogsCommand, {
       multiple: false,
       required: false,
     }),
+    include: commonFlags.include,
     // TODO: need to implement
     forward: Flags.boolean({
       char: 'f',

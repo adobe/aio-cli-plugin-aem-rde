@@ -22,8 +22,11 @@ class RequestLogsCommand extends BaseCommand {
     const { args, flags } = await this.parse(RequestLogsCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getRequestLogs(flags.target)
+          cloudSdkAPI.getRequestLogs(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -64,6 +67,7 @@ Object.assign(RequestLogsCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    include: commonFlags.include,
   },
 });
 

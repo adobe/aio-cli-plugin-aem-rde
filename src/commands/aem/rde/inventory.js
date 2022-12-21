@@ -18,8 +18,11 @@ class InventoryCommand extends BaseCommand {
     const { args, flags } = await this.parse(InventoryCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getInventories(flags.target)
+          cloudSdkAPI.getInventories(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -59,6 +62,7 @@ Object.assign(InventoryCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    include: commonFlags.include,
   },
 });
 

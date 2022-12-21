@@ -18,8 +18,11 @@ class SlingRequestsCommand extends BaseCommand {
     const { args, flags } = await this.parse(SlingRequestsCommand);
     try {
       if (!args.id) {
+        let params = {};
+        params.filter = flags.include;
+
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSlingRequests(flags.target)
+          cloudSdkAPI.getSlingRequests(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
@@ -60,6 +63,7 @@ Object.assign(SlingRequestsCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    include: commonFlags.include,
   },
 });
 

@@ -202,5 +202,18 @@ module.exports = {
       options: ['author', 'publish'],
       common: true,
     }),
+    scope: Flags.string({
+      description: 'Optional filter for the scope.',
+      multiple: false,
+      required: false,
+      options: ['custom', 'product'],
+      common: true,
+    }),
+    include: Flags.string({
+      description: 'Optional filter.',
+      multiple: false,
+      required: false,
+      common: true,
+    }),
   },
 };

@@ -54,8 +54,9 @@ class CloudSdkAPI {
     this._cmReleaseId = `cm-p${programId}-e${environmentId}`
   }
 
-  async getAemLogs(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs`);
+  async getAemLogs(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs${queryString}`);
   }
 
   async getAemLog(serviceName, id) {
@@ -74,8 +75,9 @@ class CloudSdkAPI {
     return await this._rdeClient.doDelete(`/runtime/${serviceName}/logs/${id}`);
   }
 
-  async getRequestLogs(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs`);
+  async getRequestLogs(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs${queryString}`);
   }
 
   async getRequestLog(serviceName, id) {
@@ -90,8 +92,9 @@ class CloudSdkAPI {
     return await this._rdeClient.doDelete(`/runtime/${serviceName}/request-logs`);
   }
 
-  async getInventories(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/inventory`);
+  async getInventories(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/inventory${queryString}`);
   }
 
   async getInventory(serviceName, id) {
@@ -100,8 +103,9 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiBundles(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-bundles`);
+  async getOsgiBundles(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-bundles${queryString}`);
   }
 
   async getOsgiBundle(serviceName, id) {
@@ -110,9 +114,10 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiComponents(serviceName) {
+  async getOsgiComponents(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-components`
+      `/runtime/${serviceName}/status/osgi-components${queryString}`
     );
   }
 
@@ -122,9 +127,10 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiConfigurations(serviceName) {
+  async getOsgiConfigurations(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations`
+      `/runtime/${serviceName}/status/osgi-configurations${queryString}`
     );
   }
 
@@ -134,8 +140,11 @@ class CloudSdkAPI {
     );
   }
 
-  async getOsgiService(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-services`);
+  async getOsgiServices(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-services${queryString}`
+    );
   }
 
   async getOsgiService(serviceName, id) {
@@ -144,8 +153,9 @@ class CloudSdkAPI {
     );
   }
 
-  async getSlingRequests(serviceName) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/sling-requests`);
+  async getSlingRequests(serviceName, params) {
+    let queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/sling-requests${queryString}`);
   }
 
   async getSlingRequest(serviceName, id) {
@@ -171,9 +181,7 @@ class CloudSdkAPI {
   }
 
   async getArtifacts(cursor) {
-    const queryString = cursor
-        ? `?${new URLSearchParams({ cursor }).toString()}`
-        : '';
+    let queryString = this.createUrlQueryStr({ cursor });
     return await this._rdeClient.doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
@@ -325,6 +333,16 @@ class CloudSdkAPI {
     } else {
       throw await this._createError(change);
     }
+  }
+
+  createUrlQueryStr(params) {
+    let queryString = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value) {
+        queryString.append(key,value);
+      }
+    }
+    return `?${queryString}`;
   }
 
   async _requestJson(callback) {
