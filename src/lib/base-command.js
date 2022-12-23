@@ -195,10 +195,9 @@ module.exports = {
     }),
     target: Flags.string({
       char: 's',
-      description:
-        "The target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
+      description: "The target instance type. Default 'author'.",
       multiple: false,
-      required: false,
+      required: true,
       options: ['author', 'publish'],
       common: true,
     }),
@@ -206,6 +205,7 @@ module.exports = {
       description: 'Optional filter for the scope.',
       multiple: false,
       required: false,
+      default: 'custom',
       options: ['custom', 'product'],
       common: true,
     }),

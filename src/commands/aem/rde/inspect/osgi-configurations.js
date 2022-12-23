@@ -11,38 +11,37 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+} = require('../../../../lib/base-command');
 
-class OsgiServicesCommand extends BaseCommand {
+class OsgiConfigurationsCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(OsgiServicesCommand);
+    const { args, flags } = await this.parse(OsgiConfigurationsCommand);
     try {
-      if (!args.id) {
+      if (!args.pId) {
         let params = {};
         params.scope = flags.scope;
         params.filter = flags.include;
 
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiServices(flags.target, params)
+          cloudSdkAPI.getOsgiConfigurations(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log('- Osgi Services: ');
-          json.items.forEach((osgiServices) => {
-            cli.log(osgiServices);
-          });
+          cli.log(JSON.stringify(json, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiService(flags.target, args.id)
+          cloudSdkAPI.getOsgiConfiguration(flags.target, args.pId)
         );
-
         if (response.status === 200) {
-          let osgiService = await response.json();
-          cli.log(`- Osgi Service "${args.id}": `);
-          cli.log(osgiService);
+          let osgiConfiguration = await response.json();
+          cli.log(JSON.stringify(osgiConfiguration, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -53,13 +52,13 @@ class OsgiServicesCommand extends BaseCommand {
   }
 }
 
-Object.assign(OsgiServicesCommand, {
+Object.assign(OsgiConfigurationsCommand, {
   description:
-    'Get the list of osgi-services for the target of a rapid development environment.',
+    'Get the list of osgi-configurations for the target of a rapid development environment.',
   args: [
     {
-      name: 'id',
-      description: 'The id of the osgi-service to get.',
+      name: 'pId',
+      description: 'The PID of the osgi-configuration to get.',
     },
   ],
   flags: {
@@ -69,4 +68,4 @@ Object.assign(OsgiServicesCommand, {
   },
 });
 
-module.exports = OsgiServicesCommand;
+module.exports = OsgiConfigurationsCommand;

@@ -11,36 +11,37 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+} = require('../../../../lib/base-command');
 
-class InventoryCommand extends BaseCommand {
+class OsgiBundlesCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(InventoryCommand);
+    const { args, flags } = await this.parse(OsgiBundlesCommand);
     try {
       if (!args.id) {
         let params = {};
+        params.scope = flags.scope;
         params.filter = flags.include;
 
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getInventories(flags.target, params)
+          cloudSdkAPI.getOsgiBundles(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log('- Inventories: ');
-          json.items.forEach((inventory) => {
-            cli.log(inventory);
-          });
+          cli.log(JSON.stringify(json, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getInventory(flags.target, args.id)
+          cloudSdkAPI.getOsgiBundle(flags.target, args.id)
         );
         if (response.status === 200) {
-          let inventory = await response.json();
-          cli.log(`- Inventory "${args.id}": `);
-          cli.log(inventory);
+          let osgiBundle = await response.json();
+          cli.log(JSON.stringify(osgiBundle, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -51,19 +52,20 @@ class InventoryCommand extends BaseCommand {
   }
 }
 
-Object.assign(InventoryCommand, {
+Object.assign(OsgiBundlesCommand, {
   description:
-    'Get the list of inventories for the target of a rapid development environment.',
+    'Get the list of osgi-bundles for the target of a rapid development environment.',
   args: [
     {
       name: 'id',
-      description: 'The id of the inventory to get.',
+      description: 'The id of the osgi-bundle to get.',
     },
   ],
   flags: {
     target: commonFlags.target,
+    scope: commonFlags.scope,
     include: commonFlags.include,
   },
 });
 
-module.exports = InventoryCommand;
+module.exports = OsgiBundlesCommand;

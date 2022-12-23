@@ -15,7 +15,7 @@ const {
   BaseCommand,
   cli,
   commonFlags,
-} = require('../../../../lib/base-command');
+} = require('../../../../../lib/base-command');
 
 class DeleteLogsCommand extends BaseCommand {
   async run() {
