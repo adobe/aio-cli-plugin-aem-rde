@@ -16,7 +16,7 @@ const {
   cli,
   Flags,
   commonFlags,
-} = require('../../../../lib/base-command');
+} = require('../../../../../lib/base-command');
 
 class EnableRequestLogsCommand extends BaseCommand {
   async run() {
@@ -60,7 +60,6 @@ class EnableRequestLogsCommand extends BaseCommand {
       if (response.status === 201) {
         let log = await response.json();
         cli.log('Request-logs enabled.');
-        cli.log(log);
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
       }

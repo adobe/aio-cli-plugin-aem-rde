@@ -11,7 +11,11 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+} = require('../../../../lib/base-command');
 
 class OsgiComponentsCommand extends BaseCommand {
   async run() {
@@ -27,10 +31,7 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log('- Osgi Components: ');
-          json.items.forEach((osgiComponent) => {
-            cli.log(osgiComponent);
-          });
+          cli.log(JSON.stringify(json, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -40,8 +41,7 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let osgiComponent = await response.json();
-          cli.log(`- Osgi Component "${args.name}": `);
-          cli.log(osgiComponent);
+          cli.log(JSON.stringify(osgiComponent, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }

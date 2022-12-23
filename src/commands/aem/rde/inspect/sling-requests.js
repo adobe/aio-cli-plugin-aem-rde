@@ -11,41 +11,33 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  commonFlags,
-} = require('../../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../../lib/base-command');
 
-class RequestLogsCommand extends BaseCommand {
+class SlingRequestsCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(RequestLogsCommand);
+    const { args, flags } = await this.parse(SlingRequestsCommand);
     try {
       if (!args.id) {
         let params = {};
         params.filter = flags.include;
 
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getRequestLogs(flags.target, params)
+          cloudSdkAPI.getSlingRequests(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log('- Request Logs: ');
-          json.items.forEach((requestLog) => {
-            cli.log(json);
-            cli.log(requestLog);
-          });
+          cli.log(JSON.stringify(json, null, 2))
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getRequestLog(flags.target, args.id)
+          cloudSdkAPI.getSlingRequest(flags.target, args.id)
         );
+
         if (response.status === 200) {
-          let requestLog = await response.json();
-          cli.log(`- Request Log "${args.id}": `);
-          cli.log(requestLog);
+          let slingRequest = await response.json();
+          cli.log(JSON.stringify(slingRequest, null, 2))
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -56,13 +48,13 @@ class RequestLogsCommand extends BaseCommand {
   }
 }
 
-Object.assign(RequestLogsCommand, {
+Object.assign(SlingRequestsCommand, {
   description:
-    'Get the list of request-logs for the target of a rapid development environment.',
+    'Get the list of sling-requests for the target of a rapid development environment.',
   args: [
     {
       name: 'id',
-      description: 'The id of the request-log to get.',
+      description: 'The id of the sling-request to get.',
     },
   ],
   flags: {
@@ -71,4 +63,4 @@ Object.assign(RequestLogsCommand, {
   },
 });
 
-module.exports = RequestLogsCommand;
+module.exports = SlingRequestsCommand;

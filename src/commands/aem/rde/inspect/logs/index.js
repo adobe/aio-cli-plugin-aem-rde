@@ -16,32 +16,77 @@ const {
   cli,
   Flags,
   commonFlags,
-} = require('../../../../lib/base-command');
+} = require('../../../../../lib/base-command');
 
-class CreateLogsCommand extends BaseCommand {
+class LogsCommand extends BaseCommand {
   async run() {
-    const { flags } = await this.parse(CreateLogsCommand);
+    const { flags } = await this.parse(LogsCommand);
+    try {
+      let response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.getAemLogs(flags.target, {})
+      );
+
+      if (response.status === 200) {
+        let json = await response.json();
+
+        if (json.items?.length >= 3) {
+          await this.deleteLog(flags.target, json.items[0].id);
+        }
+        let newLog = await this.createLog(flags);
+        var intervalId = setInterval(async () => {
+          await this.printLogTail(flags.target, newLog.id);
+        }, 1500);
+
+        // `ctl c` stops displaying the logs
+        process.on('SIGTERM', () => {
+          clearInterval(intervalId);
+          this.deleteLog(flags.target, json.items.at(-1).id);
+        });
+        process.on('SIGINT', () => {
+          clearInterval(intervalId);
+          this.deleteLog(flags.target, json.items.at(-1).id);
+        });
+      } else {
+        cli.log(`Error: ${response.status} - ${response.statusText}`);
+      }
+    } catch (err) {
+      cli.log(err);
+    }
+  }
+
+  async deleteLog(target, id) {
+    try {
+      let response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.deleteAemLog(target, id)
+      );
+      if (response.status !== 200) {
+        cli.log(`Error: ${response.status} - ${response.statusText}`);
+      }
+    } catch (err) {
+      cli.log(err);
+    }
+  }
+
+  async createLog(flags) {
     try {
       // build a request body out of the received flags
       let body = {};
-
       if (flags.format) {
         body.format = flags.format;
       }
-
       // check if there are values for the name key
       if (flags.info || flags.debug || flags.warn || flags.error) {
         let namesArray = [];
-        flags.info?.forEach((logger) => {
+        flags?.info?.forEach((logger) => {
           namesArray.push({ logger: logger, level: 'INFO' });
         });
-        flags.debug?.forEach((logger) => {
+        flags?.debug?.forEach((logger) => {
           namesArray.push({ logger: logger, level: 'DEBUG' });
         });
-        flags.warn?.forEach((logger) => {
+        flags?.warn?.forEach((logger) => {
           namesArray.push({ logger: logger, level: 'WARN' });
         });
-        flags.error?.forEach((logger) => {
+        flags?.error?.forEach((logger) => {
           namesArray.push({ logger: logger, level: 'ERROR' });
         });
         body.names = namesArray;
@@ -53,8 +98,7 @@ class CreateLogsCommand extends BaseCommand {
 
       if (response.status === 201) {
         let log = await response.json();
-        cli.log('New log created.');
-        cli.log(log);
+        return log;
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
       }
@@ -62,10 +106,25 @@ class CreateLogsCommand extends BaseCommand {
       cli.log(err);
     }
   }
+
+  async printLogTail(target, id) {
+    let response = await this.withCloudSdk((cloudSdkAPI) =>
+      cloudSdkAPI.getAemLogTail(target, id)
+    );
+    if (response.status === 200) {
+      let aemLogTail = await response.text();
+      if (aemLogTail !== '') {
+        cli.log(aemLogTail.trim());
+      }
+    } else {
+      cli.log(`Error: ${response.status} - ${response.statusText}`);
+    }
+  }
 }
 
-Object.assign(CreateLogsCommand, {
-  description: 'Create a new log for the provided loggers and levels.',
+Object.assign(LogsCommand, {
+  description:
+    'Get the list of logs for the target of a rapid development environment.',
   flags: {
     target: commonFlags.target,
     format: Flags.string({
@@ -101,4 +160,4 @@ Object.assign(CreateLogsCommand, {
   },
 });
 
-module.exports = CreateLogsCommand;
+module.exports = LogsCommand;

@@ -11,11 +11,15 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+} = require('../../../../lib/base-command');
 
-class OsgiBundlesCommand extends BaseCommand {
+class OsgiServicesCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(OsgiBundlesCommand);
+    const { args, flags } = await this.parse(OsgiServicesCommand);
     try {
       if (!args.id) {
         let params = {};
@@ -23,25 +27,22 @@ class OsgiBundlesCommand extends BaseCommand {
         params.filter = flags.include;
 
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiBundles(flags.target, params)
+          cloudSdkAPI.getOsgiServices(flags.target, params)
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log('- Osgi Bundles: ');
-          json.items.forEach((osgiBundle) => {
-            cli.log(osgiBundle);
-          });
+          cli.log(JSON.stringify(json, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
         let response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getOsgiBundle(flags.target, args.id)
+          cloudSdkAPI.getOsgiService(flags.target, args.id)
         );
+
         if (response.status === 200) {
-          let osgiBundle = await response.json();
-          cli.log(`- Osgi Bundle "${args.id}": `);
-          cli.log(osgiBundle);
+          let osgiService = await response.json();
+          cli.log(JSON.stringify(osgiService, null, 2));
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -52,13 +53,13 @@ class OsgiBundlesCommand extends BaseCommand {
   }
 }
 
-Object.assign(OsgiBundlesCommand, {
+Object.assign(OsgiServicesCommand, {
   description:
-    'Get the list of osgi-bundles for the target of a rapid development environment.',
+    'Get the list of osgi-services for the target of a rapid development environment.',
   args: [
     {
       name: 'id',
-      description: 'The id of the osgi-bundle to get.',
+      description: 'The id of the osgi-service to get.',
     },
   ],
   flags: {
@@ -68,4 +69,4 @@ Object.assign(OsgiBundlesCommand, {
   },
 });
 
-module.exports = OsgiBundlesCommand;
+module.exports = OsgiServicesCommand;
