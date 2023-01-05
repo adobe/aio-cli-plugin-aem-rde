@@ -15,6 +15,7 @@ const {
   BaseCommand,
   cli,
   commonFlags,
+  logInJsonArrayFormat,
 } = require('../../../../../lib/base-command');
 
 class RequestLogsCommand extends BaseCommand {
@@ -30,7 +31,11 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2));
+          if (flags.output == 'json') {
+            logInJsonArrayFormat(json?.items);
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -40,7 +45,11 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let requestLog = await response.json();
-          cli.log(requestLog);
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(requestLog, null, 2));
+          } else {
+            logInTableFormat([requestLog]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -49,6 +58,21 @@ class RequestLogsCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    id: {
+      header: 'ID',
+      minWidth: 20,
+    },
+    method: {
+      minWidth: 7,
+    },
+    path: {
+      minWidth: 7,
+    },
+  });
 }
 
 Object.assign(RequestLogsCommand, {
@@ -63,6 +87,7 @@ Object.assign(RequestLogsCommand, {
   flags: {
     target: commonFlags.target,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

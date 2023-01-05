@@ -15,6 +15,7 @@ const {
   BaseCommand,
   cli,
   commonFlags,
+  logInJsonArrayFormat,
 } = require('../../../../lib/base-command');
 
 class InventoryCommand extends BaseCommand {
@@ -30,7 +31,11 @@ class InventoryCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2));
+          if (flags.output == 'json') {
+            logInJsonArrayFormat(json?.items);
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -40,7 +45,11 @@ class InventoryCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let inventory = await response.json();
-          cli.log(JSON.stringify(inventory, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(inventory, null, 2));
+          } else {
+            logInTableFormat([inventory]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -49,6 +58,18 @@ class InventoryCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    format: {
+      minWidth: 7,
+    },
+    id: {
+      header: 'ID',
+      minWidth: 20,
+    },
+  });
 }
 
 Object.assign(InventoryCommand, {
@@ -63,6 +84,7 @@ Object.assign(InventoryCommand, {
   flags: {
     target: commonFlags.target,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

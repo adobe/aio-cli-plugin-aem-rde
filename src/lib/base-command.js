@@ -25,6 +25,16 @@ function getCliOrgId() {
   return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
 }
 
+function logInJsonArrayFormat(items) {
+  let jsonArray = '[\n';
+  items.forEach((item) => {
+    jsonArray += '  ' + JSON.stringify(item) + ',\n';
+  });
+  jsonArray = jsonArray.slice(0, -2);
+  jsonArray += '\n]';
+  CliUx.ux.log(jsonArray);
+}
+
 /**
  * @param item
  */
@@ -215,5 +225,13 @@ module.exports = {
       required: false,
       common: true,
     }),
+    output: Flags.string({
+      char: 'o',
+      description: 'Output format.',
+      multiple: false,
+      required: false,
+      options: ['json'],
+    })
   },
+  logInJsonArrayFormat: logInJsonArrayFormat,
 };

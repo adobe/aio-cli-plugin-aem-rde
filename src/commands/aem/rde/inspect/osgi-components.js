@@ -31,7 +31,11 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(json?.items));
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -41,7 +45,11 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let osgiComponent = await response.json();
-          cli.log(JSON.stringify(osgiComponent, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(osgiComponent, null, 2));
+          } else {
+            logInTableFormat([osgiComponent]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -50,6 +58,27 @@ class OsgiComponentsCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    name: {
+      header: 'NAME',
+      minWidth: 25,
+    },
+    bundleId: {
+      header: 'Bundle ID',
+    },
+    scope: {
+      minWidth: 7,
+    },
+    immediate: {
+      minWidth: 7,
+    },
+    implementationClass: {
+      header: 'Implementation Class',
+    },
+  });
 }
 
 Object.assign(OsgiComponentsCommand, {
@@ -65,6 +94,7 @@ Object.assign(OsgiComponentsCommand, {
     target: commonFlags.target,
     scope: commonFlags.scope,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 
