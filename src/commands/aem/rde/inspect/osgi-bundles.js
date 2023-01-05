@@ -31,7 +31,11 @@ class OsgiBundlesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(json?.items))
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -41,7 +45,11 @@ class OsgiBundlesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let osgiBundle = await response.json();
-          cli.log(JSON.stringify(osgiBundle, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(osgiBundle, null, 2));
+          } else {
+            logInTableFormat([osgiBundle]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -50,6 +58,32 @@ class OsgiBundlesCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    id: {
+      header: 'ID',
+      minWidth: 20,
+    },
+    name: {
+      minWidth: 7,
+    },
+    version: {
+      minWidth: 7,
+    },
+    state: {
+      minWidth: 7,
+    },
+    stateString: {
+      header: 'State String',
+      minWidth: 7,
+    },
+    startLevel: {
+      header: 'Start Level',
+      minWidth: 7,
+    },
+  });
 }
 
 Object.assign(OsgiBundlesCommand, {
@@ -65,6 +99,7 @@ Object.assign(OsgiBundlesCommand, {
     target: commonFlags.target,
     scope: commonFlags.scope,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

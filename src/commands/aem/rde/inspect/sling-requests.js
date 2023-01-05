@@ -11,7 +11,12 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+  logInJsonArrayFormat,
+} = require('../../../../lib/base-command');
 
 class SlingRequestsCommand extends BaseCommand {
   async run() {
@@ -26,7 +31,11 @@ class SlingRequestsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2))
+          if (flags.output == 'json') {
+            logInJsonArrayFormat(json?.items);
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -37,7 +46,11 @@ class SlingRequestsCommand extends BaseCommand {
 
         if (response.status === 200) {
           let slingRequest = await response.json();
-          cli.log(JSON.stringify(slingRequest, null, 2))
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(slingRequest, null, 2));
+          } else {
+            logInTableFormat([slingRequest]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -46,6 +59,24 @@ class SlingRequestsCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    id: {
+      header: 'ID',
+      minWidth: 7,
+    },
+    userId: {
+      header: 'User ID',
+    },
+    method: {
+      minWidth: 7,
+    },
+    path: {
+      minWidth: 7,
+    },
+  });
 }
 
 Object.assign(SlingRequestsCommand, {
@@ -60,6 +91,7 @@ Object.assign(SlingRequestsCommand, {
   flags: {
     target: commonFlags.target,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

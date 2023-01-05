@@ -31,7 +31,11 @@ class OsgiConfigurationsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let json = await response.json();
-          cli.log(JSON.stringify(json, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(json?.items));
+          } else {
+            logInTableFormat(json?.items);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -41,7 +45,11 @@ class OsgiConfigurationsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           let osgiConfiguration = await response.json();
-          cli.log(JSON.stringify(osgiConfiguration, null, 2));
+          if (flags.output == 'json') {
+            cli.log(JSON.stringify(osgiConfiguration, null, 2));
+          } else {
+            logInTableFormat([osgiConfiguration]);
+          }
         } else {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
@@ -50,6 +58,14 @@ class OsgiConfigurationsCommand extends BaseCommand {
       cli.log(err);
     }
   }
+}
+
+function logInTableFormat(items) {
+  cli.table(items, {
+    pid: {
+      header: 'PID',
+    },
+  });
 }
 
 Object.assign(OsgiConfigurationsCommand, {
@@ -65,6 +81,7 @@ Object.assign(OsgiConfigurationsCommand, {
     target: commonFlags.target,
     scope: commonFlags.scope,
     include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

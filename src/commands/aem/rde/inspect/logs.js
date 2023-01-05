@@ -40,11 +40,11 @@ class LogsCommand extends BaseCommand {
         // `ctl c` stops displaying the logs
         process.on('SIGTERM', () => {
           clearInterval(intervalId);
-          this.deleteLog(flags.target, json.items.at(-1).id);
+          this.deleteLog(flags.target, json.items.at(-1)?.id);
         });
         process.on('SIGINT', () => {
           clearInterval(intervalId);
-          this.deleteLog(flags.target, json.items.at(-1).id);
+          this.deleteLog(flags.target, json.items.at(-1)?.id);
         });
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
