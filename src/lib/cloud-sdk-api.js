@@ -11,7 +11,6 @@
  */
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
-const FormData = require('form-data');
 const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
 const { DoRequest } = require("./doRequest");
 
@@ -55,7 +54,7 @@ class CloudSdkAPI {
   }
 
   async getAemLogs(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/${serviceName}/logs${queryString}`);
   }
 
@@ -76,7 +75,7 @@ class CloudSdkAPI {
   }
 
   async getRequestLogs(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs${queryString}`);
   }
 
@@ -93,7 +92,7 @@ class CloudSdkAPI {
   }
 
   async getInventories(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/${serviceName}/status/inventory${queryString}`);
   }
 
@@ -104,7 +103,7 @@ class CloudSdkAPI {
   }
 
   async getOsgiBundles(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-bundles${queryString}`);
   }
 
@@ -115,7 +114,7 @@ class CloudSdkAPI {
   }
 
   async getOsgiComponents(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
       `/runtime/${serviceName}/status/osgi-components${queryString}`
     );
@@ -128,7 +127,7 @@ class CloudSdkAPI {
   }
 
   async getOsgiConfigurations(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
       `/runtime/${serviceName}/status/osgi-configurations${queryString}`
     );
@@ -141,7 +140,7 @@ class CloudSdkAPI {
   }
 
   async getOsgiServices(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
       `/runtime/${serviceName}/status/osgi-services${queryString}`
     );
@@ -154,7 +153,7 @@ class CloudSdkAPI {
   }
 
   async getSlingRequests(serviceName, params) {
-    let queryString = this.createUrlQueryStr(params);
+    const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/${serviceName}/status/sling-requests${queryString}`);
   }
 
@@ -181,22 +180,12 @@ class CloudSdkAPI {
   }
 
   async getArtifacts(cursor) {
-    let queryString = this.createUrlQueryStr({ cursor });
+    const queryString = this.createUrlQueryStr({ cursor });
     return await this._rdeClient.doGet(`/runtime/updates/artifacts${queryString}`);
   }
 
-  async deployFile(
-    fileSize,
-    path,
-    name,
-    type,
-    target,
-    contentPath,
-    force,
-    uploadCallbacks,
-    deploymentCallback
-  ) {
-    const result = await this._doPost(`/runtime/updates`, {
+  async deployFile(fileSize, path, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
+    const result = await this._rdeClient.doPost(`/runtime/updates`, {
       service: target,
       fileSize,
       type,
@@ -281,6 +270,7 @@ class CloudSdkAPI {
         }
 
         if (res.copyStatus !== 'success') {
+          uploadCallbacks.abort();
           uploadCallbacks.start(
             fileSize,
             'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.'
@@ -326,7 +316,7 @@ class CloudSdkAPI {
       (previousResponse) =>
         previousResponse
           .json()
-          .then((json) => this._doGet(`/runtime/updates/${json.updateId}`))
+          .then((json) => this._rdeClient.doGet(`/runtime/updates/${json.updateId}`))
     );
     if (change.status === 200) {
       return await change.json();
@@ -336,10 +326,10 @@ class CloudSdkAPI {
   }
 
   createUrlQueryStr(params) {
-    let queryString = new URLSearchParams();
+    const queryString = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
       if (value) {
-        queryString.append(key,value);
+        queryString.append(key, value);
       }
     }
     return `?${queryString}`;

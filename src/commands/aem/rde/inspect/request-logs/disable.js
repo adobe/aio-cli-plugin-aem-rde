@@ -21,7 +21,7 @@ class DisableRequestLogsCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(DisableRequestLogsCommand);
     try {
-      let response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.disableRequestLogs(flags.target)
       );
       if (response.status === 200) {

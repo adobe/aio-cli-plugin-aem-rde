@@ -23,15 +23,15 @@ class SlingRequestsCommand extends BaseCommand {
     const { args, flags } = await this.parse(SlingRequestsCommand);
     try {
       if (!args.id) {
-        let params = {};
+        const params = {};
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getSlingRequests(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
+          const json = await response.json();
+          if (flags.output === 'json') {
             logInJsonArrayFormat(json?.items);
           } else {
             logInTableFormat(json?.items);
@@ -40,13 +40,13 @@ class SlingRequestsCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getSlingRequest(flags.target, args.id)
         );
 
         if (response.status === 200) {
-          let slingRequest = await response.json();
-          if (flags.output == 'json') {
+          const slingRequest = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(slingRequest, null, 2));
           } else {
             logInTableFormat([slingRequest]);
@@ -61,6 +61,9 @@ class SlingRequestsCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     id: {

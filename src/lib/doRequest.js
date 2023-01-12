@@ -16,16 +16,6 @@ const fetch = createFetch();
 
 class DoRequest {
   /**
-   * The base URL for the API endpoint
-   *
-   * @type {string}
-   */
-  _baseUrl;
-
-  _accessToken;
-  _headers;
-
-  /**
    * Initializes a DoRequest object and returns it.
    *
    * @param {string} url the base URL to access the API
@@ -55,7 +45,7 @@ class DoRequest {
   async doRequest(method, path, body) {
     const url = `${this._baseUrl}${path}`;
     const options = {
-      method: method,
+      method,
       headers: Object.create(this._headers)
     };
 
@@ -71,5 +61,5 @@ class DoRequest {
 }
 
 module.exports = {
-  DoRequest: DoRequest,
+  DoRequest,
 };

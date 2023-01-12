@@ -23,16 +23,16 @@ class InventoryCommand extends BaseCommand {
     const { args, flags } = await this.parse(InventoryCommand);
     try {
       if (!args.id) {
-        let params = {};
+        const params = {};
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getInventories(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
-            logInJsonArrayFormat(json?.items);
+          const json = await response.json();
+          if (flags.output === 'json') {
+            logInJsonArrayFormat(json.items);
           } else {
             logInTableFormat(json?.items);
           }
@@ -40,12 +40,12 @@ class InventoryCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getInventory(flags.target, args.id)
         );
         if (response.status === 200) {
-          let inventory = await response.json();
-          if (flags.output == 'json') {
+          const inventory = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(inventory, null, 2));
           } else {
             logInTableFormat([inventory]);
@@ -60,6 +60,9 @@ class InventoryCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items {object}
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     format: {

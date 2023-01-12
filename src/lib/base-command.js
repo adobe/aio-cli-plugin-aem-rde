@@ -25,6 +25,9 @@ function getCliOrgId() {
   return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
 }
 
+/**
+ * @param items
+ */
 function logInJsonArrayFormat(items) {
   let jsonArray = '[\n';
   items.forEach((item) => {
@@ -97,8 +100,6 @@ async function initSdk(cloudManagerUrl, orgId) {
 }
 
 class BaseCommand extends Command {
-  _cloudSdkAPI;
-
   constructor(argv, config) {
     super(argv, config);
     const programId = Config.get('cloudmanager_programid');
@@ -231,7 +232,7 @@ module.exports = {
       multiple: false,
       required: false,
       options: ['json'],
-    })
+    }),
   },
-  logInJsonArrayFormat: logInJsonArrayFormat,
+  logInJsonArrayFormat,
 };
