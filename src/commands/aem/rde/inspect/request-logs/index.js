@@ -23,15 +23,15 @@ class RequestLogsCommand extends BaseCommand {
     const { args, flags } = await this.parse(RequestLogsCommand);
     try {
       if (!args.id) {
-        let params = {};
+        const params = {};
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getRequestLogs(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
+          const json = await response.json();
+          if (flags.output === 'json') {
             logInJsonArrayFormat(json?.items);
           } else {
             logInTableFormat(json?.items);
@@ -40,12 +40,12 @@ class RequestLogsCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getRequestLog(flags.target, args.id)
         );
         if (response.status === 200) {
-          let requestLog = await response.json();
-          if (flags.output == 'json') {
+          const requestLog = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(requestLog, null, 2));
           } else {
             logInTableFormat([requestLog]);
@@ -60,6 +60,9 @@ class RequestLogsCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items {array}
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     id: {

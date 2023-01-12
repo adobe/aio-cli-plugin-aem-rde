@@ -22,17 +22,17 @@ class OsgiBundlesCommand extends BaseCommand {
     const { args, flags } = await this.parse(OsgiBundlesCommand);
     try {
       if (!args.id) {
-        let params = {};
+        const params = {};
         params.scope = flags.scope;
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiBundles(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
-            cli.log(JSON.stringify(json?.items))
+          const json = await response.json();
+          if (flags.output === 'json') {
+            cli.log(JSON.stringify(json?.items));
           } else {
             logInTableFormat(json?.items);
           }
@@ -40,12 +40,12 @@ class OsgiBundlesCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiBundle(flags.target, args.id)
         );
         if (response.status === 200) {
-          let osgiBundle = await response.json();
-          if (flags.output == 'json') {
+          const osgiBundle = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(osgiBundle, null, 2));
           } else {
             logInTableFormat([osgiBundle]);
@@ -60,6 +60,9 @@ class OsgiBundlesCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     id: {

@@ -18,10 +18,16 @@ const jwt = require('jsonwebtoken');
 const configurationCodes = require('../lib/errors');
 const { DoRequest } = require('./doRequest');
 
+/**
+ *
+ */
 function getCliOrgId() {
   return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
 }
 
+/**
+ * @param items
+ */
 function logInJsonArrayFormat(items) {
   let jsonArray = '[\n';
   items.forEach((item) => {
@@ -32,6 +38,9 @@ function logInJsonArrayFormat(items) {
   CliUx.ux.log(jsonArray);
 }
 
+/**
+ * @param item
+ */
 function toJson(item) {
   let c = item;
   if (typeof c === 'string') {
@@ -41,6 +50,9 @@ function toJson(item) {
   return c;
 }
 
+/**
+ *
+ */
 function getBaseUrl() {
   const configStr = Config.get('cloudmanager');
   return (
@@ -48,12 +60,15 @@ function getBaseUrl() {
   );
 }
 
+/**
+ *
+ */
 async function getTokenAndKey() {
   let accessToken;
   let apiKey;
 
   try {
-    let contextName = 'aio-cli-plugin-cloudmanager';
+    const contextName = 'aio-cli-plugin-cloudmanager';
     accessToken = await getToken(contextName);
     const contextData = await context.get(contextName);
     if (!contextData || !contextData.data) {
@@ -73,9 +88,12 @@ async function getTokenAndKey() {
       throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
     }
   }
-  return { accessToken: accessToken, apiKey: apiKey };
+  return { accessToken, apiKey };
 }
 
+/**
+ *
+ */
 async function initSdk() {
   const { accessToken, apiKey } = await getTokenAndKey();
   const orgId = getCliOrgId();
@@ -84,12 +102,10 @@ async function initSdk() {
 }
 
 class BaseCommand extends Command {
-  _cloudSdkAPI;
-
   constructor(argv, config) {
     super(argv, config);
-    let programId = Config.get('cloudmanager_programid');
-    let environmentId = Config.get('cloudmanager_environmentid');
+    const programId = Config.get('cloudmanager_programid');
+    const environmentId = Config.get('cloudmanager_environmentid');
     this._programId = programId;
     this._environmentId = environmentId;
   }
@@ -102,24 +118,24 @@ class BaseCommand extends Command {
   async withCloudSdk(fn) {
     if (!this._cloudSdkAPI) {
       if (!this._programId) {
-        throw 'No programid';
+        throw new Error('No programid');
       }
       if (!this._environmentId) {
-        throw 'No environmentId';
+        throw new Error('No environmentId');
       }
       const { accessToken } = await getTokenAndKey();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (!cacheEntry || new Date(cacheEntry.expiry).valueOf() < Date.now()) {
-        let developerConsoleUrl = await this.getDeveloperConsoleUrl(
+        const developerConsoleUrl = await this.getDeveloperConsoleUrl(
           this._programId,
           this._environmentId
         );
-        let url = new URL(developerConsoleUrl);
+        const url = new URL(developerConsoleUrl);
         url.hash = '';
         url.pathname = '/api/rde';
-        let expiry = new Date();
+        const expiry = new Date();
         expiry.setDate(expiry.getDate() + 1); // cache for at most one day
         cacheEntry = {
           expiry: expiry.toISOString(),
@@ -127,7 +143,7 @@ class BaseCommand extends Command {
         };
         Config.set(cacheKey, cacheEntry);
       }
-      let request = new DoRequest(
+      const request = new DoRequest(
         cacheEntry.url,
         this._programId,
         this._environmentId,
@@ -140,8 +156,8 @@ class BaseCommand extends Command {
 }
 
 module.exports = {
-  BaseCommand: BaseCommand,
-  Flags: Flags,
+  BaseCommand,
+  Flags,
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
@@ -186,7 +202,7 @@ module.exports = {
       multiple: false,
       required: false,
       options: ['json'],
-    })
+    }),
   },
-  logInJsonArrayFormat: logInJsonArrayFormat,
+  logInJsonArrayFormat,
 };

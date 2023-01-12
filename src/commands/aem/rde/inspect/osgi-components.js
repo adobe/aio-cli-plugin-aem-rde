@@ -22,16 +22,16 @@ class OsgiComponentsCommand extends BaseCommand {
     const { args, flags } = await this.parse(OsgiComponentsCommand);
     try {
       if (!args.name) {
-        let params = {};
+        const params = {};
         params.scope = flags.scope;
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiComponents(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
+          const json = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(json?.items));
           } else {
             logInTableFormat(json?.items);
@@ -40,12 +40,12 @@ class OsgiComponentsCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiComponent(flags.target, args.name)
         );
         if (response.status === 200) {
-          let osgiComponent = await response.json();
-          if (flags.output == 'json') {
+          const osgiComponent = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(osgiComponent, null, 2));
           } else {
             logInTableFormat([osgiComponent]);
@@ -60,6 +60,9 @@ class OsgiComponentsCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     name: {

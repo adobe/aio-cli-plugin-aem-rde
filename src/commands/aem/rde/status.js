@@ -11,35 +11,49 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command')
-const {loadAllArtifacts, groupArtifacts} = require('../../../lib/rde-utils');
+const { BaseCommand, cli } = require('../../../lib/base-command');
+const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
   async run() {
     try {
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`)
-      spinner.start('retrieving environment status information')
-      let status = await this.withCloudSdk(cloudSdkAPI => loadAllArtifacts(cloudSdkAPI))
-      spinner.stop()
-      cli.log(`Environment: ${status.status}`)
+      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
+      spinner.start('retrieving environment status information');
+      const status = await this.withCloudSdk((cloudSdkAPI) =>
+        loadAllArtifacts(cloudSdkAPI)
+      );
+      spinner.stop();
+      cli.log(`Environment: ${status.status}`);
       if (status.error) {
-        cli.log(`Error: ${response.status} - ${response.statusText}`)
-        return
+        cli.log(`Error: ${status.status} - ${status.statusText}`);
+        return;
       }
 
-      let grouped = groupArtifacts(status.items)
+      const grouped = groupArtifacts(status.items);
 
-      cli.log('- Bundles Author:')
-      grouped['author']['osgi-bundle'].forEach(bundle => cli.log(` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`))
-      cli.log('- Bundles Publish:')
-      grouped['publish']['osgi-bundle'].forEach(bundle => cli.log(` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`))
-      cli.log('- Configurations Author:')
-      grouped['author']['osgi-config'].forEach(config => cli.log(` ${config.metadata.configPid} `))
-      cli.log('- Configurations Publish:')
-      grouped['publish']['osgi-config'].forEach(config => cli.log(` ${config.metadata.configPid} `))
+      cli.log('- Bundles Author:');
+      grouped.author['osgi-bundle'].forEach((bundle) =>
+        cli.log(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        )
+      );
+      cli.log('- Bundles Publish:');
+      grouped.publish['osgi-bundle'].forEach((bundle) =>
+        cli.log(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        )
+      );
+      cli.log('- Configurations Author:');
+      grouped.author['osgi-config'].forEach((config) =>
+        cli.log(` ${config.metadata.configPid} `)
+      );
+      cli.log('- Configurations Publish:');
+      grouped.publish['osgi-config'].forEach((config) =>
+        cli.log(` ${config.metadata.configPid} `)
+      );
     } catch (err) {
-      spinner.stop()
+      spinner.stop();
       cli.log(err);
     }
   }

@@ -23,42 +23,41 @@ class EnableRequestLogsCommand extends BaseCommand {
     const { flags } = await this.parse(EnableRequestLogsCommand);
     try {
       // build a request body out of the received flags
-      let body = {};
+      const body = {};
 
       if (flags.format) {
         body.format = flags.format;
       }
       if (flags.includePathPatterns) {
-        let includePathPatternsArray = [];
-        flags.includePathPatterns?.forEach((pattern) => {
+        const includePathPatternsArray = [];
+        flags.includePathPatterns.forEach((pattern) => {
           includePathPatternsArray.push(pattern);
         });
         body.includePathPatterns = includePathPatternsArray;
       }
       // check if there are values for the name key
       if (flags.info || flags.debug || flags.warn || flags.error) {
-        let namesArray = [];
-        flags.info?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'INFO' });
+        const namesArray = [];
+        flags?.info.forEach((logger) => {
+          namesArray.push({ logger, level: 'INFO' });
         });
         flags.debug?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'DEBUG' });
+          namesArray.push({ logger, level: 'DEBUG' });
         });
         flags.warn?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'WARN' });
+          namesArray.push({ logger, level: 'WARN' });
         });
         flags.error?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'ERROR' });
+          namesArray.push({ logger, level: 'ERROR' });
         });
         body.names = namesArray;
       }
 
-      let response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.enableRequestLogs(flags.target, body)
       );
 
       if (response.status === 201) {
-        let log = await response.json();
         cli.log('Request-logs enabled.');
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
@@ -75,31 +74,31 @@ Object.assign(EnableRequestLogsCommand, {
     target: commonFlags.target,
     format: Flags.string({
       char: 'f',
-      description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n'`,
+      description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
       multiple: false,
       required: false,
     }),
     info: Flags.string({
       char: 'i',
-      description: `Optional logger on INFO level.'`,
+      description: `Optional logger on INFO level.`,
       multiple: true,
       required: false,
     }),
     debug: Flags.string({
       char: 'd',
-      description: `Optional logger on DEBUG level.'`,
+      description: `Optional logger on DEBUG level.`,
       multiple: true,
       required: false,
     }),
     warn: Flags.string({
       char: 'w',
-      description: `Optional logger on WARN level.'`,
+      description: `Optional logger on WARN level.`,
       multiple: true,
       required: false,
     }),
     error: Flags.string({
       char: 'e',
-      description: `Optional logger on ERROR level.'`,
+      description: `Optional logger on ERROR level.`,
       multiple: true,
       required: false,
     }),

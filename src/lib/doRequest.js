@@ -16,18 +16,12 @@ const fetch = createFetch();
 
 class DoRequest {
   /**
-   * The base URL for the API endpoint
-   *
-   * @type {string}
-   */
-  _baseUrl;
-
-  _accessToken;
-
-  /**
    * Initializes a DoRequest object and returns it.
    *
    * @param {string} baseUrl the base URL to access the API
+   * @param programId
+   * @param environmentId
+   * @param accessToken
    */
   constructor(baseUrl, programId, environmentId, accessToken) {
     this._baseUrl = `${baseUrl}/program/${programId}/environment/${environmentId}`;
@@ -53,7 +47,7 @@ class DoRequest {
   async doRequest(method, path, body) {
     const url = `${this._baseUrl}${path}`;
     const options = {
-      method: method,
+      method,
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
         accept: 'application/json',
@@ -73,5 +67,5 @@ class DoRequest {
 }
 
 module.exports = {
-  DoRequest: DoRequest,
+  DoRequest,
 };

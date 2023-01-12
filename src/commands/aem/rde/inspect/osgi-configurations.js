@@ -22,16 +22,16 @@ class OsgiConfigurationsCommand extends BaseCommand {
     const { args, flags } = await this.parse(OsgiConfigurationsCommand);
     try {
       if (!args.pId) {
-        let params = {};
+        const params = {};
         params.scope = flags.scope;
         params.filter = flags.include;
 
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiConfigurations(flags.target, params)
         );
         if (response.status === 200) {
-          let json = await response.json();
-          if (flags.output == 'json') {
+          const json = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(json?.items));
           } else {
             logInTableFormat(json?.items);
@@ -40,12 +40,12 @@ class OsgiConfigurationsCommand extends BaseCommand {
           cli.log(`Error: ${response.status} - ${response.statusText}`);
         }
       } else {
-        let response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getOsgiConfiguration(flags.target, args.pId)
         );
         if (response.status === 200) {
-          let osgiConfiguration = await response.json();
-          if (flags.output == 'json') {
+          const osgiConfiguration = await response.json();
+          if (flags.output === 'json') {
             cli.log(JSON.stringify(osgiConfiguration, null, 2));
           } else {
             logInTableFormat([osgiConfiguration]);
@@ -60,6 +60,9 @@ class OsgiConfigurationsCommand extends BaseCommand {
   }
 }
 
+/**
+ * @param items
+ */
 function logInTableFormat(items) {
   cli.table(items, {
     pid: {

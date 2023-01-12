@@ -22,18 +22,18 @@ class LogsCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(LogsCommand);
     try {
-      let response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.getAemLogs(flags.target, {})
       );
 
       if (response.status === 200) {
-        let json = await response.json();
+        const json = await response.json();
 
         if (json.items?.length >= 3) {
           await this.deleteLog(flags.target, json.items[0].id);
         }
-        let newLog = await this.createLog(flags);
-        var intervalId = setInterval(async () => {
+        const newLog = await this.createLog(flags);
+        const intervalId = setInterval(async () => {
           await this.printLogTail(flags.target, newLog.id);
         }, 1500);
 
@@ -56,7 +56,7 @@ class LogsCommand extends BaseCommand {
 
   async deleteLog(target, id) {
     try {
-      let response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.deleteAemLog(target, id)
       );
       if (response.status !== 200) {
@@ -70,34 +70,34 @@ class LogsCommand extends BaseCommand {
   async createLog(flags) {
     try {
       // build a request body out of the received flags
-      let body = {};
+      const body = {};
       if (flags.format) {
         body.format = flags.format;
       }
       // check if there are values for the name key
       if (flags.info || flags.debug || flags.warn || flags.error) {
-        let namesArray = [];
+        const namesArray = [];
         flags?.info?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'INFO' });
+          namesArray.push({ logger, level: 'INFO' });
         });
         flags?.debug?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'DEBUG' });
+          namesArray.push({ logger, level: 'DEBUG' });
         });
         flags?.warn?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'WARN' });
+          namesArray.push({ logger, level: 'WARN' });
         });
         flags?.error?.forEach((logger) => {
-          namesArray.push({ logger: logger, level: 'ERROR' });
+          namesArray.push({ logger, level: 'ERROR' });
         });
         body.names = namesArray;
       }
 
-      let response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.createAemLog(flags.target, body)
       );
 
       if (response.status === 201) {
-        let log = await response.json();
+        const log = await response.json();
         return log;
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
@@ -108,12 +108,12 @@ class LogsCommand extends BaseCommand {
   }
 
   async printLogTail(target, id) {
-    let response = await this.withCloudSdk((cloudSdkAPI) =>
+    const response = await this.withCloudSdk((cloudSdkAPI) =>
       cloudSdkAPI.getAemLogTail(target, id)
     );
     if (response.status === 200) {
-      let aemLogTail = await response.text();
-      if (aemLogTail !== '') {
+      const aemLogTail = await response.text();
+      if (aemLogTail) {
         cli.log(aemLogTail.trim());
       }
     } else {
@@ -129,31 +129,31 @@ Object.assign(LogsCommand, {
     target: commonFlags.target,
     format: Flags.string({
       char: 'f',
-      description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n'`,
+      description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
       multiple: false,
       required: false,
     }),
     info: Flags.string({
       char: 'i',
-      description: `Optional logger on INFO level.'`,
+      description: `Optional logger on INFO level.`,
       multiple: true,
       required: false,
     }),
     debug: Flags.string({
       char: 'd',
-      description: `Optional logger on DEBUG level.'`,
+      description: `Optional logger on DEBUG level.`,
       multiple: true,
       required: false,
     }),
     warn: Flags.string({
       char: 'w',
-      description: `Optional logger on WARN level.'`,
+      description: `Optional logger on WARN level.`,
       multiple: true,
       required: false,
     }),
     error: Flags.string({
       char: 'e',
-      description: `Optional logger on ERROR level.'`,
+      description: `Optional logger on ERROR level.`,
       multiple: true,
       required: false,
     }),
