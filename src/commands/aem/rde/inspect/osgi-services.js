@@ -62,7 +62,7 @@ class OsgiServicesCommand extends BaseCommand {
 }
 
 /**
- * @param items
+ * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
   cli.table(items, {
