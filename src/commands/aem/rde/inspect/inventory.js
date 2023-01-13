@@ -61,7 +61,7 @@ class InventoryCommand extends BaseCommand {
 }
 
 /**
- * @param items {object}
+ * @param {object} items - The items displayed as a JSON array.
  */
 function logInTableFormat(items) {
   cli.table(items, {

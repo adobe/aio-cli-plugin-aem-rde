@@ -26,7 +26,7 @@ function getCliOrgId() {
 }
 
 /**
- * @param items
+ * @param {object} items - The items displayed in the table.
  */
 function logInJsonArrayFormat(items) {
   let jsonArray = '[\n';
@@ -151,7 +151,7 @@ class BaseCommand extends Command {
       );
       this._cloudSdkAPI = new CloudSdkAPI(request);
     }
-    return fn.call(null, this._cloudSdkAPI);
+    return fn(this._cloudSdkAPI);
   }
 }
 
