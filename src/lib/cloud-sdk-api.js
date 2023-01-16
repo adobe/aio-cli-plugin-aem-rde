@@ -233,11 +233,12 @@ class CloudSdkAPI {
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await sleepSeconds(1);
-          if (time++ > 20 && progress === 0) {
+          if (time++ > 30 && progress === 0) {
             await client.abortCopyFromURL(copyId);
+            uploadCallbacks.abort()
             break;
           }
-          res = await new ShareFileClient(clientUrl).getProperties();
+          res = await client.getProperties();
           if (res.copyProgress) {
             progress = getProgressBytes(res.copyProgress);
 
@@ -252,7 +253,6 @@ class CloudSdkAPI {
         }
 
         if (res.copyStatus !== 'success') {
-          uploadCallbacks.abort();
           uploadCallbacks.start(
             fileSize,
             'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.'
