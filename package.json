@@ -50,13 +50,16 @@
   "oclif": {
     "commands": "./src/commands",
     "bin": "aio",
-    "devPlugins": [
-      "@oclif/plugin-help"
-    ],
+    "hooks": {
+      "init": "./src/lib/hooks/experimental-features-init-hook"
+    },
     "topics": {
       "aem:rde": {
         "description": "Interact with RapidDev Environments."
       }
-    }
+    },
+    "experimental-features": [
+      "aem:rde:inspect"
+    ]
   }
 }
