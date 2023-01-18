@@ -37,7 +37,9 @@
     "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
   },
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "lint": "eslint . --ext .js",
+    "formatter": "prettier --check ./src"
   },
   "files": [
     "/src",
