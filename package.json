@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@adobe/aio-lib-cloudmanager": "^2.0.0",
-    "@adobe/aio-lib-core-config": "^3.0.0",
     "@adobe/aio-lib-core-errors": "^3.1.1",
     "@adobe/aio-lib-core-networking": "^3.0.0",
     "@adobe/aio-lib-ims": "^6.0.1",
@@ -23,10 +22,7 @@
   },
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^2.0.0",
-    "@oclif/dev-cli": "1.26.10",
-    "eslint": "^8.31.0",
-    "eslint-config-prettier": "^8.6.0",
-    "eslint-plugin-prettier": "^4.2.1"
+    "@oclif/dev-cli": "1.26.10"
   },
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
@@ -50,16 +46,13 @@
   "oclif": {
     "commands": "./src/commands",
     "bin": "aio",
-    "hooks": {
-      "init": "./src/lib/hooks/experimental-features-init-hook"
-    },
+    "devPlugins": [
+      "@oclif/plugin-help"
+    ],
     "topics": {
       "aem:rde": {
         "description": "Interact with RapidDev Environments."
       }
-    },
-    "experimental-features": [
-      "aem:rde:inspect"
-    ]
+    }
   }
 }

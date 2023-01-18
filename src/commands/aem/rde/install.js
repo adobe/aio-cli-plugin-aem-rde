@@ -11,17 +11,12 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  commonFlags,
-  Flags,
-} = require('../../../lib/base-command');
-const { loadUpdateHistory } = require('../../../lib/rde-utils');
-const { basename } = require('path');
+const {BaseCommand, cli, commonFlags, Flags} = require('../../../lib/base-command')
+const {loadUpdateHistory} = require("../../../lib/rde-utils");
+const {basename} = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
-const { URL, pathToFileURL } = require('url');
+const {URL, pathToFileURL} = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
 
@@ -31,12 +26,9 @@ const deploymentTypes = [
   'content-package',
   'content-file',
   'content-xml',
-  'dispatcher-config',
+  'dispatcher-config'
 ];
 
-/**
- *
- */
 function createProgressBar() {
   return cli.progress({
     format: 'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
@@ -45,19 +37,12 @@ function createProgressBar() {
     stopOnComplete: true,
     formatValue: function (v, options, type) {
       // padding
-      /**
-       * @param value
-       * @param length
-       */
       function autopadding(value, length) {
         return (options.autopaddingChar + value).slice(-length);
       }
 
-      /**
-       * @param value
-       */
       function toKiloBytes(value) {
-        return Math.round(value / 1024);
+        return Math.round(value / 1024)
       }
 
       switch (type) {
@@ -73,93 +58,83 @@ function createProgressBar() {
         default:
           return v;
       }
-    },
+    }
   });
 }
 
-/**
- * @param url
- */
 async function computeStats(url) {
   switch (url.protocol) {
     case 'http:':
-    case 'https:': {
-      const con = await fetch(url, { method: 'HEAD' });
-      const effectiveUrl = con.url ? new URL(con.url) : url;
+    case 'https:':
+      let con = (await fetch(url, { method: 'HEAD' }));
+      let effectiveUrl = !!con.url ? new URL(con.url) : url;
       return {
         fileSize: parseInt(con.headers.get('content-length')),
         effectiveUrl,
         path: effectiveUrl.pathname,
-        isLocalFile: false,
+        isLocalFile: false
       };
-    }
     case 'file:':
-      break;
+      let path = fs.realpathSync(url);
+      return {
+        fileSize: fs.statSync(path).size,
+        effectiveUrl: url,
+        path,
+        isLocalFile: true
+      };
     default:
-      throw new Error(`Unsupported protocol ${url.protocol}`);
+      throw `Unsupported protocol ${url.protocol}`
   }
 }
 
 class DeployCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(DeployCommand);
+    const { args, flags } = await this.parse(DeployCommand)
     const progressBar = createProgressBar();
 
-    const originalUrl = args.location;
-    const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
-      originalUrl
-    );
+    let originalUrl = args.location;
+    let { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(originalUrl);
     let fileName = basename(path);
     let type = flags.type;
     if (!type) {
       let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
-      if (
-        !isLocalFile &&
-        guessedTypes === deploymentTypes &&
-        effectiveUrl !== originalUrl
-      ) {
+      if (!isLocalFile && guessedTypes === deploymentTypes && effectiveUrl !== originalUrl) {
         // when there was a redirect, it is possible that the original URL
         // has a file extension, but not the effective URL, so we try again
-        fileName = basename(originalUrl.pathname);
+        fileName = basename(originalUrl.pathname)
         guessedTypes = guessType(fileName, originalUrl, flags.path);
       }
       if (guessedTypes.length > 1) {
-        cli.log(`Could not infer the type of the deployed artifact.`);
-        cli.log(
-          `Please specify the -t option with one of the following types: ${guessedTypes.join(
-            ', '
-          )}`
-        );
-        return;
+        cli.log(`Could not infer the type of the deployed artifact.`)
+        cli.log(`Please specify the -t option with one of the following types: ${guessedTypes.join(', ')}`)
+        return
       } else if (guessedTypes.length === 1) {
-        type = guessedTypes[0];
+        type = guessedTypes[0]
       } else {
-        throw new Error('guessedTypes is empty');
+        throw new Error("guessedTypes is empty")
       }
     }
 
     try {
-      const change = await this.withCloudSdk((cloudSdkAPI) => {
-        const uploadCallbacks = {
+      let change = await this.withCloudSdk(cloudSdkAPI => {
+        let uploadCallbacks = {
           progress: (copiedBytes) => progressBar.update(copiedBytes),
           abort: () => progressBar.stop(),
           start: (size, msg) => {
             if (msg) {
-              cli.log(msg);
+              cli.log(msg)
             }
-            progressBar.start(size, 0);
-          },
-        };
-
-        const deploymentCallbacks = () => {
-          if (!spinner.isSpinning) {
-            spinner.start('applying update');
+            progressBar.start(size, 0)
           }
-        };
+        }
 
-        const deploy = isLocalFile
-          ? cloudSdkAPI.deployFile
-          : cloudSdkAPI.deployURL;
+        let deploymentCallbacks = () => {
+          if (!spinner.isSpinning) {
+            spinner.start('applying update')
+          }
+        }
+
+        let deploy = isLocalFile ? cloudSdkAPI.deployFile : cloudSdkAPI.deployURL;
         return deploy.call(
           cloudSdkAPI,
           fileSize,
@@ -170,15 +145,15 @@ class DeployCommand extends BaseCommand {
           type === 'osgi-config' ? fileName : flags.path,
           flags.force,
           uploadCallbacks,
-          deploymentCallbacks
-        );
+          deploymentCallbacks);
       }).finally(() => spinner.stop());
 
-      await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-          done ? spinner.stop() : spinner.start(text)
-        )
-      );
+      await this.withCloudSdk(cloudSdkAPI => loadUpdateHistory(
+          cloudSdkAPI,
+          change.updateId,
+          cli,
+          (done, text) => done ? spinner.stop() : spinner.start(text)
+      ));
     } catch (err) {
       progressBar.stop();
       spinner.stop();
@@ -187,13 +162,8 @@ class DeployCommand extends BaseCommand {
   }
 }
 
-/**
- * @param name
- * @param url
- * @param pathFlag
- */
 function guessType(name, url, pathFlag) {
-  const extension = name.substring(name.lastIndexOf('.'));
+  let extension = name.substring(name.lastIndexOf('.'));
   switch (extension) {
     case '.jar':
       return ['osgi-bundle'];
@@ -201,14 +171,14 @@ function guessType(name, url, pathFlag) {
       return ['osgi-config'];
     case '.zip':
       if (url.protocol === 'file:') {
-        const zip = new Zip(fs.realpathSync(url), {});
-        const isContentPackage = zip.getEntry('jcr_root/') !== null;
+        let zip = new Zip(fs.realpathSync(url), {});
+        let isContentPackage = zip.getEntry('jcr_root/') !== null
         if (isContentPackage) {
           return ['content-package'];
         }
-        const isDispatcherConfig = zip.getEntry('conf.dispatcher.d/') !== null;
+        let isDispatcherConfig = zip.getEntry('conf.dispatcher.d/') !== null
         if (isDispatcherConfig) {
-          return ['dispatcher-config'];
+          return ['dispatcher-config']
         }
       }
       return ['content-package', 'dispatcher-config'];
@@ -224,19 +194,18 @@ Object.assign(DeployCommand, {
   args: [
     {
       name: 'location',
-      description:
-        'Location (public accessible url or path on local file system) to an artifact',
+      description: 'Location (public accessible url or path on local file system) to an artifact',
       required: true,
-      parse: async (location) => {
+      parse: async location => {
         if (location.startsWith('https://') || location.startsWith('http://')) {
           return new URL(location);
         } else {
           // remove file:// if present
-          const filePath = location.replace(/^file:\/\//, '');
-          return pathToFileURL(filePath);
+          let filePath = location.replace(new RegExp("^file://"), '')
+          return  pathToFileURL(filePath);
         }
-      },
-    },
+      }
+    }
   ],
   flags: {
     target: commonFlags.target,
@@ -245,21 +214,21 @@ Object.assign(DeployCommand, {
       description: 'the type to deploy',
       multiple: false,
       required: false,
-      options: deploymentTypes,
+      options: deploymentTypes
     }),
     path: Flags.string({
       char: 'p',
       description: 'the path in case this is a content-file',
       multiple: false,
-      required: false,
+      required: false
     }),
     force: Flags.boolean({
       char: 'f',
       multiple: false,
-      required: false,
-    }),
+      required: false
+    })
   },
   aliases: [],
-});
+})
 
-module.exports = DeployCommand;
+module.exports = DeployCommand
