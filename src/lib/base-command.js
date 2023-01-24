@@ -95,7 +95,7 @@ class BaseCommand extends Command {
       }
       const {accessToken, apiKey} = await getTokenAndKey();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
-      let cacheEntry = Config.get(cacheKey)
+      let cacheEntry;// = Config.get(cacheKey)
       // TODO: prune expired cache entries
       if (!cacheEntry || new Date(cacheEntry.expiry).valueOf() < Date.now() || !cacheEntry.devConsoleUrl) {
         let developerConsoleUrl = await this.getDeveloperConsoleUrl(this._programId, this._environmentId);
@@ -103,16 +103,17 @@ class BaseCommand extends Command {
         url.hash = ''
         let devConsoleUrl = url.toString()
         url.pathname = '/api/rde'
+        let rdeApiUrl = url.toString();
         let expiry = new Date()
         expiry.setDate(expiry.getDate() + 1) // cache for at most one day
         cacheEntry = {
           expiry: expiry.toISOString(),
-          url: url.toString(),
+          rdeApiUrl: rdeApiUrl,
           devConsoleUrl: devConsoleUrl
         }
         Config.set(cacheKey, cacheEntry)
       }
-      this._cloudSdkAPI = new CloudSdkAPI(getBaseUrl(), apiKey, getCliOrgId(), cacheEntry.devConsoleUrl, cacheEntry.url, this._programId, this._environmentId, accessToken)
+      this._cloudSdkAPI = new CloudSdkAPI(getBaseUrl(), apiKey, getCliOrgId(), cacheEntry.devConsoleUrl, cacheEntry.rdeApiUrl, this._programId, this._environmentId, accessToken)
     }
     return fn.call(null, this._cloudSdkAPI)
   }

@@ -22,7 +22,7 @@ class CloudSdkAPI {
    *
    * @type {string}
    */
-  _baseUrl;
+  _rdeApiUrl;
 
   _accessToken;
 
@@ -33,19 +33,19 @@ class CloudSdkAPI {
    * @param {string} apiKey the cloudmanager api key
    * @param {string} orgId the cloudmanager org id
    * @param {string} devConsoleUrl the dev console url for the environment
-   * @param {string} baseUrl the base URL to access the API
+   * @param {string} rdeApiUrl the base URL to access the API
    * @param {string} programId The ID of the program that contains the environment.
    * @param {string} environmentId The ID of the environment.
    * @param {string} accessToken The bearer token used to authenticate requests to the API.
    */
-  constructor(cmUrl, apiKey, orgId, devConsoleUrl, baseUrl, programId, environmentId, accessToken) {
+  constructor(cmUrl, apiKey, orgId, devConsoleUrl, rdeApiUrl, programId, environmentId, accessToken) {
     this._cmUrl = cmUrl;
     this._apiKey = apiKey;
     this._orgId = orgId;
     this._devConsoleUrl = devConsoleUrl;
     this._programId = programId;
     this._environmentId = environmentId;
-    this._baseUrl = `${baseUrl}/program/${programId}/environment/${environmentId}`;
+    this._rdeApiUrl = `${rdeApiUrl}/program/${programId}/environment/${environmentId}`;
     this._accessToken = accessToken;
   }
 
@@ -66,7 +66,7 @@ class CloudSdkAPI {
   }
 
   async _doRequest(method, path, body) {
-    const url = `${this._baseUrl}${path}`
+    const url = `${this._rdeApiUrl}${path}`
     const options = {
       method: method,
       headers: {
@@ -255,15 +255,15 @@ class CloudSdkAPI {
     }
   }
 
-  async _waitForStatus(predicate, request) {
-      let status = await this._requestJson(request);
+  async _waitForJson(predicate, request) {
+      let json = await this._requestJson(request);
 
-      while (!predicate(status)) {
+      while (!predicate(json)) {
         await sleepSeconds(10);
-        status = await this._requestJson(request);
+        json = await this._requestJson(request);
       }
 
-      return status;
+      return json;
   }
 
   async _waitForEnvRunning(namespace) {
@@ -279,7 +279,7 @@ class CloudSdkAPI {
   }
 
   async _waitForEnv(namespace, state1, state2) {
-    return (await this._waitForStatus(
+    return (await this._waitForJson(
       (status) => status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state1 ||
                   status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state2,
       async () => await this._doDevConsoleRequest(`get`,`/api/releases/${namespace}/status`)
@@ -294,10 +294,10 @@ class CloudSdkAPI {
     await this._setEnvStatus(namespace, `dehibernate`);
   }
 
-  async _setEnvStatus(namespace, status) {
-    await this._waitForStatus(
+  async _setEnvStatus(namespace, target) {
+    await this._waitForJson(
       (status) => status.ok,
-      async () => await this._doDevConsoleRequest(`post`, `/api/releases/${namespace}/${status}/cm-p${this._programId}-e${this._environmentId}`)
+      async () => await this._doDevConsoleRequest(`post`, `/api/releases/${namespace}/${target}/cm-p${this._programId}-e${this._environmentId}`)
     );
   }
 
@@ -376,7 +376,7 @@ class CloudSdkAPI {
   }
 
   async _waitForEnvReady() {
-    await this._waitForStatus((status) => status.status === 'ready',
+    await this._waitForJson((status) => status.status === 'ready',
       async () => await this._doCMRequest('get', `/api/program/${this._programId}/environment/${this._environmentId}`)
     );
   }
