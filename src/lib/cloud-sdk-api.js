@@ -22,20 +22,30 @@ class CloudSdkAPI {
    *
    * @type {string}
    */
-  _baseUrl;
+  _rdeApiUrl;
 
   _accessToken;
 
   /**
    * Initializes a CloudSdkAPI object and returns it.
    *
-   * @param {string} baseUrl the base URL to access the API
+   * @param {string} cmUrl the cloudmanager api endpoint
+   * @param {string} apiKey the cloudmanager api key
+   * @param {string} orgId the cloudmanager org id
+   * @param {string} devConsoleUrl the dev console url for the environment
+   * @param {string} rdeApiUrl the base URL to access the API
    * @param {string} programId The ID of the program that contains the environment.
    * @param {string} environmentId The ID of the environment.
    * @param {string} accessToken The bearer token used to authenticate requests to the API.
    */
-  constructor(baseUrl, programId, environmentId, accessToken) {
-    this._baseUrl = `${baseUrl}/program/${programId}/environment/${environmentId}`;
+  constructor(cmUrl, apiKey, orgId, devConsoleUrl, rdeApiUrl, programId, environmentId, accessToken) {
+    this._cmUrl = cmUrl;
+    this._apiKey = apiKey;
+    this._orgId = orgId;
+    this._devConsoleUrl = devConsoleUrl;
+    this._programId = programId;
+    this._environmentId = environmentId;
+    this._rdeApiUrl = `${rdeApiUrl}/program/${programId}/environment/${environmentId}`;
     this._accessToken = accessToken;
   }
 
@@ -56,12 +66,56 @@ class CloudSdkAPI {
   }
 
   async _doRequest(method, path, body) {
-    const url = `${this._baseUrl}${path}`
+    const url = `${this._rdeApiUrl}${path}`
     const options = {
       method: method,
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
         accept: 'application/json',
+        body: 'blob'
+      },
+    }
+
+    if (body instanceof FormData) {
+      options.body = body
+    } else if (body) {
+      options.body = JSON.stringify(body)
+      options.headers['content-type'] = 'application/json'
+    }
+
+    return await fetch(url, options);
+  }
+
+  async _doDevConsoleRequest(method, path, body) {
+    const url = `${this._devConsoleUrl}${path}`
+    const options = {
+      method: method,
+      headers: {
+        Authorization: `Bearer ${this._accessToken}`,
+        accept: 'application/json',
+        body: 'blob'
+      },
+    }
+
+    if (body instanceof FormData) {
+      options.body = body
+    } else if (body) {
+      options.body = JSON.stringify(body)
+      options.headers['content-type'] = 'application/json'
+    }
+
+    return await fetch(url, options);
+  }
+
+  async _doCMRequest(method, path, body) {
+    const url = `${this._cmUrl}${path}`
+    const options = {
+      method: method,
+      headers: {
+        Authorization: `Bearer ${this._accessToken}`,
+        accept: 'application/json',
+        'x-api-key': this._apiKey,
+        'x-gw-ims-org-id': this._orgId,
         body: 'blob'
       },
     }
@@ -190,6 +244,141 @@ class CloudSdkAPI {
     } else {
       throw `Error: ${change.status} - ${change.statusText}`
     }
+  }
+
+  async _requestJson(callback) {
+    let response = await callback();
+    if (response.status === 200) {
+      return await (response.json());
+    } else {
+      throw `Error: ${response.status} - ${response.statusText}`
+    }
+  }
+
+  async _waitForJson(predicate, request) {
+      let json = await this._requestJson(request);
+
+      while (!predicate(json)) {
+        await sleepSeconds(10);
+        json = await this._requestJson(request);
+      }
+
+      return json;
+  }
+
+  async _waitForEnvRunning(namespace) {
+    await this._waitForEnv(namespace, 'running');
+  }
+
+  async _waitForEnvHibernated(namespace) {
+    await this._waitForEnv(namespace, 'hibernated');
+  }
+
+  async _waitForEnvRunningOrHibernated(namespace) {
+    return await this._waitForEnv(namespace, 'running', 'hibernated');
+  }
+
+  async _waitForEnv(namespace, state1, state2) {
+    return (await this._waitForJson(
+      (status) => status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state1 ||
+                  status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state2,
+      async () => await this._doDevConsoleRequest(`get`,`/api/releases/${namespace}/status`)
+    )).releases.status[`cm-p${this._programId}-e${this._environmentId}`].releaseState;
+  }
+
+  async _hibernateEnv(namespace) {
+    await this._setEnvStatus(namespace, `hibernate`);
+  }
+
+  async _dehibernateEnv(namespace) {
+    await this._setEnvStatus(namespace, `dehibernate`);
+  }
+
+  async _setEnvStatus(namespace, target) {
+    await this._waitForJson(
+      (status) => status.ok,
+      async () => await this._doDevConsoleRequest(`post`, `/api/releases/${namespace}/${target}/cm-p${this._programId}-e${this._environmentId}`)
+    );
+  }
+
+  async _getNamespace() {
+    const nameSpaceRequest = await this._doDevConsoleRequest(`get`, `/api/status`);
+    if (nameSpaceRequest.status === 200) {
+      const nameSpaceStatus = await nameSpaceRequest.json();
+      if (nameSpaceStatus.availableNamespaces && nameSpaceStatus.availableNamespaces[0]) {
+        return nameSpaceStatus.availableNamespaces[0];
+      } else {
+        throw `Error: no namespace found`;
+      }
+    } else {
+      throw `Error: ${nameSpaceRequest.status} - ${nameSpaceRequest.statusText}`;
+    }
+  }
+
+  async _checkRDE() {
+    const response = await this.getArtifacts(`limit=0`)
+    if (response.status !== 200) {
+        throw `Error: ${response.status} - ${response.statusText}`
+    }
+  }
+
+  async _startEnv(namespace) {
+    await this._dehibernateEnv(namespace);
+    await this._waitForEnvRunning(namespace);
+  }
+
+  async _stopEnv(namespace) {
+    await this._hibernateEnv(namespace);
+    await this._waitForEnvHibernated(namespace);
+  }
+
+  async startEnv() {
+    await this._checkRDE();
+    const namespace = await this._getNamespace();
+    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    if (status == 'hibernated') {
+      await this._startEnv(namespace);
+    } else {
+      throw `Error: environment not hibernated`
+    }
+  }
+
+  async stopEnv() {
+    await this._checkRDE();
+    const namespace= await this._getNamespace();
+    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    if (status == 'running') {
+      await this._stopEnv(namespace);
+    } else {
+      throw `Error: environment not running`
+    }
+  }
+
+  async restartEnv() {
+    await this._checkRDE();
+    const namespace = await this._getNamespace();
+    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    if (status == 'running') {
+      await this._stopEnv(namespace);
+    }
+    await this._startEnv(namespace);
+  }
+
+  async resetEnv() {
+    await this._checkRDE();
+    await this._waitForEnvReady();
+    await this._resetEnv();
+    await this._waitForEnvReady();
+  }
+
+  async _resetEnv() {
+    await this._doCMRequest(`put`, `/api/program/${this._programId}/environment/${this._environmentId}/reset`);
+  }
+
+  async _waitForEnvReady() {
+    await this._waitForJson((status) => status.status === 'ready',
+      async () => await this._doCMRequest('get', `/api/program/${this._programId}/environment/${this._environmentId}`)
+    );
   }
 }
 
