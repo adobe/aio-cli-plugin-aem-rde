@@ -95,7 +95,7 @@ class BaseCommand extends Command {
       }
       const {accessToken, apiKey} = await getTokenAndKey();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
-      let cacheEntry;// = Config.get(cacheKey)
+      let cacheEntry = Config.get(cacheKey)
       // TODO: prune expired cache entries
       if (!cacheEntry || new Date(cacheEntry.expiry).valueOf() < Date.now() || !cacheEntry.devConsoleUrl) {
         let developerConsoleUrl = await this.getDeveloperConsoleUrl(this._programId, this._environmentId);
