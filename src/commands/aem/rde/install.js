@@ -157,7 +157,12 @@ class DeployCommand extends BaseCommand {
     } catch (err) {
       progressBar.stop();
       spinner.stop();
-      cli.log(err);
+      if (err.endsWith('Concurrent modification')) {
+        cli.log('Your RDE is waiting for the upload of a previous invocation of the "install" command.');
+        cli.log('You can ignore this by using the "--force" flag.');
+      } else {
+        cli.log(err);
+      }
     }
   }
 }
