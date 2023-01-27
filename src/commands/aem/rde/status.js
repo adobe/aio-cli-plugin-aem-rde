@@ -54,7 +54,7 @@ class StatusCommand extends BaseCommand {
       );
     } catch (err) {
       spinner.stop();
-      cli.log(err);
+      cli.log(err)
     }
   }
 }
@@ -66,4 +66,4 @@ Object.assign(StatusCommand, {
   aliases: [],
 });
 
-module.exports = StatusCommand;
+module.exports = StatusCommand
