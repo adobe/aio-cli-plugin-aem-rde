@@ -1,9 +1,9 @@
 name: pr-linter-formatter
 on:
   pull_request:
-    types: ['opened', 'edited', 'reopened', 'synchronize']
   push:
-    branches: [test-git-action]
+    branches:
+      - test-git-action
 jobs:
   LintFormat:
     runs-on: ubuntu-latest
