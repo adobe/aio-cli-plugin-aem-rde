@@ -26,7 +26,7 @@ class StatusCommand extends BaseCommand {
       spinner.stop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
-        cli.log(`Error: ${status.status} - ${status.statusText}`);
+        cli.log(`Error: ${status.status} - ${status.statusText}`)
         return;
       }
 
