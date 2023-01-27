@@ -19,7 +19,7 @@ class StatusCommand extends BaseCommand {
   async run() {
     try {
       cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
-      spinner.start('retrieving environment status information');
+      spinner.start('retrieving environment status information')
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
