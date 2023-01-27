@@ -1,4 +1,4 @@
-name: pr-linter-formater
+name: pr-linter-formatter
 on:
   pull_request:
     types: ['opened', 'edited', 'reopened', 'synchronize']
@@ -13,7 +13,7 @@ jobs:
         with:
           # Make sure the actual branch is checked out when running on pull requests
           ref: ${{ github.head_ref }}
-      - name: build 
+      - name: build
         run: npm install
       - name: lint
         run: npm run lint
