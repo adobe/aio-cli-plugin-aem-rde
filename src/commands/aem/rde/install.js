@@ -44,6 +44,7 @@ const deploymentTypes = [
   'content-xml',
   'dispatcher-config',
   'frontend',
+  'config',
 ];
 
 /**
