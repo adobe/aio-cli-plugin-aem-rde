@@ -43,7 +43,7 @@ function logInJsonArrayFormat(items) {
  */
 function toJson(item) {
   let c = item;
-  if (typeof c === 'string') {
+  if (typeof c == 'string') {
     c = JSON.parse(c);
   }
 
@@ -141,7 +141,7 @@ class BaseCommand extends Command {
           expiry: expiry.toISOString(),
           url: url.toString(),
         };
-        Config.set(cacheKey, cacheEntry)
+        Config.set(cacheKey, cacheEntry);
       }
       const request = new DoRequest(
         cacheEntry.url,
