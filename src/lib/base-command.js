@@ -141,7 +141,7 @@ class BaseCommand extends Command {
           expiry: expiry.toISOString(),
           url: url.toString(),
         };
-        Config.set(cacheKey, cacheEntry);
+        Config.set(cacheKey, cacheEntry)
       }
       const request = new DoRequest(
         cacheEntry.url,
