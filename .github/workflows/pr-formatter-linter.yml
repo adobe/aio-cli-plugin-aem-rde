@@ -1,11 +1,11 @@
-name: pr-linter-formatter
+name: 'pr-linter-formatter'
 on:
   pull_request:
   push:
     branches:
       - test-git-action
 jobs:
-  LintFormat:
+  lint-format:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,8 +15,8 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: build
         run: npm install
-      - name: lint
-        run: npm run lint
       - name: formatter
         run: npm run formatter
+      - name: lint
+        run: npm run lint
       - run: npm test
