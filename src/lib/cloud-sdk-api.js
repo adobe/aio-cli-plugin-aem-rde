@@ -11,183 +11,283 @@
  */
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
-const FormData = require('form-data');
 const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
 
-const fetch = createFetch()
+const fetch = createFetch();
 
 class CloudSdkAPI {
-  /**
-   * The base URL for the API endpoint
-   *
-   * @type {string}
-   */
-  _rdeApiUrl;
-
-  _accessToken;
-
-  /**
-   * Initializes a CloudSdkAPI object and returns it.
-   *
-   * @param {string} cmUrl the cloudmanager api endpoint
-   * @param {string} apiKey the cloudmanager api key
-   * @param {string} orgId the cloudmanager org id
-   * @param {string} devConsoleUrl the dev console url for the environment
-   * @param {string} rdeApiUrl the base URL to access the API
-   * @param {string} programId The ID of the program that contains the environment.
-   * @param {string} environmentId The ID of the environment.
-   * @param {string} accessToken The bearer token used to authenticate requests to the API.
-   */
-  constructor(cmUrl, apiKey, orgId, devConsoleUrl, rdeApiUrl, programId, environmentId, accessToken) {
-    this._cmUrl = cmUrl;
-    this._apiKey = apiKey;
-    this._orgId = orgId;
-    this._devConsoleUrl = devConsoleUrl;
-    this._programId = programId;
-    this._environmentId = environmentId;
-    this._rdeApiUrl = `${rdeApiUrl}/program/${programId}/environment/${environmentId}`;
-    this._accessToken = accessToken;
+  constructor(request) {
+    this._request = request;
   }
 
-  async _doGet(path, body) {
-    return await this._doRequest('get', path, body)
+  async getAemLogs(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(`/runtime/${serviceName}/logs${queryString}`);
   }
 
-  async _doPost(path, body) {
-    return await this._doRequest('post', path, body)
+  async getAemLog(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/logs/${id}`);
   }
 
-  async _doPut(path, body) {
-    return await this._doRequest('put', path, body)
+  async getAemLogTail(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/logs/${id}/tail`);
   }
 
-  async _doDelete(path) {
-    return await this._doRequest('delete', path)
+  async createAemLog(serviceName, data) {
+    return this._request.doPost(`/runtime/${serviceName}/logs`, data);
   }
 
   async _doRequest(method, path, body) {
-    const url = `${this._rdeApiUrl}${path}`
+    const url = `${this._rdeApiUrl}${path}`;
     const options = {
-      method: method,
+      method,
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
         accept: 'application/json',
-        body: 'blob'
+        body: 'blob',
       },
-    }
+    };
+  }
 
-    if (body instanceof FormData) {
-      options.body = body
-    } else if (body) {
-      options.body = JSON.stringify(body)
-      options.headers['content-type'] = 'application/json'
-    }
+  async getRequestLogs(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/request-logs${queryString}`
+    );
+  }
 
-    return await fetch(url, options);
+  async getRequestLog(serviceName, id) {
+    return this._request.doGet(`/runtime/${serviceName}/request-logs/${id}`);
+  }
+
+  async enableRequestLogs(serviceName, data) {
+    return this._request.doPost(`/runtime/${serviceName}/request-logs`, data);
+  }
+
+  async disableRequestLogs(serviceName) {
+    return this._request.doDelete(`/runtime/${serviceName}/request-logs`);
+  }
+
+  async getInventories(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/inventory${queryString}`
+    );
+  }
+
+  async getInventory(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/inventory/${id}`
+    );
+  }
+
+  async getOsgiBundles(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-bundles${queryString}`
+    );
+  }
+
+  async getOsgiBundle(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-bundles/${id}`
+    );
+  }
+
+  async getOsgiComponents(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-components${queryString}`
+    );
+  }
+
+  async getOsgiComponent(serviceName, componentName) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-components/${componentName}`
+    );
+  }
+
+  async getOsgiConfigurations(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations${queryString}`
+    );
+  }
+
+  async getOsgiConfiguration(serviceName, pId) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-configurations/${pId}`
+    );
+  }
+
+  async getOsgiServices(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-services${queryString}`
+    );
+  }
+
+  async getOsgiService(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/osgi-services/${id}`
+    );
+  }
+
+  async getSlingRequests(serviceName, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/sling-requests${queryString}`
+    );
+  }
+
+  async getSlingRequest(serviceName, id) {
+    return this._request.doGet(
+      `/runtime/${serviceName}/status/sling-requests/${id}`
+    );
   }
 
   async _doDevConsoleRequest(method, path, body) {
-    const url = `${this._devConsoleUrl}${path}`
+    const url = `${this._devConsoleUrl}${path}`;
     const options = {
-      method: method,
+      method,
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
         accept: 'application/json',
-        body: 'blob'
+        body: 'blob',
       },
-    }
+    };
 
     if (body instanceof FormData) {
-      options.body = body
+      options.body = body;
     } else if (body) {
-      options.body = JSON.stringify(body)
-      options.headers['content-type'] = 'application/json'
+      options.body = JSON.stringify(body);
+      options.headers['content-type'] = 'application/json';
     }
 
     return await fetch(url, options);
   }
 
   async _doCMRequest(method, path, body) {
-    const url = `${this._cmUrl}${path}`
+    const url = `${this._cmUrl}${path}`;
     const options = {
-      method: method,
+      method,
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
         accept: 'application/json',
         'x-api-key': this._apiKey,
         'x-gw-ims-org-id': this._orgId,
-        body: 'blob'
+        body: 'blob',
       },
-    }
+    };
 
     if (body instanceof FormData) {
-      options.body = body
+      options.body = body;
     } else if (body) {
-      options.body = JSON.stringify(body)
-      options.headers['content-type'] = 'application/json'
+      options.body = JSON.stringify(body);
+      options.headers['content-type'] = 'application/json';
     }
 
     return await fetch(url, options);
   }
 
   async getLogs(id) {
-    return await this._doGet(`/runtime/updates/${id}/logs`)
+    return this._request.doGet(`/runtime/updates/${id}/logs`);
   }
+
   async getChanges() {
-    return await this._doGet(`/runtime/updates`);
+    return await this._request.doGet(`/runtime/updates`);
   }
 
   async getChange(id) {
-    return await this._doGet(`/runtime/updates/${id}`)
+    return await this._doGet(`/runtime/updates/${id}`);
   }
 
   async getArtifacts(cursor) {
-    let queryString = cursor ? `?${new URLSearchParams({cursor}).toString()}` : '';
-    return await this._doGet(`/runtime/updates/artifacts${queryString}`);
+    const queryString = this.createUrlQueryStr({ cursor });
+    return await this._request.doGet(
+      `/runtime/updates/artifacts${queryString}`
+    );
   }
 
-  async deployFile(fileSize, path, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
-    let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
+  async deployFile(
+    fileSize,
+    path,
+    name,
+    type,
+    target,
+    contentPath,
+    force,
+    uploadCallbacks,
+    deploymentCallback
+  ) {
+    const result = await this._request.doPost(`/runtime/updates`, {
+      service: target,
+      fileSize,
+      type,
+      metadata: { name },
+      contentPath,
+      force,
+    });
 
     if (result.status === 201) {
-      let url = result.headers.get('Location');
-      let changeId = (await result.json()).updateId;
-      let client = new ShareFileClient(url);
-      uploadCallbacks.start(fileSize)
+      const url = result.headers.get('Location');
+      const changeId = (await result.json()).updateId;
+      const client = new ShareFileClient(url);
+      uploadCallbacks.start(fileSize);
       await client.uploadFile(path, {
-        onProgress: (progress) => uploadCallbacks.progress(progress.loadedBytes)
+        onProgress: (progress) =>
+          uploadCallbacks.progress(progress.loadedBytes),
       });
-      return await this._putUpdate(changeId, deploymentCallback);
+      return await this._request.putUpdate(changeId, deploymentCallback);
     } else {
-      uploadCallbacks.abort()
-      throw `Error: ${result.status} - ${result.statusText}`
+      uploadCallbacks.abort();
+      throw new Error(`Error: ${result.status} - ${result.statusText}`);
     }
   }
 
-  async deployURL(fileSize, url, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
+  async deployURL(
+    fileSize,
+    url,
+    name,
+    type,
+    target,
+    contentPath,
+    force,
+    uploadCallbacks,
+    deploymentCallback
+  ) {
     if (fileSize > 0) {
-      uploadCallbacks.start(fileSize)
-      let result = await this._doPost(`/runtime/updates`, { service: target, fileSize: fileSize, type: type, metadata: { name: name }, contentPath: contentPath, force: force });
+      uploadCallbacks.start(fileSize);
+      const result = await this._request.doPost(`/runtime/updates`, {
+        service: target,
+        fileSize,
+        type,
+        metadata: { name },
+        contentPath,
+        force,
+      });
 
       if (result.status === 201) {
-        let clientUrl = result.headers.get('Location');
-        let changeId = (await result.json()).updateId;
-        let client = new ShareFileClient(clientUrl);
+        const clientUrl = result.headers.get('Location');
+        const changeId = (await result.json()).updateId;
+        const client = new ShareFileClient(clientUrl);
         let res = await client.startCopyFromURL(url);
-        let copyId = res.copyId;
+        const copyId = res.copyId;
 
-        let getProgressBytes = (copyProgress) => {
-          return copyProgress ? parseInt(copyProgress.slice(0, copyProgress.indexOf('/'))) : 0
-        }
+        const getProgressBytes = (copyProgress) => {
+          return copyProgress
+            ? parseInt(copyProgress.slice(0, copyProgress.indexOf('/')))
+            : 0;
+        };
 
-        let progress = getProgressBytes(res.copyProgress)
-        uploadCallbacks.progress(progress)
+        let progress = getProgressBytes(res.copyProgress);
+        uploadCallbacks.progress(progress);
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await sleepSeconds(1);
           if (time++ > 30 && progress === 0) {
             await client.abortCopyFromURL(copyId);
-            uploadCallbacks.abort()
+            uploadCallbacks.abort();
             break;
           }
           res = await client.getProperties();
@@ -199,71 +299,83 @@ class CloudSdkAPI {
             // that progress is happening, even though we haven't got the
             // numbers yet. Fake progress is limited to max 1/3 of the file
             // size.
-            let fakeProgress = Math.round(time * fileSize / 60);
-            uploadCallbacks.progress(Math.max(progress, fakeProgress))
+            const fakeProgress = Math.round((time * fileSize) / 60);
+            uploadCallbacks.progress(Math.max(progress, fakeProgress));
           }
         }
 
         if (res.copyStatus !== 'success') {
-          uploadCallbacks.start(fileSize, 'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.')
-          let con = await fetch(url);
+          uploadCallbacks.start(
+            fileSize,
+            'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.'
+          );
+          const con = await fetch(url);
           await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {
-            onProgress: (progress) => uploadCallbacks.progress(progress.loadedBytes)
+            onProgress: (progress) =>
+              uploadCallbacks.progress(progress.loadedBytes),
           });
         }
         return await this._putUpdate(changeId, deploymentCallback);
       } else {
-        uploadCallbacks.abort()
-        throw `Error: ${result.status} - ${result.statusText}`
+        uploadCallbacks.abort();
+        throw new Error(`Error: ${result.status} - ${result.statusText}`);
       }
     } else {
-      throw Error("Can not get file size from head request");
+      throw Error('Can not get file size from head request');
     }
   }
 
   async _putUpdate(changeId, callbackProgress) {
-    let change = await handleRetryAfter(
-        () => this._doPut(`/runtime/updates/${changeId}`),
-        () => this._doGet(`/runtime/updates/${changeId}`),
-        callbackProgress
-    )
+    const change = await handleRetryAfter(
+      () => this._request.doPut(`/runtime/updates/${changeId}`),
+      () => this._request.doGet(`/runtime/updates/${changeId}`),
+      callbackProgress
+    );
     if (change.status === 200) {
       return await change.json();
     } else {
-      throw `Error: ${change.status} - ${change.statusText}`
+      throw new Error(`Error: ${change.status} - ${change.statusText}`);
     }
   }
 
   async delete(id, force) {
-    let change = await handleRetryAfter(
-        () => this._doDelete(`/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')),
-        previousResponse => previousResponse.json()
-            .then(json => this._doGet(`/runtime/updates/${json.updateId}`)))
+    const change = await handleRetryAfter(
+      () =>
+        this._doDelete(
+          `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
+        ),
+      (previousResponse) =>
+        previousResponse
+          .json()
+          .then((json) =>
+            this._request.doGet(`/runtime/updates/${json.updateId}`)
+          )
+    );
     if (change.status === 200) {
       return await change.json();
     } else {
-      throw `Error: ${change.status} - ${change.statusText}`
+      throw new Error(`Error: ${change.status} - ${change.statusText}`);
     }
   }
 
   async _requestJson(callback) {
-    let response = await callback();
+    const response = await callback();
     if (response.status === 200) {
-      return await (response.json());
+      return await response.json();
     } else {
-      throw `Error: ${response.status} - ${response.statusText}`
+      throw `Error: ${response.status} - ${response.statusText}`;
     }
   }
 
   async _waitForJson(predicate, request) {
-      let json = await this._requestJson(request);
+    let json = await this._requestJson(request);
 
-      while (!predicate(json)) {
-        await sleepSeconds(10);
-        json = await this._requestJson(request);
-      }
+    while (!predicate(json)) {
+      await sleepSeconds(10);
+      json = await this._requestJson(request);
+    }
 
-      return json;
+    return json;
   }
 
   async _waitForEnvRunning(namespace) {
@@ -279,11 +391,23 @@ class CloudSdkAPI {
   }
 
   async _waitForEnv(namespace, state1, state2) {
-    return (await this._waitForJson(
-      (status) => status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state1 ||
-                  status.releases?.status[`cm-p${this._programId}-e${this._environmentId}`]?.releaseState === state2,
-      async () => await this._doDevConsoleRequest(`get`,`/api/releases/${namespace}/status`)
-    )).releases.status[`cm-p${this._programId}-e${this._environmentId}`].releaseState;
+    return (
+      await this._waitForJson(
+        (status) =>
+          status.releases?.status[
+            `cm-p${this._programId}-e${this._environmentId}`
+          ]?.releaseState === state1 ||
+          status.releases?.status[
+            `cm-p${this._programId}-e${this._environmentId}`
+          ]?.releaseState === state2,
+        async () =>
+          await this._doDevConsoleRequest(
+            `get`,
+            `/api/releases/${namespace}/status`
+          )
+      )
+    ).releases.status[`cm-p${this._programId}-e${this._environmentId}`]
+      .releaseState;
   }
 
   async _hibernateEnv(namespace) {
@@ -297,15 +421,25 @@ class CloudSdkAPI {
   async _setEnvStatus(namespace, target) {
     await this._waitForJson(
       (status) => status.ok,
-      async () => await this._doDevConsoleRequest(`post`, `/api/releases/${namespace}/${target}/cm-p${this._programId}-e${this._environmentId}`)
+      async () =>
+        await this._doDevConsoleRequest(
+          `post`,
+          `/api/releases/${namespace}/${target}/cm-p${this._programId}-e${this._environmentId}`
+        )
     );
   }
 
   async _getNamespace() {
-    const nameSpaceRequest = await this._doDevConsoleRequest(`get`, `/api/status`);
+    const nameSpaceRequest = await this._doDevConsoleRequest(
+      `get`,
+      `/api/status`
+    );
     if (nameSpaceRequest.status === 200) {
       const nameSpaceStatus = await nameSpaceRequest.json();
-      if (nameSpaceStatus.availableNamespaces && nameSpaceStatus.availableNamespaces[0]) {
+      if (
+        nameSpaceStatus.availableNamespaces &&
+        nameSpaceStatus.availableNamespaces[0]
+      ) {
         return nameSpaceStatus.availableNamespaces[0];
       } else {
         throw `Error: no namespace found`;
@@ -316,9 +450,9 @@ class CloudSdkAPI {
   }
 
   async _checkRDE() {
-    const response = await this.getArtifacts(`limit=0`)
+    const response = await this.getArtifacts(`limit=0`);
     if (response.status !== 200) {
-        throw `Error: ${response.status} - ${response.statusText}`
+      throw `Error: ${response.status} - ${response.statusText}`;
     }
   }
 
@@ -335,29 +469,29 @@ class CloudSdkAPI {
   async startEnv() {
     await this._checkRDE();
     const namespace = await this._getNamespace();
-    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated(namespace);
     if (status == 'hibernated') {
       await this._startEnv(namespace);
     } else {
-      throw `Error: environment not hibernated`
+      throw `Error: environment not hibernated`;
     }
   }
 
   async stopEnv() {
     await this._checkRDE();
-    const namespace= await this._getNamespace();
-    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    const namespace = await this._getNamespace();
+    const status = await this._waitForEnvRunningOrHibernated(namespace);
     if (status == 'running') {
       await this._stopEnv(namespace);
     } else {
-      throw `Error: environment not running`
+      throw `Error: environment not running`;
     }
   }
 
   async restartEnv() {
     await this._checkRDE();
     const namespace = await this._getNamespace();
-    let status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated(namespace);
     if (status == 'running') {
       await this._stopEnv(namespace);
     }
@@ -372,16 +506,24 @@ class CloudSdkAPI {
   }
 
   async _resetEnv() {
-    await this._doCMRequest(`put`, `/api/program/${this._programId}/environment/${this._environmentId}/reset`);
+    await this._doCMRequest(
+      `put`,
+      `/api/program/${this._programId}/environment/${this._environmentId}/reset`
+    );
   }
 
   async _waitForEnvReady() {
-    await this._waitForJson((status) => status.status === 'ready',
-      async () => await this._doCMRequest('get', `/api/program/${this._programId}/environment/${this._environmentId}`)
+    await this._waitForJson(
+      (status) => status.status === 'ready',
+      async () =>
+        await this._doCMRequest(
+          'get',
+          `/api/program/${this._programId}/environment/${this._environmentId}`
+        )
     );
   }
 }
 
 module.exports = {
-  CloudSdkAPI: CloudSdkAPI,
-}
+  CloudSdkAPI,
+};

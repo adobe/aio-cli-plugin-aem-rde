@@ -1,0 +1,7 @@
+{
+  aem-rde: {
+    experimental-features: [
+      "aem:rde:inspect"
+    ]
+  }
+}
