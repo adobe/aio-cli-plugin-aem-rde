@@ -6,6 +6,7 @@ on:
       - test-git-action
 jobs:
   lint-format:
+    name: linter-formatter
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
