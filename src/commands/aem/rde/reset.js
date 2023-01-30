@@ -9,19 +9,30 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+'use strict';
 
-const DeleteCommand = require('./commands/aem/rde/delete')
-const HistoryCommand = require('./commands/aem/rde/history')
-const InstallCommand = require('./commands/aem/rde/install')
-const StatusCommand = require('./commands/aem/rde/status')
-const RestartCommand = require('./commands/aem/rde/restart')
-const ResetCommand = require('./commands/aem/rde/reset')
+const { BaseCommand, cli } = require('../../../lib/base-command')
+const spinner = require('ora')();
 
-module.exports = {
-  'delete': new DeleteCommand().run,
-  'history': new HistoryCommand().run,
-  'install': new InstallCommand().run,
-  'status': new StatusCommand().run,
-  'restart': new RestartCommand().run,
-  'reset': new ResetCommand().run
+class ResetCommand extends BaseCommand {
+  async run() {
+    try {
+      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`)
+      spinner.start('reseting environment')
+      await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.resetEnv())
+      spinner.stop()
+      cli.log(`Environment reseted.`)
+    } catch (err) {
+      spinner.stop()
+      cli.log(err);
+    }
+  }
 }
+
+Object.assign(ResetCommand, {
+  description: 'Reset the RDE',
+  args: [],
+  aliases: [],
+})
+
+module.exports = ResetCommand

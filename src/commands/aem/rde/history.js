@@ -11,40 +11,37 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli} = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class ChangesCommand extends BaseCommand {
   async run() {
-    const { args } = await this.parse(ChangesCommand);
+    const { args } = await this.parse(ChangesCommand)
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getChanges()
-        );
+        let response = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.getChanges());
         if (response.status === 200) {
-          const json = await response.json();
-          spinner.stop();
+          let json = await response.json();
+          spinner.stop()
           if (json.items.length === 0) {
-            cli.log('There are no updates yet.');
+            cli.log('There are no updates yet.')
           } else {
             json.items.forEach(rdeUtils.logChange);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          cli.log(`Error: ${response.status} - ${response.statusText}`)
         }
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
-        cli.log(
-          `Invalid update ID "${args.id}". Please use a positive update ID number as the input.`
-        );
+          cli.log(`Invalid update ID "${args.id}". Please use a positive update ID number as the input.`)
       } else {
-        await this.withCloudSdk((cloudSdkAPI) =>
-          rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
-            done ? spinner.stop() : spinner.start(text)
-          )
-        );
+        await this.withCloudSdk(cloudSdkAPI => rdeUtils.loadUpdateHistory(
+            cloudSdkAPI,
+            args.id,
+            cli,
+            (done, text) => done ? spinner.stop() : spinner.start(text)
+        ));
       }
     } catch (err) {
       cli.log(err);
@@ -56,15 +53,13 @@ class ChangesCommand extends BaseCommand {
 
 Object.assign(ChangesCommand, {
   description: 'Get a list of the updates done to the current rde.',
-  args: [
-    {
-      name: 'id',
-      description: 'The id of the update to get (including logs)',
-      multiple: false,
-      required: false,
-    },
-  ],
+  args: [{
+    name: 'id',
+    description: 'The id of the update to get (including logs)',
+    multiple: false,
+    required: false
+  }],
   aliases: [],
-});
+})
 
-module.exports = ChangesCommand;
+module.exports = ChangesCommand
