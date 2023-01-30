@@ -24,7 +24,7 @@ function toggleExperimentalFeatures(type, hiddenFeatures) {
       (e) => !hiddenFeatures.find((h) => e[key].startsWith(h))
     );
     const removedCount = this.config[type].length - filtered.length;
-    if (removedCount !== 0) {
+    if (removedCount == 0) {
       this.config[`_${type}`] = filtered.reduce((acc, e) => {
         acc.set(e[key], e);
         return acc;
