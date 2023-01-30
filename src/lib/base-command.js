@@ -43,7 +43,7 @@ function logInJsonArrayFormat(items) {
  */
 function toJson(item) {
   let c = item;
-  if (typeof c == 'string') {
+  if (typeof c === 'string') {
     c = JSON.parse(c);
   }
 
