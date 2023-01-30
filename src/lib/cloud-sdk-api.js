@@ -138,7 +138,7 @@ class CloudSdkAPI {
   }
 
   async getChange(id) {
-    return await this._doGet(`/runtime/updates/${id}`);
+    return await this._doGet(`/runtime/updates/${id}`)
   }
 
   async getArtifacts(cursor) {
@@ -200,7 +200,7 @@ class CloudSdkAPI {
             // numbers yet. Fake progress is limited to max 1/3 of the file
             // size.
             let fakeProgress = Math.round(time * fileSize / 60);
-            uploadCallbacks.progress(Math.max(progress, fakeProgress));
+            uploadCallbacks.progress(Math.max(progress, fakeProgress))
           }
         }
 
