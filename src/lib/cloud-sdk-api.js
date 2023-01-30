@@ -37,18 +37,6 @@ class CloudSdkAPI {
     return this._request.doPost(`/runtime/${serviceName}/logs`, data);
   }
 
-  async _doRequest(method, path, body) {
-    const url = `${this._rdeApiUrl}${path}`;
-    const options = {
-      method,
-      headers: {
-        Authorization: `Bearer ${this._accessToken}`,
-        accept: 'application/json',
-        body: 'blob',
-      },
-    };
-  }
-
   async getRequestLogs(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return this._request.doGet(
@@ -157,7 +145,7 @@ class CloudSdkAPI {
       },
     };
 
-    if (body instanceof FormData) {
+    if (body) {
       options.body = body;
     } else if (body) {
       options.body = JSON.stringify(body);
@@ -180,7 +168,7 @@ class CloudSdkAPI {
       },
     };
 
-    if (body instanceof FormData) {
+    if (body) {
       options.body = body;
     } else if (body) {
       options.body = JSON.stringify(body);
@@ -363,7 +351,7 @@ class CloudSdkAPI {
     if (response.status === 200) {
       return await response.json();
     } else {
-      throw `Error: ${response.status} - ${response.statusText}`;
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
     }
   }
 
@@ -442,17 +430,19 @@ class CloudSdkAPI {
       ) {
         return nameSpaceStatus.availableNamespaces[0];
       } else {
-        throw `Error: no namespace found`;
+        throw new Error(`Error: no namespace found`);
       }
     } else {
-      throw `Error: ${nameSpaceRequest.status} - ${nameSpaceRequest.statusText}`;
+      throw new Error(
+        `Error: ${nameSpaceRequest.status} - ${nameSpaceRequest.statusText}`
+      );
     }
   }
 
   async _checkRDE() {
     const response = await this.getArtifacts(`limit=0`);
     if (response.status !== 200) {
-      throw `Error: ${response.status} - ${response.statusText}`;
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
     }
   }
 
@@ -470,10 +460,10 @@ class CloudSdkAPI {
     await this._checkRDE();
     const namespace = await this._getNamespace();
     const status = await this._waitForEnvRunningOrHibernated(namespace);
-    if (status == 'hibernated') {
+    if (status === 'hibernated') {
       await this._startEnv(namespace);
     } else {
-      throw `Error: environment not hibernated`;
+      throw new Error(`Error: environment not hibernated`);
     }
   }
 
@@ -481,10 +471,10 @@ class CloudSdkAPI {
     await this._checkRDE();
     const namespace = await this._getNamespace();
     const status = await this._waitForEnvRunningOrHibernated(namespace);
-    if (status == 'running') {
+    if (status === 'running') {
       await this._stopEnv(namespace);
     } else {
-      throw `Error: environment not running`;
+      throw new Error(`Error: environment not running`);
     }
   }
 
@@ -492,7 +482,7 @@ class CloudSdkAPI {
     await this._checkRDE();
     const namespace = await this._getNamespace();
     const status = await this._waitForEnvRunningOrHibernated(namespace);
-    if (status == 'running') {
+    if (status === 'running') {
       await this._stopEnv(namespace);
     }
     await this._startEnv(namespace);

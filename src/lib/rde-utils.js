@@ -73,8 +73,12 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
     );
     progressCallback(true);
     if (!response) {
-      cli.log(`No logs have become available within the retry period of 20 seconds.`)
-      cli.log(`Please run "aio aem:rde:history ${updateId}" to check for progress manually.`)
+      cli.log(
+        `No logs have become available within the retry period of 20 seconds.`
+      );
+      cli.log(
+        `Please run "aio aem:rde:history ${updateId}" to check for progress manually.`
+      );
     } else if (response.status === 200) {
       logChange(change);
       const log = await response.text();
