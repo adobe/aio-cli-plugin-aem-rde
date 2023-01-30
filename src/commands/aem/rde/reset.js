@@ -18,10 +18,10 @@ class ResetCommand extends BaseCommand {
   async run() {
     try {
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`)
-      spinner.start('reseting environment')
+      spinner.start('resetting environment')
       await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.resetEnv())
       spinner.stop()
-      cli.log(`Environment reseted.`)
+      cli.log(`Environment reset.`)
     } catch (err) {
       spinner.stop()
       cli.log(err);
