@@ -130,6 +130,10 @@ class CloudSdkAPI {
     return await fetch(url, options);
   }
 
+  async _createError(response) {
+    return `Error: ${response.status} - ${(await response.text())}`
+  }
+
   async getLogs(id) {
     return await this._doGet(`/runtime/updates/${id}/logs`)
   }
@@ -160,7 +164,7 @@ class CloudSdkAPI {
       return await this._putUpdate(changeId, deploymentCallback);
     } else {
       uploadCallbacks.abort()
-      throw `Error: ${result.status} - ${result.statusText}`
+      throw await this._createError(result);
     }
   }
 
@@ -214,7 +218,7 @@ class CloudSdkAPI {
         return await this._putUpdate(changeId, deploymentCallback);
       } else {
         uploadCallbacks.abort()
-        throw `Error: ${result.status} - ${result.statusText}`
+        throw await this._createError(result);
       }
     } else {
       throw Error("Can not get file size from head request");
@@ -230,7 +234,7 @@ class CloudSdkAPI {
     if (change.status === 200) {
       return await change.json();
     } else {
-      throw `Error: ${change.status} - ${change.statusText}`
+      throw await this._createError(change);
     }
   }
 
@@ -242,7 +246,7 @@ class CloudSdkAPI {
     if (change.status === 200) {
       return await change.json();
     } else {
-      throw `Error: ${change.status} - ${change.statusText}`
+      throw await this._createError(change);
     }
   }
 
@@ -251,7 +255,7 @@ class CloudSdkAPI {
     if (response.status === 200) {
       return await (response.json());
     } else {
-      throw `Error: ${response.status} - ${response.statusText}`
+      throw await this._createError(response);
     }
   }
 
@@ -311,14 +315,14 @@ class CloudSdkAPI {
         throw `Error: no namespace found`;
       }
     } else {
-      throw `Error: ${nameSpaceRequest.status} - ${nameSpaceRequest.statusText}`;
+      throw await this._createError(nameSpaceRequest);
     }
   }
 
   async _checkRDE() {
     const response = await this.getArtifacts(`limit=0`)
     if (response.status !== 200) {
-        throw `Error: ${response.status} - ${response.statusText}`
+      throw await this._createError(response);
     }
   }
 
