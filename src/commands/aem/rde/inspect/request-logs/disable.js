@@ -11,28 +11,35 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
-const spinner = require('ora')();
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+} = require('../../../../../lib/base-command');
 
-class ResetCommand extends BaseCommand {
+class DisableRequestLogsCommand extends BaseCommand {
   async run() {
+    const { flags } = await this.parse(DisableRequestLogsCommand);
     try {
-      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      spinner.start('reseting environment');
-      await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.resetEnv());
-      spinner.stop();
-      cli.log(`Environment reseted.`);
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.disableRequestLogs(flags.target)
+      );
+      if (response.status === 200) {
+        cli.log('Request-logs disabled.');
+      } else {
+        cli.log(`Error: ${response.status} - ${response.statusText}`);
+      }
     } catch (err) {
-      spinner.stop();
       cli.log(err);
     }
   }
 }
 
-Object.assign(ResetCommand, {
-  description: 'Reset the RDE',
-  args: [],
-  aliases: [],
+Object.assign(DisableRequestLogsCommand, {
+  description: 'Disable request logging.',
+  flags: {
+    target: commonFlags.target,
+  },
 });
 
-module.exports = ResetCommand;
+module.exports = DisableRequestLogsCommand;
