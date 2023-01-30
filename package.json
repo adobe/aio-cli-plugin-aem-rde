@@ -23,6 +23,8 @@
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^2.0.0",
     "@oclif/dev-cli": "1.26.10",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -38,8 +40,8 @@
   },
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
-    "lint": "eslint . --ext .js",
-    "prettier-format": "prettier --config .prettierrc --check ./src"
+    "formatter": "prettier --config .prettierrc --check ./src",
+    "lint": "eslint src --ext .js"
   },
   "files": [
     "/src",
