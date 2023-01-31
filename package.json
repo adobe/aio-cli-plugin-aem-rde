@@ -22,7 +22,11 @@
   },
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^2.0.0",
-    "@oclif/dev-cli": "1.26.10"
+    "@oclif/dev-cli": "1.26.10",
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "2.8.3"
   },
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
