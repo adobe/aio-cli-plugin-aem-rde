@@ -11,51 +11,64 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags, Flags } = require('../../../lib/base-command')
-const {loadUpdateHistory} = require('../../../lib/rde-utils');
-const {loadAllArtifacts, groupArtifacts} = require("../../../lib/rde-utils");
+const {
+  BaseCommand,
+  cli,
+  commonFlags,
+  Flags,
+} = require('../../../lib/base-command');
+const { loadUpdateHistory } = require('../../../lib/rde-utils');
+const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class DeleteCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(DeleteCommand)
+    const { args, flags } = await this.parse(DeleteCommand);
     try {
-      let services = !flags.target ? ['author', 'publish'] : [flags.target ]
-      let types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type]
-      let filters = {
-        'osgi-bundle': bundle => bundle.metadata.bundleSymbolicName === args.id ||
-          `${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}` === args.id,
-        'osgi-config': config => config.metadata.configPid === args.id
-      }
+      const services = !flags.target ? ['author', 'publish'] : [flags.target];
+      const types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type];
+      const filters = {
+        'osgi-bundle': (bundle) =>
+          bundle.metadata.bundleSymbolicName === args.id ||
+          `${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}` ===
+            args.id,
+        'osgi-config': (config) => config.metadata.configPid === args.id,
+      };
 
       spinner.start(`deleting ${args.id}`);
-      let status = await this.withCloudSdk(cloudSdkAPI => loadAllArtifacts(cloudSdkAPI))
-      let grouped = groupArtifacts(status.items)
-      let artifacts = [];
-      for (let target of services) {
-        for (let type of types) {
-          artifacts.push(...grouped[target][type].filter(filters[type]))
+      const status = await this.withCloudSdk((cloudSdkAPI) =>
+        loadAllArtifacts(cloudSdkAPI)
+      );
+      const grouped = groupArtifacts(status.items);
+      const artifacts = [];
+      for (const target of services) {
+        for (const type of types) {
+          artifacts.push(...grouped[target][type].filter(filters[type]));
         }
       }
 
-      for (let artifact of artifacts) {
-        let change = await this.withCloudSdk(cloudSdkAPI => cloudSdkAPI.delete(artifact.id, flags.force));
-        await this.withCloudSdk(cloudSdkAPI => loadUpdateHistory(
-            cloudSdkAPI,
-            change.updateId,
-            cli,
-            (done, text) => done ? spinner.stop() : spinner.start(text)
-        ));
+      for (const artifact of artifacts) {
+        const change = await this.withCloudSdk((cloudSdkAPI) =>
+          cloudSdkAPI.delete(artifact.id, flags.force)
+        );
+        await this.withCloudSdk((cloudSdkAPI) =>
+          loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
+            done ? spinner.stop() : spinner.start(text)
+          )
+        );
       }
       spinner.stop();
 
       if (artifacts.length === 0) {
-        let typeInfo = types.length === 1 ? types[0] : 'artifact'
-        let serviceInfo = services.length === 1 ? `the ${services[0]} of ` : ''
-        cli.log(`Could not delete ${typeInfo} "${args.id}". It is not present on ${serviceInfo}this environment.`)
+        const typeInfo = types.length === 1 ? types[0] : 'artifact';
+        const serviceInfo =
+          services.length === 1 ? `the ${services[0]} of ` : '';
+        cli.log(
+          `Could not delete ${typeInfo} "${args.id}". It is not present on ${serviceInfo}this environment.`
+        );
       }
     } catch (err) {
-      spinner.stop()
+      spinner.stop();
       cli.log(err);
     }
   }
@@ -63,12 +76,14 @@ class DeleteCommand extends BaseCommand {
 
 Object.assign(DeleteCommand, {
   description: 'Delete bundles and configs from the current rde.',
-  args: [{
-    name: 'id',
-    description: 'the id (bsn or pid) to delete',
-    multiple: false,
-    required: true
-    }],
+  args: [
+    {
+      name: 'id',
+      description: 'the id (bsn or pid) to delete',
+      multiple: false,
+      required: true,
+    },
+  ],
   flags: {
     target: commonFlags.target,
     type: Flags.string({
@@ -76,17 +91,15 @@ Object.assign(DeleteCommand, {
       description: 'the type (osgi-bundle|osgi-config)',
       multiple: false,
       required: false,
-      options: [
-        'osgi-config',
-        'osgi-bundle']
+      options: ['osgi-config', 'osgi-bundle'],
     }),
     force: Flags.boolean({
       char: 'f',
       multiple: false,
-      required: false
-    })
+      required: false,
+    }),
   },
   aliases: [],
-})
+});
 
-module.exports = DeleteCommand
+module.exports = DeleteCommand;

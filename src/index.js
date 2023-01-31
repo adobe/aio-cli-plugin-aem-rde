@@ -10,18 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-const DeleteCommand = require('./commands/aem/rde/delete')
-const HistoryCommand = require('./commands/aem/rde/history')
-const InstallCommand = require('./commands/aem/rde/install')
-const StatusCommand = require('./commands/aem/rde/status')
-const RestartCommand = require('./commands/aem/rde/restart')
-const ResetCommand = require('./commands/aem/rde/reset')
+const DeleteCommand = require('./commands/aem/rde/delete');
+const HistoryCommand = require('./commands/aem/rde/history');
+const InstallCommand = require('./commands/aem/rde/install');
+const StatusCommand = require('./commands/aem/rde/status');
+const RestartCommand = require('./commands/aem/rde/restart');
+const ResetCommand = require('./commands/aem/rde/reset');
 
 module.exports = {
-  'delete': new DeleteCommand().run,
-  'history': new HistoryCommand().run,
-  'install': new InstallCommand().run,
-  'status': new StatusCommand().run,
-  'restart': new RestartCommand().run,
-  'reset': new ResetCommand().run
-}
+  delete: new DeleteCommand().run,
+  history: new HistoryCommand().run,
+  install: new InstallCommand().run,
+  status: new StatusCommand().run,
+  restart: new RestartCommand().run,
+  reset: new ResetCommand().run,
+};

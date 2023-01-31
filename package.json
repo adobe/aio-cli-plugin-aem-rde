@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@adobe/aio-lib-cloudmanager": "^2.0.0",
+    "@adobe/aio-lib-core-config": "^3.1.0",
     "@adobe/aio-lib-core-errors": "^3.1.1",
     "@adobe/aio-lib-core-networking": "^3.0.0",
     "@adobe/aio-lib-ims": "^6.0.1",
