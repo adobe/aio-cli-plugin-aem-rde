@@ -85,7 +85,7 @@ async function computeStats(url) {
     case 'http:':
     case 'https:': {
       const con = await fetch(url, { method: 'HEAD' });
-      const effectiveUrl = con.url ? new URL(con.url) : url;
+      const effectiveUrl = con.url ? new URL(con.url) : url
       return {
         fileSize: parseInt(con.headers.get('content-length')),
         effectiveUrl,
@@ -122,7 +122,7 @@ class DeployCommand extends BaseCommand {
       let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
       if (
         !isLocalFile &&
-        guessedTypes === deploymentTypes &&
+        guessedTypes == deploymentTypes &&
         effectiveUrl !== originalUrl
       ) {
         // when there was a redirect, it is possible that the original URL
