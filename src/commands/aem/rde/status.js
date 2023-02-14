@@ -11,18 +11,19 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
   async run() {
+    const { args, flags } = await this.parse(StatusCommand);
     try {
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('retrieving environment status information');
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
-        loadAllArtifacts(cloudSdkAPI)
-      );
+      const status = await this.withCloudSdk(flags, (cloudSdkAPI) => {
+        cli.log(`Info for ${cloudSdkAPI.getEnvironmentLabel()}`);
+        loadAllArtifacts(cloudSdkAPI);
+      });
       spinner.stop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
@@ -63,6 +64,9 @@ Object.assign(StatusCommand, {
   description:
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
+  flags: {
+    ...commonFlags.global,
+  },
   aliases: [],
 });
 

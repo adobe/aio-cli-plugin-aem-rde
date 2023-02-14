@@ -36,7 +36,7 @@ class DeleteCommand extends BaseCommand {
       };
 
       spinner.start(`deleting ${args.id}`);
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
+      const status = await this.withCloudSdk(flags, (cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
       const grouped = groupArtifacts(status.items);
@@ -48,7 +48,7 @@ class DeleteCommand extends BaseCommand {
       }
 
       for (const artifact of artifacts) {
-        const change = await this.withCloudSdk((cloudSdkAPI) =>
+        const change = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.delete(artifact.id, flags.force)
         );
         await this.withCloudSdk((cloudSdkAPI) =>
@@ -85,6 +85,7 @@ Object.assign(DeleteCommand, {
     },
   ],
   flags: {
+    ...commonFlags.global,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

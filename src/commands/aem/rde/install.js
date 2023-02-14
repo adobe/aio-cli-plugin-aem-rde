@@ -146,7 +146,7 @@ class DeployCommand extends BaseCommand {
     }
 
     try {
-      const change = await this.withCloudSdk((cloudSdkAPI) => {
+      const change = await this.withCloudSdk(flags, (cloudSdkAPI) => {
         const uploadCallbacks = {
           progress: (copiedBytes) => progressBar.update(copiedBytes),
           abort: () => progressBar.stop(),
@@ -253,6 +253,7 @@ Object.assign(DeployCommand, {
     },
   ],
   flags: {
+    ...commonFlags.global,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

@@ -49,17 +49,16 @@ function getBaseUrl() {
 /**
  *
  */
-async function getTokenAndKey() {
+async function getTokenAndKey(imsContextName) {
   let accessToken;
   let apiKey;
 
   try {
-    const contextName = 'aio-cli-plugin-cloudmanager';
-    accessToken = await getToken(contextName);
-    const contextData = await context.get(contextName);
+    accessToken = await getToken(imsContextName);
+    const contextData = await context.get(imsContextName);
     if (!contextData || !contextData.data) {
       throw new configurationCodes.NO_IMS_CONTEXT({
-        messageValues: contextName,
+        messageValues: imsContextName,
       });
     }
     apiKey = contextData.data.client_id;
@@ -88,29 +87,36 @@ async function initSdk() {
 }
 
 class BaseCommand extends Command {
-  constructor(argv, config) {
-    super(argv, config);
-    const programId = Config.get('cloudmanager_programid');
-    const environmentId = Config.get('cloudmanager_environmentid');
-    this._programId = programId;
-    this._environmentId = environmentId;
-  }
-
   async getDeveloperConsoleUrl(programId, environmentId) {
     const sdk = await initSdk();
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
-  async withCloudSdk(fn) {
+  getProgramId(flags) {
+    const programId = flags.programId || Config.get('cloudmanager_programid');
+    if (!programId) {
+      throw new Error('No programId');
+    }
+    return programId;
+  }
+
+  getEnvironmentId(flags) {
+    const environmentId =
+      flags.environmentId || Config.get('cloudmanager_environmentid');
+    if (!environmentId) {
+      throw new Error('No environmentId');
+    }
+    return environmentId;
+  }
+
+  async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-      if (!this._programId) {
-        throw new Error('No programId');
-      }
-      if (!this._environmentId) {
-        throw new Error('No environmentId');
-      }
-      const { accessToken, apiKey } = await getTokenAndKey();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
+      const environmentId = this.getEnvironmentId(flags);
+      const programId = this.getProgramId(flags);
+      const { accessToken, apiKey } = await getTokenAndKey(
+        flags.imsContextName || 'aio-cli-plugin-cloudmanager'
+      );
+      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${programId}-e${environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -119,8 +125,8 @@ class BaseCommand extends Command {
         !cacheEntry.devConsoleUrl
       ) {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
-          this._programId,
-          this._environmentId
+          programId,
+          environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
@@ -142,8 +148,8 @@ class BaseCommand extends Command {
         getCliOrgId(),
         cacheEntry.devConsoleUrl,
         cacheEntry.rdeApiUrl,
-        this._programId,
-        this._environmentId,
+        programId,
+        environmentId,
         accessToken
       );
     }
@@ -157,18 +163,25 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "the programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
-      common: true,
-    }),
+    global: {
+      imsContextName: Flags.string({
+        description:
+          'the alternate IMS context name to use instead of aio-cli-plugin-cloudmanager',
+        common: true,
+      }),
+      programId: Flags.string({
+        char: 'p',
+        description:
+          "the programId. If not specified, defaults to 'cloudmanager_programId' config value",
+        common: true,
+      }),
+      environmentId: Flags.string({
+        char: 'e',
+        description:
+          "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+        common: true,
+      }),
+    },
     target: Flags.string({
       char: 's',
       description:
