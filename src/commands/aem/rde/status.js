@@ -30,6 +30,11 @@ class StatusCommand extends BaseCommand {
         return;
       }
 
+      /* */
+      console.log("status.items");
+      console.log(JSON.stringify(status.items, undefined, 2));
+      /* */
+
       const grouped = groupArtifacts(status.items);
 
       cli.log('- Bundles Author:');
