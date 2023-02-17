@@ -1,6 +1,5 @@
 const assert = require('assert');
-const { groupArtifacts } = require('../../src/lib/rde-utils');
-// const {RdeUtils} = require('../../src/lib/rde-utils.js');
+const RdeUtils = require('../../src/lib/rde-utils.js');
 
 describe('RdeUtils', function () {
   describe('#groupArtifacts', function () {
@@ -20,7 +19,7 @@ describe('RdeUtils', function () {
       "service": "author",
       "type": "osgi-config"
     }];
-    const grouped = groupArtifacts(arts);
+    const grouped = RdeUtils.groupArtifacts(arts);
 
     it('author has 1 bundle and 1 config', function () {
       assert.equal(1, grouped.author['osgi-bundle'].length);
