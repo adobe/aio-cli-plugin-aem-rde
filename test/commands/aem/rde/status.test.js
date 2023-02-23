@@ -1,5 +1,5 @@
 const assert = require('assert');
-const StatusCmd = require('../../../../src/commands/aem/rde/status.js');
+const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 
 const mockCloudSDKAPI = {};
 mockCloudSDKAPI.called = [];
@@ -11,7 +11,7 @@ mockCloudSDKAPI.getArtifacts = function(cursor) {
     result.json = function() {
         const jsres = {};
         jsres.status = "OK";
-        jsres.items = ["a", "b", "c"];
+        jsres.items = [];
         return jsres;
     };
     return result;
@@ -21,9 +21,9 @@ const mockWithCloudSdk = function(fn) {
     return fn(mockCloudSDKAPI);
 }
 
-describe('StatusCmd', function() {
-    describe('#run', async function() {
-        const sc = new StatusCmd();
+describe('StatusCommand', function() {
+    describe('#run empty results', async function() {
+        const sc = new StatusCommand();
         sc.withCloudSdk = mockWithCloudSdk.bind(sc);
 
         sc.run();
@@ -32,4 +32,6 @@ describe('StatusCmd', function() {
             assert.equal("getArtifacts", mockCloudSDKAPI.called[0]);
         });
     });
+
+    // TODO run with actual results
 });
