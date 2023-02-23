@@ -8,7 +8,7 @@ mockCloudSDKAPI.restartEnv = function() {
 }
 
 const mockWithCloudSdk = function(fn) {
-    fn(mockCloudSDKAPI);
+    return fn(mockCloudSDKAPI);
 }
 
 describe('RestartCmd', function() {
@@ -17,7 +17,7 @@ describe('RestartCmd', function() {
         rc.withCloudSdk = mockWithCloudSdk.bind(rc);
         rc.run();
 
-        it('cloudSDKAPI.restartEnv() should have been called', function() {
+        it('cloudSDKAPI.restartEnv() has been called', function() {
             assert.ok(mockCloudSDKAPI.restartEnvCalled);
         });
     });

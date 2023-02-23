@@ -8,7 +8,7 @@ mockCloudSDKAPI.resetEnv = function() {
 }
 
 const mockWithCloudSdk = function(fn) {
-    fn(mockCloudSDKAPI);
+    return fn(mockCloudSDKAPI);
 }
 
 describe('ResetCmd', function() {
@@ -17,7 +17,7 @@ describe('ResetCmd', function() {
         rc.withCloudSdk = mockWithCloudSdk.bind(rc);
 
         rc.run();
-        it('cloudSDKAPI.resetEnv() should have been called', function() {
+        it('cloudSDKAPI.resetEnv() has been called', function() {
             assert.ok(mockCloudSDKAPI.resetEnvCalled);
         });
     });
