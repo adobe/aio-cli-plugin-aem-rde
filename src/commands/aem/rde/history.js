@@ -11,17 +11,17 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class ChangesCommand extends BaseCommand {
   async run() {
-    const { args } = await this.parse(ChangesCommand);
+    const { args, flags } = await this.parse(ChangesCommand);
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
@@ -64,6 +64,9 @@ Object.assign(ChangesCommand, {
       required: false,
     },
   ],
+  flags: {
+    ...commonFlags.global,
+  },
   aliases: [],
 });
 

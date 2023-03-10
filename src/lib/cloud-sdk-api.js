@@ -464,6 +464,10 @@ class CloudSdkAPI {
         )
     );
   }
+
+  getEnvironmentLabel() {
+    return `cm-p${this._programId}-e${this._environmentId}`;
+  }
 }
 
 module.exports = {
