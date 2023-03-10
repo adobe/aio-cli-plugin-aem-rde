@@ -40,6 +40,13 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 3. Run `aio aem:rde:install --help ` for help about a specific command.
 4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 
+## Running unit tests
+
+1. Run `npm run test`
+
+This both runs the mocha-based unit tests as well as produces a test report table at the end.
+A more detailed test report can be found in the `coverage/index.thml` file.
+
 ## Steps for testing local modifications
 
 1. Clone this repository to a folder.
