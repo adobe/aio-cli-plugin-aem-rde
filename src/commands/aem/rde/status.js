@@ -87,12 +87,12 @@ class StatusCommand extends BaseCommand {
         result.statusText = status.BaseCommand;
       } else {
         result.author = {
-          'osgi-bundle': grouped.author['osgi-bundle'],
-          'osgi-config': grouped.publish['osgi-config']
+          'osgiBundles': grouped.author['osgi-bundle'],
+          'osgiConfigs': grouped.publish['osgi-config']
         };
         result.publish = {
-          'osgi-bundle': grouped.author['osgi-bundle'],
-          'osgi-config': grouped.publish['osgi-config']
+          'osgiBundles': grouped.author['osgi-bundle'],
+          'osgiConfigs': grouped.publish['osgi-config']
         };
       }
 

@@ -38,7 +38,7 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 1. Run `aio login`
 2. Run `aio aem:rde` for general help.
 3. Run `aio aem:rde:install --help ` for help about a specific command.
-4. Run `aio aem:rde:status --help` to see if the configured environment can be accessed.
+4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 
 ## Running unit tests
 
