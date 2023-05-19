@@ -78,7 +78,8 @@ async function getTokenAndKey() {
     }
     apiKey = contextData.data.client_id;
   } catch (err) {
-    accessToken = await getToken('cli');
+    // takes the localAccessToken (from dev-console) if set, else get the client ims id
+    accessToken = Config.get('accessToken') || (await getToken('cli'));
     const decodedToken = jwt.decode(accessToken);
     if (!decodedToken) {
       throw new configurationCodes.codes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
