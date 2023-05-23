@@ -67,11 +67,11 @@ async function getTokenAndKey() {
     accessToken = await getToken('cli');
     const decodedToken = jwt.decode(accessToken);
     if (!decodedToken) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      throw new configurationCodes.codes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
     }
     apiKey = decodedToken.client_id;
     if (!apiKey) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+      throw new configurationCodes.codes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
     }
   }
   return { accessToken, apiKey };

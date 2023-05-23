@@ -27,7 +27,10 @@
     "eslint": "^8.33.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "2.8.3"
+    "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
+    "prettier": "2.8.3",
+    "sinon": "15.0"
   },
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
@@ -38,7 +41,8 @@
     "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
   },
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0",
+    "test": "nyc --reporter=text --reporter=html mocha 'test/**/*.test.js'",
+    "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",
     "lint": "eslint src --ext .js"
   },
