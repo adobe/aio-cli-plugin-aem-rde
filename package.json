@@ -42,6 +42,7 @@
   },
   "scripts": {
     "test": "nyc --reporter=text --reporter=html mocha 'test/**/*.test.js'",
+    "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",
     "lint": "eslint src --ext .js"
   },
