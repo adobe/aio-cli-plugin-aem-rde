@@ -17,7 +17,7 @@ const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(StatusCommand);
+    const { flags } = await this.parse(StatusCommand);
     if (flags.json) {
       await this.printAsJson();
     } else {
