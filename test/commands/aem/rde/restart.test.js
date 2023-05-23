@@ -1,24 +1,24 @@
 const assert = require('assert');
 const RestartCommand = require('../../../../src/commands/aem/rde/restart.js');
 
-const mockCloudSDKAPI = {}
+const mockCloudSDKAPI = {};
 mockCloudSDKAPI.restartEnvCalled = false;
-mockCloudSDKAPI.restartEnv = function() {
-    this.restartEnvCalled = true;
-}
+mockCloudSDKAPI.restartEnv = function () {
+  this.restartEnvCalled = true;
+};
 
-const mockWithCloudSdk = function(fn) {
-    return fn(mockCloudSDKAPI);
-}
+const mockWithCloudSdk = function (fn) {
+  return fn(mockCloudSDKAPI);
+};
 
-describe('RestartCommand', function() {
-    describe('#run', async function() {
-        const rc = new RestartCommand();
-        rc.withCloudSdk = mockWithCloudSdk.bind(rc);
-        rc.run();
+describe('RestartCommand', function () {
+  describe('#run', async function () {
+    const rc = new RestartCommand();
+    rc.withCloudSdk = mockWithCloudSdk.bind(rc);
+    rc.run();
 
-        it('cloudSDKAPI.restartEnv() has been called', function() {
-            assert.ok(mockCloudSDKAPI.restartEnvCalled);
-        });
+    it('cloudSDKAPI.restartEnv() has been called', function () {
+      assert.ok(mockCloudSDKAPI.restartEnvCalled);
     });
+  });
 });
