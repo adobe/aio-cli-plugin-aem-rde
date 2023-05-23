@@ -28,13 +28,13 @@ $ aio plugins:update
 The plugin needs to be configured to point to an existing RDE environment as follows:
 
 ```
- $ aio config:set -l cloudmanager_orgid <org-id>
- $ aio config:set -l cloudmanager_programid <program-id>
- $ aio config:set -l cloudmanager_environmentid <env-id>
+ $ aio config:set cloudmanager_orgid <org-id>
+ $ aio config:set cloudmanager_programid <program-id>
+ $ aio config:set cloudmanager_environmentid <env-id>
 ```
 
-The flag `-l` stores the configuration in the local directory (i.e. the config is only effective in the current directory).
-For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
+> **Note**:
+> If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
 
 ## Verifying configuration
 
