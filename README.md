@@ -38,6 +38,34 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 > **Note**:
 > If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
 
+## Configuration for `aio aem rde inspect` commands
+
+### Enable `aio aem rde inspect` commands
+
+Append the following to your `package.json` file:
+
+```
+   "experimental-features": {
+      "aem:rde:inspect": {
+        "description": "Inspects the RapidDev Environments."
+      }
+    }
+```
+
+### Add user access token to the configuration
+
+When calling the commands under the `inspect` topic the plugin needs additional configurations.
+
+1. Go to Skyline Developer Console of your environment: `https://dev-console-ns-team-aem-cm-stg-n0000.ethos00-stage-va7.dev.adobeaemcloud.com/#release-cm-p00000-e000000`
+2. Go to `Integrations` tab.
+3. Go to `Local token` sub-tab and click on `Get Local Development Token` button.
+4. Copy the `accessToken`: `eyJhbGciOiJSUzI1NiIsIng1dSI.....`
+5. Go to terminal and do the following:
+
+```
+$ aio config:set accessToken <past access token here>
+```
+
 ## Verifying configuration
 
 1. Run `aio login`
@@ -45,12 +73,16 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 3. Run `aio aem:rde:install --help ` for help about a specific command.
 4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 
+Only if `inspect` topic is enabled. 
+5. Run `aio aem:rde:inspect --help` to see if the inspect command can be accessed. 
+6. Run `aio aem:rde:inspect:logs` to see if the authorization with the set token works.
+
 ## Running unit tests
 
 1. Run `npm run test`
 
 This both runs the mocha-based unit tests as well as produces a test report table at the end.
-A more detailed test report can be found in the `coverage/index.thml` file.
+A more detailed test report can be found in the `coverage/index.html` file.
 
 ## Steps for testing local modifications
 
