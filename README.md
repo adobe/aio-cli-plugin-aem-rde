@@ -35,6 +35,9 @@ The plugin needs to be configured to point to an existing RDE environment as fol
  $ aio config:set cloudmanager_environmentid <env-id>
 ```
 
+> **Note**:
+> If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
+
 ## Verifying configuration
 
 1. Run `aio login`
