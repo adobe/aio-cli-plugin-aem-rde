@@ -11,12 +11,22 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
+
   async run() {
+    const { args, flags } = await this.parse(StatusCommand);
+    if (flags.json) {
+      await this.printAsJson();
+    } else {
+      await this.printAsText();
+    }
+  }
+
+  async printAsText() {
     try {
       cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('retrieving environment status information');
@@ -57,12 +67,53 @@ class StatusCommand extends BaseCommand {
       cli.log(err);
     }
   }
+
+  async printAsJson() {
+    try {
+
+      const status = await this.withCloudSdk((cloudSdkAPI) =>
+        loadAllArtifacts(cloudSdkAPI)
+      );
+
+      const grouped = groupArtifacts(status.items);
+
+      const result = {
+        programId: this._programId,
+        environmentId: this._environmentId,
+        status: status.status,
+      }
+
+      if (status.error) {
+        result.statusText = status.BaseCommand;
+      } else {
+        result.author = {
+          'osgiBundles': grouped.author['osgi-bundle'],
+          'osgiConfigs': grouped.publish['osgi-config']
+        };
+        result.publish = {
+          'osgiBundles': grouped.author['osgi-bundle'],
+          'osgiConfigs': grouped.publish['osgi-config']
+        };
+      }
+
+      cli.log(JSON.stringify(result));
+    } catch (err) {
+      cli.log(err);
+    }
+  }
 }
 
 Object.assign(StatusCommand, {
   description:
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
+  flags: {
+    json: Flags.boolean({ char: 'j', hidden: false, description: 'output as json' })
+  },
+  usage: [
+    'status              # output as textual content',
+    'status --json       # output as json object'
+  ],
   aliases: [],
 });
 
