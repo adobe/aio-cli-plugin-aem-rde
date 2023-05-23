@@ -1,7 +1,7 @@
 # How to create a release
 
 In order to build a new alpha release and push it to npmjs.com, run the following commands
-                                      
+
     # inside your git clone with the "main" branch checked out
     npm version --preid alpha prerelease
     git push && git push --tags

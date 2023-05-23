@@ -16,7 +16,6 @@ const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
-
   async run() {
     const { args, flags } = await this.parse(StatusCommand);
     if (flags.json) {
@@ -70,7 +69,6 @@ class StatusCommand extends BaseCommand {
 
   async printAsJson() {
     try {
-
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
@@ -81,18 +79,18 @@ class StatusCommand extends BaseCommand {
         programId: this._programId,
         environmentId: this._environmentId,
         status: status.status,
-      }
+      };
 
       if (status.error) {
         result.statusText = status.BaseCommand;
       } else {
         result.author = {
-          'osgiBundles': grouped.author['osgi-bundle'],
-          'osgiConfigs': grouped.publish['osgi-config']
+          osgiBundles: grouped.author['osgi-bundle'],
+          osgiConfigs: grouped.publish['osgi-config'],
         };
         result.publish = {
-          'osgiBundles': grouped.author['osgi-bundle'],
-          'osgiConfigs': grouped.publish['osgi-config']
+          osgiBundles: grouped.author['osgi-bundle'],
+          osgiConfigs: grouped.publish['osgi-config'],
         };
       }
 
@@ -108,11 +106,15 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
-    json: Flags.boolean({ char: 'j', hidden: false, description: 'output as json' })
+    json: Flags.boolean({
+      char: 'j',
+      hidden: false,
+      description: 'output as json',
+    }),
   },
   usage: [
     'status              # output as textual content',
-    'status --json       # output as json object'
+    'status --json       # output as json object',
   ],
   aliases: [],
 });
