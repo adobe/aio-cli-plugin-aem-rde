@@ -1,24 +1,20 @@
 const assert = require('assert');
+const sinon = require('sinon').createSandbox();
 const ResetCommand = require('../../../../src/commands/aem/rde/reset.js');
+const {createCloudSdkAPIStub, setupLogCapturing} = require("./util");
+const {cli} = require("../../../../src/lib/base-command");
 
-const mockCloudSDKAPI = {};
-mockCloudSDKAPI.resetEnvCalled = false;
-mockCloudSDKAPI.resetEnv = function () {
-  this.resetEnvCalled = true;
-};
+describe('ResetCommand', () => {
 
-const mockWithCloudSdk = function (fn) {
-  return fn(mockCloudSDKAPI);
-};
+  setupLogCapturing(sinon, cli);
 
-describe('ResetCommand', function () {
-  describe('#run', async function () {
-    const rc = new ResetCommand();
-    rc.withCloudSdk = mockWithCloudSdk.bind(rc);
-
-    rc.run();
-    it('cloudSDKAPI.resetEnv() has been called', function () {
-      assert.ok(mockCloudSDKAPI.resetEnvCalled);
+  describe('#run', () => {
+    it('cloudSDKAPI.resetEnv() has been called', async () => {
+      let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new ResetCommand([], null), {
+        resetEnv: () => {}
+      })
+      await command.run();
+      assert.ok(cloudSdkApiStub.resetEnv.calledOnce);
     });
   });
 });

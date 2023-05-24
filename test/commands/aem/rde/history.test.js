@@ -1,136 +1,87 @@
 const assert = require('assert');
-const sinon = require('sinon');
+const sinon = require('sinon').createSandbox();
 
 const { cli } = require('../../../../src/lib/base-command');
-const ChangesCommand = require('../../../../src/commands/aem/rde/history.js');
+const HistoryCommand = require('../../../../src/commands/aem/rde/history.js');
+const {setupLogCapturing, createCloudSdkAPIStub} = require("./util");
 
-describe('ChangesCommand', function () {
-  describe('#run', function () {
-    let mockCliLines = '';
 
-    let logStub;
-    before(function () {
-      logStub = sinon.stub(cli, 'log');
-      logStub.callsFake(function (v) {
-        mockCliLines += v + '\n';
-      });
-    });
-    after(function () {
-      logStub.restore();
-    });
-
-    it('The correct changes are reported', async function () {
-      // This is all mock setup for the test
-      const mockCloudSDKAPI = {};
-      mockCloudSDKAPI.getChangesCalled = false;
-      mockCloudSDKAPI.getChanges = function () {
-        this.getChangesCalled = true;
-        const res = {};
-        res.status = 200;
-        res.json = function () {
-          const jsres = {};
-          jsres.items = [
-            {
-              updateId: 6,
-              action: 'install',
-              status: 'OK',
-              metadata: {},
-              timestamps: {},
-            },
-            {
-              updateId: 8,
-              action: 'delete',
-              status: 'OK',
-              metadata: {},
-              timestamps: {},
-            },
-          ];
-          return jsres;
-        };
-        return res;
-      };
-
-      const mockWithCloudSdk = function (fn) {
-        return fn(mockCloudSDKAPI);
-      };
-
-      // The real test starts here
-      const cc1 = new ChangesCommand();
-      cc1.withCloudSdk = mockWithCloudSdk.bind(cc1);
-      cc1.argv = [];
-
-      await cc1.run();
-
-      assert.ok(mockCloudSDKAPI.getChangesCalled);
-      assert.ok(mockCliLines.includes('#6: install OK'));
-      assert.ok(mockCliLines.includes('#8: delete OK'));
-    });
-  });
-});
-
-describe('ChangesCommand2', function () {
-  describe('#run with id', function () {
-    let mockCliLines = '';
-
-    let logStub;
-    before(function () {
-      logStub = sinon.stub(cli, 'log');
-      logStub.callsFake(function (v) {
-        mockCliLines += v + '\n';
-      });
-    });
-    after(function () {
-      logStub.restore();
-    });
-
-    it('called the right remote API methods', async function () {
-      // This is all mock setup for the test
-      const mockCloudSDKAPI = {};
-      mockCloudSDKAPI.called = [];
-      mockCloudSDKAPI.getChange = function (id) {
-        this.called.push('getChange ' + id);
-        const res = {};
-        res.status = 200;
-        res.headers = new Map();
-        res.json = function () {
-          const jsobj = {
-            updateId: 123,
+const stubbedCloudSdkMethods = {
+  getChanges: sinon.fake(() => Object.create({
+    status: 200,
+    json: function() {
+      return {
+        items: [
+          {
+            updateId: 6,
             action: 'install',
             status: 'OK',
             metadata: {},
             timestamps: {},
-          };
-          return jsobj;
-        };
-        return res;
+          },
+          {
+            updateId: 8,
+            action: 'delete',
+            status: 'OK',
+            metadata: {},
+            timestamps: {},
+          },
+        ]
       };
-      mockCloudSDKAPI.getLogs = function (id) {
-        this.called.push('getLogs ' + id);
-        const res = {};
-        res.status = 200;
-        res.text = function () {
-          return 'logline';
-        };
-        return res;
-      };
+    }
+  })),
+  getChange: id => Object.create({
+    status: 200,
+    headers: new Map(),
+    json: () => Object.create({
+      updateId: id,
+      action: 'install',
+      status: 'OK',
+      metadata: {},
+      timestamps: {},
+    })
+  }),
+  getLogs: id => Object.create({
+    status: 200,
+    text: () => 'logline'
+  })
+};
 
-      const mockWithCloudSdk = function (fn) {
-        return fn(mockCloudSDKAPI);
-      };
+describe('HistoryCommand', () => {
 
-      // Test starts here
-      const cc = new ChangesCommand();
-      cc.argv = ['123'];
-      cc.withCloudSdk = mockWithCloudSdk.bind(cc);
+  setupLogCapturing(sinon, cli)
 
-      await cc.run();
+  describe('#run', () => {
+    let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new HistoryCommand([], null), stubbedCloudSdkMethods);
 
-      assert.ok(mockCliLines.includes('123'));
-      assert.ok(mockCliLines.includes('logline'));
+    it('should call getChanges() exactly once', async () => {
+      await command.run();
+      assert.ok(cloudSdkApiStub.getChanges.calledOnce);
+    });
 
-      assert.equal(2, mockCloudSDKAPI.called.length);
-      assert.equal('getChange 123', mockCloudSDKAPI.called[0]);
-      assert.equal('getLogs 123', mockCloudSDKAPI.called[1]);
+    it('should produce the correct log output', async () => {
+      await command.run();
+      assert.equal(cli.log.getCapturedLogOutput(),
+          "#6: install OK - done by undefined at undefined\n" +
+          "#8: delete OK - done by undefined at undefined");
+    });
+  });
+
+  describe('#run with id', () => {
+    let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new HistoryCommand(['123'], null), stubbedCloudSdkMethods);
+
+    it('called the right remote API methods', async () => {
+      await command.run();
+      assert.ok(cloudSdkApiStub.getChange.calledOnce)
+      assert.ok(cloudSdkApiStub.getLogs.calledOnce)
+    });
+
+    it('should produce the correct log output', async () => {
+      await command.run();
+      assert.equal(cli.log.getCapturedLogOutput(),
+          "#123: install OK - done by undefined at undefined\n" +
+          "Logs:\n" +
+          "> logline");
     });
   });
 });
