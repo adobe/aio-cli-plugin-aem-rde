@@ -11,14 +11,10 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  Flags,
-  commonFlags,
-} = require('../../../../lib/base-command');
+const { cli, Flags, commonFlags } = require('../../../../lib/base-command');
+const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
 
-class LogsCommand extends BaseCommand {
+class LogsCommand extends InspectBaseCommand {
   async run() {
     const { flags } = await this.parse(LogsCommand);
     try {

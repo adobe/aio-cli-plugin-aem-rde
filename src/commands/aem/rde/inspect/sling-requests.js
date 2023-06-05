@@ -11,14 +11,14 @@
  */
 'use strict';
 
+const { commonFlags, cli } = require('../../../../lib/base-command');
 const {
-  BaseCommand,
-  cli,
-  commonFlags,
+  inspectCommonFlags,
+  InspectBaseCommand,
   logInJsonArrayFormat,
-} = require('../../../../lib/base-command');
+} = require('../../../../lib/inspect-base-command');
 
-class SlingRequestsCommand extends BaseCommand {
+class SlingRequestsCommand extends InspectBaseCommand {
   async run() {
     const { args, flags } = await this.parse(SlingRequestsCommand);
     try {
@@ -93,8 +93,8 @@ Object.assign(SlingRequestsCommand, {
   ],
   flags: {
     target: commonFlags.target,
-    include: commonFlags.include,
-    output: commonFlags.output,
+    include: inspectCommonFlags.include,
+    output: inspectCommonFlags.output,
   },
 });
 

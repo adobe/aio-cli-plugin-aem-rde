@@ -26,19 +26,6 @@ function getCliOrgId() {
 }
 
 /**
- * @param {object} items - The items displayed in the table.
- */
-function logInJsonArrayFormat(items) {
-  let jsonArray = '[\n';
-  items.forEach((item) => {
-    jsonArray += '  ' + JSON.stringify(item) + ',\n';
-  });
-  jsonArray = jsonArray.slice(0, -2);
-  jsonArray += '\n]';
-  CliUx.ux.log(jsonArray);
-}
-
-/**
  * @param item
  */
 function toJson(item) {
@@ -72,14 +59,13 @@ async function getTokenAndKey() {
     accessToken = await getToken(contextName);
     const contextData = await context.get(contextName);
     if (!contextData || !contextData.data) {
-      throw new configurationCodes.NO_IMS_CONTEXT({
+      throw new configurationCodes.codes.NO_IMS_CONTEXT({
         messageValues: contextName,
       });
     }
     apiKey = contextData.data.client_id;
   } catch (err) {
-    // takes the localAccessToken (from dev-console) if set, else get the client ims id
-    accessToken = Config.get('accessToken') || (await getToken('cli'));
+    accessToken = await getToken('cli');
     const decodedToken = jwt.decode(accessToken);
     if (!decodedToken) {
       throw new configurationCodes.codes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
@@ -194,27 +180,8 @@ module.exports = {
       options: ['author', 'publish'],
       common: true,
     }),
-    scope: Flags.string({
-      description: 'Optional filter for the scope.',
-      multiple: false,
-      required: false,
-      default: 'custom',
-      options: ['custom', 'product'],
-      common: true,
-    }),
-    include: Flags.string({
-      description: 'Optional filter.',
-      multiple: false,
-      required: false,
-      common: true,
-    }),
-    output: Flags.string({
-      char: 'o',
-      description: 'Output format.',
-      multiple: false,
-      required: false,
-      options: ['json'],
-    }),
   },
-  logInJsonArrayFormat,
+  getCliOrgId,
+  getBaseUrl,
+  initSdk,
 };
