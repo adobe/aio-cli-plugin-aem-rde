@@ -72,8 +72,9 @@ describe('HistoryCommand', () => {
 
     it('called the right remote API methods', async () => {
       await command.run();
-      assert.ok(cloudSdkApiStub.getChange.calledOnce)
-      assert.ok(cloudSdkApiStub.getLogs.calledOnce)
+      assert.ok(cloudSdkApiStub.getChange.calledOnceWithExactly('123'));
+      assert.ok(cloudSdkApiStub.getLogs.calledOnceWithExactly('123'));
+      assert.ok(cloudSdkApiStub.getChange.calledBefore(cloudSdkApiStub.getLogs));
     });
 
     it('should produce the correct log output', async () => {
