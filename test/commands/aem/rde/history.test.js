@@ -47,19 +47,19 @@ const stubbedCloudSdkMethods = {
   })
 };
 
-describe('HistoryCommand', () => {
+describe('HistoryCommand', function() {
 
   setupLogCapturing(sinon, cli)
 
-  describe('#run', () => {
+  describe('#run', function() {
     let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new HistoryCommand([], null), stubbedCloudSdkMethods);
 
-    it('should call getChanges() exactly once', async () => {
+    it('should call getChanges() exactly once', async function() {
       await command.run();
       assert.ok(cloudSdkApiStub.getChanges.calledOnce);
     });
 
-    it('should produce the correct log output', async () => {
+    it('should produce the correct log output', async function() {
       await command.run();
       assert.equal(cli.log.getCapturedLogOutput(),
           "#6: install OK - done by undefined at undefined\n" +
@@ -67,17 +67,17 @@ describe('HistoryCommand', () => {
     });
   });
 
-  describe('#run with id', () => {
+  describe('#run with id', function() {
     let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new HistoryCommand(['123'], null), stubbedCloudSdkMethods);
 
-    it('called the right remote API methods', async () => {
+    it('called the right remote API methods', async function() {
       await command.run();
       assert.ok(cloudSdkApiStub.getChange.calledOnceWithExactly('123'));
       assert.ok(cloudSdkApiStub.getLogs.calledOnceWithExactly('123'));
       assert.ok(cloudSdkApiStub.getChange.calledBefore(cloudSdkApiStub.getLogs));
     });
 
-    it('should produce the correct log output', async () => {
+    it('should produce the correct log output', async function() {
       await command.run();
       assert.equal(cli.log.getCapturedLogOutput(),
           "#123: install OK - done by undefined at undefined\n" +

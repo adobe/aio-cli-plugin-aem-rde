@@ -33,19 +33,19 @@ sinon.stub(Config, 'get')
     .withArgs('cloudmanager_programid').returns('12345')
     .withArgs('cloudmanager_environmentid').returns('54321')
 
-describe('StatusCommand', () => {
+describe('StatusCommand', function() {
 
   setupLogCapturing(sinon, cli);
 
-  describe('#run as textual result', () => {
+  describe('#run as textual result', function() {
     let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new StatusCommand([], null), stubbedMethods);
 
-    it('should call getArtifacts() exactly once', async () => {
+    it('should call getArtifacts() exactly once', async function() {
       await command.run();
       assert.equal(cloudSdkApiStub.getArtifacts.calledOnce, true);
     });
 
-    it('should produce the correct textual output', async () => {
+    it('should produce the correct textual output', async function() {
       await command.run();
       assert.equal(cli.log.getCapturedLogOutput(),
           "Info for cm-p12345-e54321\n" +
@@ -58,15 +58,15 @@ describe('StatusCommand', () => {
     });
   });
 
-  describe('#run as json result', () => {
+  describe('#run as json result', function() {
     let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new StatusCommand(['--json'], null), stubbedMethods);
 
-    it('should call getArtifacts() exactly once', async () => {
+    it('should call getArtifacts() exactly once', async function() {
       await command.run();
       assert.equal(cloudSdkApiStub.getArtifacts.calledOnce, true);
     });
 
-    it('should have the expected json result', async () => {
+    it('should have the expected json result', async function() {
       await command.run();
       assert.deepEqual(
         {

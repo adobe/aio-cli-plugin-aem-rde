@@ -4,15 +4,15 @@ const RestartCommand = require('../../../../src/commands/aem/rde/restart.js');
 const {createCloudSdkAPIStub, setupLogCapturing} = require("./util");
 const {cli} = require("../../../../src/lib/base-command");
 
-describe('RestartCommand', () => {
+describe('RestartCommand', function() {
 
   setupLogCapturing(sinon, cli);
 
-  describe('#run', () => {
+  describe('#run', function() {
     let [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, new RestartCommand([], null), {
       restartEnv: () => {}
     });
-    it('cloudSDKAPI.restartEnv() has been called', async () => {
+    it('cloudSDKAPI.restartEnv() has been called', async function() {
       await command.run();
       assert.ok(cloudSdkApiStub.restartEnv.calledOnce);
     });
