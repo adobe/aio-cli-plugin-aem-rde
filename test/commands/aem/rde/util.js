@@ -6,13 +6,11 @@ function setupLogCapturing(sinon, cli) {
         cli.log.getCapturedLogOutput = () => cli.log.getCalls().map(i => i.firstArg).join('\n')
     });
 
-    beforeEach(() => {
-        cli.log.resetHistory();
-    });
+    // Resets the internal state of all fakes created through sandbox, see https://sinonjs.org/releases/latest/sandbox/#sandboxreset
+    beforeEach(sinon.reset);
 
-    after(() => {
-        sinon.restore();
-    });
+    // Restores all fakes created through sandbox, see https://sinonjs.org/releases/latest/sandbox/#sandboxrestore
+    after(sinon.restore);
 }
 
 function createCloudSdkAPIStub(sinon, command, stubbedMethods) {
