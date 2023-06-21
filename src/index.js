@@ -28,12 +28,12 @@ const OsgiServicesCommand = require('./commands/aem/rde/inspect/osgi-services');
 const SlingRequestsCommand = require('./commands/aem/rde/inspect/sling-requests');
 
 module.exports = {
-  'delete': new DeleteCommand().run,
-  'history': new HistoryCommand().run,
-  'install': new InstallCommand().run,
-  'status': new StatusCommand().run,
-  'restart': new RestartCommand().run,
-  'reset': new ResetCommand().run,
+  delete: new DeleteCommand().run,
+  history: new HistoryCommand().run,
+  install: new InstallCommand().run,
+  status: new StatusCommand().run,
+  restart: new RestartCommand().run,
+  reset: new ResetCommand().run,
   'inspect:logs': new LogsCommand().run,
   'inspect:request-logs': new RequestLogsCommand().run,
   'inspect:request-logs:enable': new EnableRequestLogsCommand().run,
@@ -44,4 +44,4 @@ module.exports = {
   'inspect:osgi-configurations': new OsgiConfigurationsCommand().run,
   'inspect:osgi-services': new OsgiServicesCommand().run,
   'inspect:sling-requests': new SlingRequestsCommand().run,
-}
+};

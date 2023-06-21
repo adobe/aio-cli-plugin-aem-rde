@@ -83,8 +83,8 @@ function createProgressBar() {
 async function computeStats(url) {
   switch (url.protocol) {
     case 'http:':
-    case 'https:':
-      const con = await fetch(url, {method: 'HEAD'});
+    case 'https:': {
+      const con = await fetch(url, { method: 'HEAD' });
       const effectiveUrl = con.url ? new URL(con.url) : url;
       return {
         fileSize: parseInt(con.headers.get('content-length')),
@@ -92,7 +92,8 @@ async function computeStats(url) {
         path: effectiveUrl.pathname,
         isLocalFile: false,
       };
-    case 'file:':
+    }
+    case 'file:': {
       const path = fs.realpathSync(url);
       return {
         fileSize: fs.statSync(path).size,
@@ -100,6 +101,7 @@ async function computeStats(url) {
         path,
         isLocalFile: true,
       };
+    }
     default:
       throw new Error(`Unsupported protocol ${url.protocol}`);
   }

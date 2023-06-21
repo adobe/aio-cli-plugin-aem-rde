@@ -131,14 +131,14 @@ class BaseCommand extends Command {
         Config.set(cacheKey, cacheEntry);
       }
       this._cloudSdkAPI = new CloudSdkAPI(
-          `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
-          cacheEntry.devConsoleUrl,
-          cacheEntry.rdeApiUrl,
-          apiKey,
-          orgId,
-          this._programId,
-          this._environmentId,
-          accessToken
+        `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
+        cacheEntry.devConsoleUrl,
+        cacheEntry.rdeApiUrl,
+        apiKey,
+        orgId,
+        this._programId,
+        this._environmentId,
+        accessToken
       );
     }
     return fn(this._cloudSdkAPI);

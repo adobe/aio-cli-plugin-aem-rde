@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
-const { DoRequest } = require("./doRequest");
+const { DoRequest } = require('./doRequest');
 
 const fetch = createFetch();
 
@@ -44,10 +44,16 @@ class CloudSdkAPI {
       accept: 'application/json',
       body: 'blob',
     };
-    this._cloudManagerClient = new DoRequest(cloudManagerUrl, Object.assign({
-      'x-api-key': apiKey,
-      'x-gw-ims-org-id': orgId,
-    }, authorizationHeaders));
+    this._cloudManagerClient = new DoRequest(
+      cloudManagerUrl,
+      Object.assign(
+        {
+          'x-api-key': apiKey,
+          'x-gw-ims-org-id': orgId,
+        },
+        authorizationHeaders
+      )
+    );
     this._devConsoleClient = new DoRequest(devConsoleUrl, authorizationHeaders);
     this._rdeClient = new DoRequest(
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
@@ -58,7 +64,9 @@ class CloudSdkAPI {
 
   async getAemLogs(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/logs${queryString}`
+    );
   }
 
   async getAemLog(serviceName, id) {
@@ -66,7 +74,9 @@ class CloudSdkAPI {
   }
 
   async getAemLogTail(serviceName, id) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs/${id}/tail`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/logs/${id}/tail`
+    );
   }
 
   async createAemLog(serviceName, data) {
@@ -79,40 +89,53 @@ class CloudSdkAPI {
 
   async getRequestLogs(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/request-logs${queryString}`
+    );
   }
 
   async getRequestLog(serviceName, id) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/request-logs/${id}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/request-logs/${id}`
+    );
   }
 
   async enableRequestLogs(serviceName, data) {
-    return await this._rdeClient.doPost(`/runtime/${serviceName}/request-logs`, data);
+    return await this._rdeClient.doPost(
+      `/runtime/${serviceName}/request-logs`,
+      data
+    );
   }
 
   async disableRequestLogs(serviceName) {
-    return await this._rdeClient.doDelete(`/runtime/${serviceName}/request-logs`);
+    return await this._rdeClient.doDelete(
+      `/runtime/${serviceName}/request-logs`
+    );
   }
 
   async getInventories(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/inventory${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/inventory${queryString}`
+    );
   }
 
   async getInventory(serviceName, id) {
     return await this._rdeClient.doGet(
-        `/runtime/${serviceName}/status/inventory/${id}`
+      `/runtime/${serviceName}/status/inventory/${id}`
     );
   }
 
   async getOsgiBundles(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/osgi-bundles${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/osgi-bundles${queryString}`
+    );
   }
 
   async getOsgiBundle(serviceName, id) {
     return await this._rdeClient.doGet(
-        `/runtime/${serviceName}/status/osgi-bundles/${id}`
+      `/runtime/${serviceName}/status/osgi-bundles/${id}`
     );
   }
 
@@ -157,7 +180,9 @@ class CloudSdkAPI {
 
   async getSlingRequests(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/status/sling-requests${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/${serviceName}/status/sling-requests${queryString}`
+    );
   }
 
   async getSlingRequest(serviceName, id) {
@@ -184,10 +209,22 @@ class CloudSdkAPI {
 
   async getArtifacts(cursor) {
     const queryString = this.createUrlQueryStr({ cursor });
-    return await this._rdeClient.doGet(`/runtime/updates/artifacts${queryString}`);
+    return await this._rdeClient.doGet(
+      `/runtime/updates/artifacts${queryString}`
+    );
   }
 
-  async deployFile(fileSize, path, name, type, target, contentPath, force, uploadCallbacks, deploymentCallback) {
+  async deployFile(
+    fileSize,
+    path,
+    name,
+    type,
+    target,
+    contentPath,
+    force,
+    uploadCallbacks,
+    deploymentCallback
+  ) {
     const result = await this._rdeClient.doPost(`/runtime/updates`, {
       service: target,
       fileSize,
@@ -313,13 +350,16 @@ class CloudSdkAPI {
 
   async delete(id, force) {
     const change = await handleRetryAfter(
-      () => this._rdeClient.doDelete(
-        `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
-      ),
+      () =>
+        this._rdeClient.doDelete(
+          `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
+        ),
       (previousResponse) =>
         previousResponse
           .json()
-          .then((json) => this._rdeClient.doGet(`/runtime/updates/${json.updateId}`))
+          .then((json) =>
+            this._rdeClient.doGet(`/runtime/updates/${json.updateId}`)
+          )
     );
     if (change.status === 200) {
       return await change.json();
@@ -367,18 +407,18 @@ class CloudSdkAPI {
   }
 
   async _waitForEnvRunningOrHibernated(namespace) {
-    return await this._waitForEnv(namespace,'running', 'hibernated');
+    return await this._waitForEnv(namespace, 'running', 'hibernated');
   }
 
   async _waitForEnv(namespace, ...allowedStates) {
-    return (
-      await this._waitForJson(
-        (releaseState) => allowedStates.includes(releaseState),
-        async () => {
-          let status = await this._devConsoleClient.doGet(`/api/releases/${namespace}/status`);
-          return status.releases?.status[this._cmReleaseId]?.releaseState;
-        }
-      )
+    return await this._waitForJson(
+      (releaseState) => allowedStates.includes(releaseState),
+      async () => {
+        const status = await this._devConsoleClient.doGet(
+          `/api/releases/${namespace}/status`
+        );
+        return status.releases?.status[this._cmReleaseId]?.releaseState;
+      }
     );
   }
 
