@@ -46,7 +46,7 @@ class DoRequest {
     const url = `${this._baseUrl}${path}`;
     const options = {
       method,
-      headers: Object.create(this._headers)
+      headers: this._headers,
     };
 
     if (body instanceof FormData) {

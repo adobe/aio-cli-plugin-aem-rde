@@ -39,7 +39,7 @@ class CloudSdkAPI {
     environmentId,
     accessToken
   ) {
-    let authorizationHeaders = {
+    const authorizationHeaders = {
       Authorization: `Bearer ${accessToken}`,
       accept: 'application/json',
       body: 'blob',
@@ -49,8 +49,11 @@ class CloudSdkAPI {
       'x-gw-ims-org-id': orgId,
     }, authorizationHeaders));
     this._devConsoleClient = new DoRequest(devConsoleUrl, authorizationHeaders);
-    this._rdeClient = new DoRequest(rdeUrl, authorizationHeaders);
-    this._cmReleaseId = `cm-p${programId}-e${environmentId}`
+    this._rdeClient = new DoRequest(
+      `${rdeUrl}/program/${programId}/environment/${environmentId}`,
+      authorizationHeaders
+    );
+    this._cmReleaseId = `cm-p${programId}-e${environmentId}`;
   }
 
   async getAemLogs(serviceName, params) {

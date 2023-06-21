@@ -16,7 +16,6 @@ const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const configurationCodes = require('../lib/errors');
-const { DoRequest } = require('./doRequest');
 
 /**
  *
@@ -26,25 +25,11 @@ function getCliOrgId() {
 }
 
 /**
- * @param item
- */
-function toJson(item) {
-  let c = item;
-  if (typeof c === 'string') {
-    c = JSON.parse(c);
-  }
-
-  return c;
-}
-
-/**
  *
  */
 function getBaseUrl() {
-  const configStr = Config.get('cloudmanager');
-  return (
-    (configStr && toJson(configStr).base_url) || 'https://cloudmanager.adobe.io'
-  );
+  const configStr = Config.get('cloudmanager.base_url');
+  return configStr || 'https://cloudmanager.adobe.io';
 }
 
 /**
@@ -79,7 +64,8 @@ async function getTokenAndKey() {
 }
 
 /**
- *
+ * @param cloudManagerUrl
+ * @param orgId
  */
 async function initSdk(cloudManagerUrl, orgId) {
   const { accessToken, apiKey } = await getTokenAndKey();
@@ -95,7 +81,12 @@ class BaseCommand extends Command {
     this._environmentId = environmentId;
   }
 
-  async getDeveloperConsoleUrl(cloudManagerUrl, orgId, programId, environmentId) {
+  async getDeveloperConsoleUrl(
+    cloudManagerUrl,
+    orgId,
+    programId,
+    environmentId
+  ) {
     const sdk = await initSdk(cloudManagerUrl, orgId);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
@@ -115,21 +106,21 @@ class BaseCommand extends Command {
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
-          !cacheEntry ||
-          new Date(cacheEntry.expiry).valueOf() < Date.now() ||
-          !cacheEntry.devConsoleUrl
+        !cacheEntry ||
+        new Date(cacheEntry.expiry).valueOf() < Date.now() ||
+        !cacheEntry.devConsoleUrl
       ) {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
-            cloudManagerUrl,
-            orgId,
-            this._programId,
-            this._environmentId
+          cloudManagerUrl,
+          orgId,
+          this._programId,
+          this._environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
         const devConsoleUrl = url.toString();
+        const rdeApiUrl = url.toString();
         url.pathname = '/api/rde';
-        const rdeApiUrl = `${url.toString()}/program/${programId}/environment/${environmentId}`;
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 1); // cache for at most one day
         cacheEntry = {
@@ -163,7 +154,7 @@ module.exports = {
     programId: Flags.string({
       char: 'p',
       description:
-        "the programId. If not specified, defaults to 'cloudmanager_programId' config value",
+        "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
       common: true,
     }),
     environmentId: Flags.string({
@@ -178,6 +169,7 @@ module.exports = {
       multiple: false,
       required: true,
       options: ['author', 'publish'],
+      default: 'author',
       common: true,
     }),
   },

@@ -17,7 +17,6 @@ const {
   BaseCommand,
   getCliOrgId,
   getBaseUrl,
-  initSdk,
   Flags,
   cli,
 } = require('./base-command');
@@ -61,11 +60,6 @@ class InspectBaseCommand extends BaseCommand {
     this._environmentId = Config.get('cloudmanager_environmentid');
   }
 
-  async getDeveloperConsoleUrl(programId, environmentId) {
-    const sdk = await initSdk();
-    return sdk.getDeveloperConsoleUrl(programId, environmentId);
-  }
-
   async withCloudSdk(fn) {
     if (!this._cloudSdkAPI) {
       if (!this._programId) {
@@ -83,7 +77,11 @@ class InspectBaseCommand extends BaseCommand {
         new Date(cacheEntry.expiry).valueOf() < Date.now() ||
         !cacheEntry.devConsoleUrl
       ) {
+        const cloudManagerUrl = getBaseUrl();
+        const orgId = getCliOrgId();
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
+          cloudManagerUrl,
+          orgId,
           this._programId,
           this._environmentId
         );
@@ -103,10 +101,10 @@ class InspectBaseCommand extends BaseCommand {
       }
       this._cloudSdkAPI = new CloudSdkAPI(
         getBaseUrl(),
-        apiKey,
-        getCliOrgId(),
         cacheEntry.devConsoleUrl,
         cacheEntry.rdeApiUrl,
+        apiKey,
+        getCliOrgId(),
         this._programId,
         this._environmentId,
         accessToken
