@@ -119,8 +119,8 @@ class BaseCommand extends Command {
         const url = new URL(developerConsoleUrl);
         url.hash = '';
         const devConsoleUrl = url.toString();
-        const rdeApiUrl = url.toString();
         url.pathname = '/api/rde';
+        const rdeApiUrl = url.toString();
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 1); // cache for at most one day
         cacheEntry = {
