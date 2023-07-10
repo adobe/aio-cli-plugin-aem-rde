@@ -97,16 +97,16 @@ describe('SlingRequestsCommand', function () {
       assert.equal(cloudSdkApiStub.getSlingRequests.calledOnce, true);
     });
 
-    it.skip('should produce the correct textual output for getSlingRequests.', async function () {
+    it('should produce the correct textual output for getSlingRequests.', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        ' ID                 User ID Method Path                                  \n' +
-          ' ────────────────── ─────── ────── ───────────────────────────────────── \n' +
-          ' 0         HEAD   /libs/granite/core/content/login.html \n' +
-          ' 1         HEAD   /libs/granite/core/content/login.html \n' +
-          ' 2         HEAD   /libs/granite/core/content/login.html \n' +
-          ' 3         HEAD   /libs/granite/core/content/login.html \n'
+        '\x1B[1m ID     User ID Method Path                                  \x1B[22m\n' +
+          '\x1B[1m ────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
+          ' 0              HEAD   /libs/granite/core/content/login.html \n' +
+          ' 1              HEAD   /libs/granite/core/content/login.html \n' +
+          ' 2              HEAD   /libs/granite/core/content/login.html \n' +
+          ' 3              HEAD   /libs/granite/core/content/login.html '
       );
     });
   });
@@ -149,13 +149,13 @@ describe('SlingRequestsCommand', function () {
       assert.equal(cloudSdkApiStub.getSlingRequest.calledOnce, true);
     });
 
-    it.skip('should produce the correct textual output', async function () {
+    it('should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        ' ID                 User ID Method Path                                 \n' +
-          '────────────────── ─────── ────── ───────────────────────────────────── \n' +
-          '1         HEAD   /libs/granite/core/content/login.html \n'
+          '\x1B[1m ID                 User ID Method Path                                  \x1B[22m\n' +
+          '\x1B[1m ────────────────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
+          ' 1687361077653-2032         HEAD   /libs/granite/core/content/login.html '
       );
     });
   });

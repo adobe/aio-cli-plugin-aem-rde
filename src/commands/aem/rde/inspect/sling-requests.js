@@ -79,7 +79,7 @@ function logInTableFormat(items) {
     path: {
       minWidth: 7,
     },
-  });
+  }, { printLine: cli.log });
 }
 
 Object.assign(SlingRequestsCommand, {
