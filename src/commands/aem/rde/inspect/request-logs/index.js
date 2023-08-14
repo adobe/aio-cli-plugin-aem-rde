@@ -64,18 +64,22 @@ class RequestLogsCommand extends InspectBaseCommand {
  * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    id: {
-      header: 'ID',
-      minWidth: 20,
+  cli.table(
+    items,
+    {
+      id: {
+        header: 'ID',
+        minWidth: 20,
+      },
+      method: {
+        minWidth: 7,
+      },
+      path: {
+        minWidth: 7,
+      },
     },
-    method: {
-      minWidth: 7,
-    },
-    path: {
-      minWidth: 7,
-    },
-  });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(RequestLogsCommand, {

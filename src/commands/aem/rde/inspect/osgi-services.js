@@ -65,21 +65,25 @@ class OsgiServicesCommand extends InspectBaseCommand {
  * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    id: {
-      header: 'ID',
+  cli.table(
+    items,
+    {
+      id: {
+        header: 'ID',
+      },
+      scope: {
+        minWidth: 7,
+      },
+      bundleId: {
+        header: 'Bundle ID',
+        minWidth: 7,
+      },
+      types: {
+        minWidth: 7,
+      },
     },
-    scope: {
-      minWidth: 7,
-    },
-    bundleId: {
-      header: 'Bundle ID',
-      minWidth: 7,
-    },
-    types: {
-      minWidth: 7,
-    },
-  });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(OsgiServicesCommand, {

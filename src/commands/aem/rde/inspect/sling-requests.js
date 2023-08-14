@@ -65,21 +65,25 @@ class SlingRequestsCommand extends InspectBaseCommand {
  * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    id: {
-      header: 'ID',
-      minWidth: 7,
+  cli.table(
+    items,
+    {
+      id: {
+        header: 'ID',
+        minWidth: 7,
+      },
+      userId: {
+        header: 'User ID',
+      },
+      method: {
+        minWidth: 7,
+      },
+      path: {
+        minWidth: 7,
+      },
     },
-    userId: {
-      header: 'User ID',
-    },
-    method: {
-      minWidth: 7,
-    },
-    path: {
-      minWidth: 7,
-    },
-  }, { printLine: cli.log });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(SlingRequestsCommand, {

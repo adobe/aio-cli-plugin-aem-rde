@@ -64,24 +64,28 @@ class OsgiComponentsCommand extends InspectBaseCommand {
  * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    name: {
-      header: 'NAME',
-      minWidth: 25,
+  cli.table(
+    items,
+    {
+      name: {
+        header: 'NAME',
+        minWidth: 25,
+      },
+      bundleId: {
+        header: 'Bundle ID',
+      },
+      scope: {
+        minWidth: 7,
+      },
+      immediate: {
+        minWidth: 7,
+      },
+      implementationClass: {
+        header: 'Implementation Class',
+      },
     },
-    bundleId: {
-      header: 'Bundle ID',
-    },
-    scope: {
-      minWidth: 7,
-    },
-    immediate: {
-      minWidth: 7,
-    },
-    implementationClass: {
-      header: 'Implementation Class',
-    },
-  });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(OsgiComponentsCommand, {

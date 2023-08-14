@@ -64,15 +64,19 @@ class InventoryCommand extends InspectBaseCommand {
  * @param {object} items - The items displayed as a JSON array.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    format: {
-      minWidth: 7,
+  cli.table(
+    items,
+    {
+      format: {
+        minWidth: 7,
+      },
+      id: {
+        header: 'ID',
+        minWidth: 20,
+      },
     },
-    id: {
-      header: 'ID',
-      minWidth: 20,
-    },
-  });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(InventoryCommand, {

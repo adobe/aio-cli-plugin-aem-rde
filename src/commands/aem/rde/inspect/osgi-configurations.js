@@ -64,11 +64,15 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
  * @param {object} items - The items selectively displayed in the table.
  */
 function logInTableFormat(items) {
-  cli.table(items, {
-    pid: {
-      header: 'PID',
+  cli.table(
+    items,
+    {
+      pid: {
+        header: 'PID',
+      },
     },
-  });
+    { printLine: (s) => cli.log(s) }
+  );
 }
 
 Object.assign(OsgiConfigurationsCommand, {

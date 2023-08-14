@@ -11,6 +11,7 @@ const errorObj = Object.assign(
     statusText: 'Test error message.',
   }
 );
+
 const stubbedThrowErrorMethods = {
   getSlingRequests: () => {
     throw new Error(errorObj.statusText);
@@ -18,11 +19,12 @@ const stubbedThrowErrorMethods = {
 };
 const stubbedErrorMethods = {
   getSlingRequests: () => errorObj,
+  getSlingRequest: () => errorObj,
 };
 
 const stubbedMethods = {
-  getSlingRequest: () =>
-    Object.assign(
+  getSlingRequest: (...args) => {
+    return Object.assign(
       {},
       {
         status: 200,
@@ -31,7 +33,7 @@ const stubbedMethods = {
             {},
             {
               status: 200,
-              id: '1687361077653-2032',
+              id: '1',
               method: 'HEAD',
               path: '/libs/granite/core/content/login.html',
               log:
@@ -43,7 +45,8 @@ const stubbedMethods = {
             }
           ),
       }
-    ),
+    );
+  },
   getSlingRequests: () =>
     Object.assign(
       {},
@@ -85,7 +88,7 @@ const stubbedMethods = {
 describe('SlingRequestsCommand', function () {
   setupLogCapturing(sinon, cli);
 
-  describe('#run as textual result', function () {
+  describe('#run as textual results', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
       new SlingRequestsCommand([], null),
@@ -123,7 +126,7 @@ describe('SlingRequestsCommand', function () {
       assert.equal(cloudSdkApiStub.getSlingRequests.calledOnce, true);
     });
 
-    it('should have the expected json result', async function () {
+    it('should have the expected json array result', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -138,9 +141,10 @@ describe('SlingRequestsCommand', function () {
   });
 
   describe('#run specific (id) sling-request as textual result', function () {
+    const reqId = '1';
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new SlingRequestsCommand(['1'], null),
+      new SlingRequestsCommand([reqId], null),
       stubbedMethods
     );
 
@@ -149,13 +153,18 @@ describe('SlingRequestsCommand', function () {
       assert.equal(cloudSdkApiStub.getSlingRequest.calledOnce, true);
     });
 
+    it('should call the getSlingRequest() with an id argument', async function () {
+      await command.run();
+      assert.equal(cloudSdkApiStub.getSlingRequest.args[0][1], reqId);
+    });
+
     it('should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-          '\x1B[1m ID                 User ID Method Path                                  \x1B[22m\n' +
-          '\x1B[1m ────────────────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
-          ' 1687361077653-2032         HEAD   /libs/granite/core/content/login.html '
+        '\x1B[1m ID     User ID Method Path                                  \x1B[22m\n' +
+          '\x1B[1m ────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
+          ' 1              HEAD   /libs/granite/core/content/login.html '
       );
     });
   });
@@ -165,24 +174,38 @@ describe('SlingRequestsCommand', function () {
       new SlingRequestsCommand(['1', '-o', 'json'], null),
       stubbedMethods
     );
-    // it('should produce the correct json output for a slingRequest', async function () {
-    //   await command.run();
-    //   assert.equal(
-    //     cli.log.getCapturedLogOutput(),
-    //     '      0 TIMER_START{Request Processing}\n' +
-    //       '      2 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>\n' +
-    //       '     17 LOG Method=HEAD, PathInfo=null\n' +
-    //       '   3403 LOG Calling filter: org.apache.sling.security.impl.ContentDispositionFilter\n' +
-    //       '   3408 LOG Calling filter: com.adobe.granite.csrf.impl.CSRFFilter\n'
-    //   );
-    // });
+    it('should produce the correct json output for a slingRequest', async function () {
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        '{\n' +
+          '  "status": 200,\n' +
+          '  "id": "1",\n' +
+          '  "method": "HEAD",\n' +
+          '  "path": "/libs/granite/core/content/login.html",\n' +
+          '  "log": "      0 TIMER_START{Request Processing}\\n      2 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>\\n     17 LOG Method=HEAD, PathInfo=null\\n   3403 LOG Calling filter: org.apache.sling.security.impl.ContentDispositionFilter\\n   3408 LOG Calling filter: com.adobe.granite.csrf.impl.CSRFFilter\\n"\n' +
+          '}'
+      );
+    });
   });
 
-  describe('Handle error cases', function () {
-    it('Should print out a error message when status is not 200.', async function () {
+  describe('#handle error cases', function () {
+    it('Should print out a error message when status is not 200 (all sling requests).', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new SlingRequestsCommand([], null),
+        stubbedErrorMethods
+      );
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        `Error: ${errorObj.status} - ${errorObj.statusText}`
+      );
+    });
+    it('Should print out a error message when status is not 200. (one sling request [id])', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new SlingRequestsCommand(['1'], null),
         stubbedErrorMethods
       );
       await command.run();
