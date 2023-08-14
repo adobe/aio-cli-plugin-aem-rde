@@ -29,19 +29,17 @@ class LogsCommand extends InspectBaseCommand {
           await this.deleteLog(flags.target, json.items[0].id);
         }
         const newLog = await this.createLog(flags);
-        const intervalId = setInterval(async () => {
-          await this.printLogTail(flags.target, newLog.id);
+        const intervalId = setInterval(() => {
+          this.printLogTail(flags.target, newLog.id);
         }, 1500);
 
         // `ctl c` stops displaying the logs
-        process.on('SIGTERM', () => {
+        let listener = () => {
           clearInterval(intervalId);
           this.deleteLog(flags.target, json.items.at(-1)?.id);
-        });
-        process.on('SIGINT', () => {
-          clearInterval(intervalId);
-          this.deleteLog(flags.target, json.items.at(-1)?.id);
-        });
+        };
+        process.once('SIGTERM', listener);
+        process.once('SIGINT', listener);
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
       }

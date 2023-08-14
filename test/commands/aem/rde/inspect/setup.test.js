@@ -6,14 +6,15 @@ const Config = require('@adobe/aio-lib-core-config');
 const { createCloudSdkAPIStub } = require('../util.js');
 
 describe('SetupCommand', function () {
-  before(() => sinon.replace(Config, 'set', sinon.fake()));
+  before(() => {
+    sinon.replace(Config, 'set', sinon.fake());
+    // sets a fix timestamp as 'now'
+    sinon.useFakeTimers({
+      now: 1687612336371,
+    });
+  });
   after(() => sinon.restore());
   beforeEach(() => Config.set.resetHistory());
-
-  // sets a fix timestamp as 'now'
-  sinon.useFakeTimers({
-    now: 1687612336371,
-  });
 
   describe('Check error cases.', function () {
     it('should validate the token and throw error if not valid', async function () {

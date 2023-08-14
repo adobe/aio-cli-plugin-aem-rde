@@ -18,12 +18,12 @@ const stubbedThrowErrorMethods = () => {
 };
 
 const stubbedMethods = {
-  getAemLogs: () =>
+  getAemLogs: async () =>
     Object.assign(
       {},
       {
         status: 200,
-        json: () =>
+        json: async () =>
           Object.create({
             status: 'Ready',
             items: [
@@ -37,16 +37,16 @@ const stubbedMethods = {
           }),
       }
     ),
-  getAemLogTail: () =>
+  getAemLogTail: async () =>
     Object.assign(
       {},
       {
         status: 200,
-        text: () =>
+        text: async () =>
           '11.08.2023 07:55:24.278 *INFO* [898-59] log.request 11/Aug/2023:07:55:24 +0000 [919] TEST',
       }
     ),
-  deleteAemLog: () =>
+  deleteAemLog: async () =>
     Object.assign(
       {},
       {
@@ -65,34 +65,28 @@ const stubbedMethods = {
         //   }),
       }
     ),
-  createAemLog: () =>
+  createAemLog: async () =>
     Object.assign(
       {},
       {
         status: 201,
-        // json: () =>
-        //   Object.create({
-        //     status: 'Ready',
-        //     items: [
-        //       {
-        //         id: '54b981e4-ff38-4dc9-8b05-4c8907b68457',
-        //         names: [{ logger: '', level: 'INFO' }],
-        //         format:
-        //           '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n',
-        //       },
-        //     ],
-        //   }),
+        json: async () =>
+            Object.assign({}, {
+            id: '54b981e4-ff38-4dc9-8b05-4c8907b68457',
+            names: [{ logger: '', level: 'INFO' }],
+            format: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n',
+          }),
       }
-    ),
+    )
 };
 
 const stubbedMethodsToManyAemLogs = {
-  getAemLogs: () =>
+  getAemLogs: async () =>
     Object.assign(
       {},
       {
         status: 200,
-        json: () =>
+        json: async () =>
           Object.create({
             status: 'Ready',
             items: [
@@ -128,13 +122,21 @@ describe('LogsCommand', function () {
   // TODO: How to solve the MaxListenersExceededWarning error?
   // TODO: need to test for SIGTERM as well
   setupLogCapturing(sinon, cli);
+
+  before(() => sinon.useFakeTimers());
+  after(() => sinon.restore())
+  afterEach(() => {
+    // make sure the command exits after each test
+    process.emit('SIGINT');
+  });
+
   describe('#run', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
       new LogsCommand([], null),
       stubbedMethods
     );
-    /** 
+    /**
   //  * if status 200 call getAemlogs once
   //  * if status !200 getaemlogs print error message
   //  * catch a genatall throw
@@ -142,10 +144,8 @@ describe('LogsCommand', function () {
     describe('#getAemLogs', function () {
       it('should be called exactly once', async function () {
         await command.run();
-        // process.on('SIGINT', () => {
+        await sinon.clock.runToLast();
         assert.equal(cloudSdkApiStub.getAemLogs.calledOnce, true);
-        // });
-        // process.emit('SIGINT');
       });
       it('Should catch the throw and print out a error message.', async function () {
         const [command] = createCloudSdkAPIStub(
@@ -154,6 +154,7 @@ describe('LogsCommand', function () {
           { ...stubbedMethods, getAemLogs: stubbedThrowErrorMethods }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
@@ -167,6 +168,7 @@ describe('LogsCommand', function () {
           { ...stubbedMethods, getAemLogs: () => errorObj }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
@@ -174,7 +176,7 @@ describe('LogsCommand', function () {
       });
     });
 
-    /** 
+    /**
   //  * if status 200 call create Logs -> call getAEMlogstail once
      * if status 200 call create Logs -> call getAEMlogstail -> 200 -> print output
   //  * if status 200 call create Logs -> call getAEMlogstail -> !200 -> print error
@@ -182,19 +184,23 @@ describe('LogsCommand', function () {
     describe('#getAemLogTail', function () {
       it('should be called exactly once', async function () {
         await command.run();
-        // process.on('SIGINT', () => {
-        assert.equal(cloudSdkApiStub.getAemLogTail.calledOnce, true);
-        // });
-        // process.emit('SIGINT');
+        await sinon.clock.runToLast();
+        await sinon.clock.runToLast();
+        sinon.assert.callCount(cloudSdkApiStub.getAemLogTail, 2);
+
+        process.emit('SIGINT');
+        sinon.assert.calledOnce(cloudSdkApiStub.deleteAemLog);
       });
       it('Should print out an error message when status is not 200', async function () {
         const [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that is returning 404
-          { ...stubbedMethods, getAemLogTail: () => errorObj }
+          { ...stubbedMethods, getAemLogTail: async () => errorObj }
         );
+        sinon.clock.reset();
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
@@ -202,7 +208,7 @@ describe('LogsCommand', function () {
       });
     });
 
-    /** 
+    /**
   //  * if status 200 call create Logs -> call create AEM logs once
   //  * if status 200 call create Logs -> call create AEM logs -> with right formated body (format, warn, debug, info etc)
      * if status 200 call create Logs -> call create AEM logs -> 201 -> output log
@@ -224,14 +230,13 @@ describe('LogsCommand', function () {
 
       it('should be called exactly once', async function () {
         await command.run();
-        // process.on('SIGINT', () => {
-        assert.equal(cloudSdkApiStub.createAemLog.calledOnce, true);
-        // });
-        // process.emit('SIGINT');
+        await sinon.clock.runToLast();
+        assert.ok(cloudSdkApiStub.createAemLog.calledOnce);
       });
 
       it('should formats the format-args right', async function () {
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cloudSdkApiStub.createAemLog.args[0][1].format,
           '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n'
@@ -240,7 +245,8 @@ describe('LogsCommand', function () {
 
       it('should formats the level/logger args right', async function () {
         await command.run();
-        assert.equal(cloudSdkApiStub.createAemLog.args[0][1].names, [
+        await sinon.clock.runToLast();
+        assert.deepEqual(cloudSdkApiStub.createAemLog.args[0][1].names, [
           { level: 'INFO', logger: arg },
           { level: 'INFO', logger: arg },
           { level: 'DEBUG', logger: arg },
@@ -257,6 +263,7 @@ describe('LogsCommand', function () {
           { ...stubbedMethods, createAemLog: () => errorObj }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
@@ -274,6 +281,7 @@ describe('LogsCommand', function () {
           }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
@@ -291,10 +299,8 @@ describe('LogsCommand', function () {
     describe('#deleteAemLog', function () {
       it('should be called exactly once', async function () {
         await command.run();
-        // process.on('SIGINT', () => {
+        await sinon.clock.runToLast();
         assert.equal(cloudSdkApiStub.deleteAemLog.calledOnce, true);
-        // });
-        // process.emit('SIGINT');
       });
 
       it('Should print out a error message when status is not 200', async function () {
@@ -305,6 +311,7 @@ describe('LogsCommand', function () {
           { ...stubbedMethods, deleteAemLog: () => errorObj }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
@@ -321,6 +328,7 @@ describe('LogsCommand', function () {
           }
         );
         await command.run();
+        await sinon.clock.runToLast();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
@@ -335,11 +343,8 @@ describe('LogsCommand', function () {
         );
 
         await command.run();
-
-        // process.on('SIGINT', () => {
+        sinon.clock.tick(2 * 1500);
         assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 2);
-        // });
-        // process.emit('SIGINT');
       });
     });
   });
