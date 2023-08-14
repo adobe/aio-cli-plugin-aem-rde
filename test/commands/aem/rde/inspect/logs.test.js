@@ -240,7 +240,7 @@ describe('LogsCommand', function () {
 
       it('should formats the level/logger args right', async function () {
         await command.run();
-        assert.equal(cloudSdkApiStub.createAemLog.args[0][1].names, [
+        assert.deepStrictEqual(cloudSdkApiStub.createAemLog.args[0][1].names, [
           { level: 'INFO', logger: arg },
           { level: 'INFO', logger: arg },
           { level: 'DEBUG', logger: arg },
