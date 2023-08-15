@@ -34,9 +34,9 @@ class LogsCommand extends InspectBaseCommand {
         }, 1500);
 
         // `ctl c` stops displaying the logs
-        let listener = () => {
+        const listener = () => {
           clearInterval(intervalId);
-          this.deleteLog(flags.target, json.items.at(-1)?.id);
+          this.deleteLog(flags.target, json.items?.at(-1)?.id);
         };
         process.once('SIGTERM', listener);
         process.once('SIGINT', listener);

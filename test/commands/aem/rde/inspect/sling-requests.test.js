@@ -23,7 +23,7 @@ const stubbedErrorMethods = {
 };
 
 const stubbedMethods = {
-  getSlingRequest: (...args) => {
+  getSlingRequest: () => {
     return Object.assign(
       {},
       {
