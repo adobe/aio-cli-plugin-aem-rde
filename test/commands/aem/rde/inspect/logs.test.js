@@ -110,53 +110,59 @@ const getToManyAemLogs = async () =>
     }
   );
 
+let command, cloudSdkApiStub;
+
 describe('LogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   before(() => sinon.useFakeTimers());
   after(() => sinon.restore());
-  // afterEach(() => {
-  //   // make sure the command exits after each test
-  //   process.emit('SIGINT');
-  // });
+
+  beforeEach(() => {
+    [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new LogsCommand([], null),
+        stubbedMethods
+    );
+  })
+  afterEach(async () => {
+    try {
+      await command.stopAndCleanup()
+    } catch (e) {
+      console.info('Error in afterEach handler', e)
+    }
+  })
 
   describe('#run', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new LogsCommand([], null),
-      stubbedMethods
-    );
-
     describe('#getAemLogs', function () {
       it('should be called exactly once', async function () {
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(cloudSdkApiStub.getAemLogs.calledOnce, true);
-        process.emit('SIGINT');
       });
 
       it('Should catch the throw and print out a error message.', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           { ...stubbedMethods, getAemLogs: stubbedThrowErrorMethods }
         );
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
         );
       });
       it('Should print out an error message when status is not 200', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that is returning 404
           { ...stubbedMethods, getAemLogs: () => errorObj }
         );
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
@@ -167,50 +173,46 @@ describe('LogsCommand', function () {
     describe('#getAemLogTail', function () {
       it('should be called 2 times', async function () {
         await command.run();
-        await sinon.clock.runToLast();
-        await sinon.clock.runToLast();
-        process.emit('SIGINT');
+        await sinon.clock.runToLastAsync();
+        await sinon.clock.runToLastAsync();
         sinon.assert.callCount(cloudSdkApiStub.getAemLogTail, 2);
       });
 
       it('should print out the log tail', async function () {
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           '11.08.2023 07:55:24.278 *INFO* [898-59] log.request 11/Aug/2023:07:55:24 +0000 [919] TEST'
         );
-        process.emit('SIGINT');
       });
 
       it('Should print out an error message when status is not 200', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that is returning 404
           { ...stubbedMethods, getAemLogTail: async () => errorObj }
         );
-        sinon.clock.reset();
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
         );
-        process.emit('SIGINT');
       });
     });
 
     describe('#deleteAemLog', function () {
+
       it('should be called exactly once', async function () {
         await command.run();
-        await sinon.clock.runToLast();
-        process.emit('SIGINT');
-        assert.equal(cloudSdkApiStub.deleteAemLog.calledOnce, true);
+        await command.stopAndCleanup(); // called on SIGINT and SIGTERM
+        assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 1);
       });
 
       it('Should catch the throw and print out a error message.', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that throws an error
@@ -221,9 +223,7 @@ describe('LogsCommand', function () {
         );
 
         await command.run();
-        await sinon.clock.runToLast();
-
-        process.emit('SIGINT');
+        await command.stopAndCleanup();
         assert.equal(
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
@@ -231,23 +231,23 @@ describe('LogsCommand', function () {
       });
 
       it('Should print out a error message when status is not 200', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that is returning 404
           { ...stubbedMethods, deleteAemLog: () => errorObj }
         );
         await command.run();
-        await sinon.clock.runToLast();
-        process.emit('SIGINT');
+        await command.stopAndCleanup();
         assert.equal(
-          cli.log.getCapturedLogOutput(),
-          `Error: ${errorObj.status} - ${errorObj.statusText}`
+            cli.log.getCapturedLogOutput(),
+            `Error: ${errorObj.status} - ${errorObj.statusText}`
         );
+
       });
 
-      it('should be called 2 times when there are more than 2 logs saved', async function () {
-        const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+      it('should be called once for cleanup when there are more than 2 logs saved', async function () {
+        [command, cloudSdkApiStub] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwrites the stbbed method with one that returns more than 2 logs
@@ -255,44 +255,42 @@ describe('LogsCommand', function () {
         );
 
         await command.run();
-        await sinon.clock.runToLast();
-        process.emit('SIGINT');
-        assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 2);
+        assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 1);
       });
     });
     describe('#createAemLog', function () {
       const arg = 'test';
       const format =
-        '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
-      const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new LogsCommand(
-          ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg],
-          null
-        ),
-        stubbedMethods
-      );
+          '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
+
+      beforeEach(() => {
+        [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+            sinon,
+            new LogsCommand(
+                ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg],
+                null
+            ),
+            stubbedMethods
+        );
+      })
 
       it('should be called exactly once', async function () {
         await command.run();
-        await sinon.clock.runToLast();
         assert.ok(cloudSdkApiStub.createAemLog.calledOnce);
-        process.emit('SIGINT');
       });
 
       it('should formats the format-args right', async function () {
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.equal(
           cloudSdkApiStub.createAemLog.args[0][1].format,
           '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n'
         );
-        process.emit('SIGINT');
       });
 
       it('should formats the level/logger args right', async function () {
         await command.run();
-        await sinon.clock.runToLast();
+        await sinon.clock.runToLastAsync();
         assert.deepStrictEqual(cloudSdkApiStub.createAemLog.args[0][1].names, [
           { level: 'INFO', logger: arg },
           { level: 'INFO', logger: arg },
@@ -300,11 +298,10 @@ describe('LogsCommand', function () {
           { level: 'WARN', logger: arg },
           { level: 'ERROR', logger: arg },
         ]);
-        process.emit('SIGINT');
       });
 
       it('Should print out an error message when status is not 201', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that is returning 404
@@ -315,11 +312,10 @@ describe('LogsCommand', function () {
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.status} - ${errorObj.statusText}`
         );
-        process.emit('SIGINT');
       });
 
       it('Should catch the throw and print out a error message.', async function () {
-        const [command] = createCloudSdkAPIStub(
+        [command] = createCloudSdkAPIStub(
           sinon,
           new LogsCommand([], null),
           // overwriting the stubbed method with one that throws an error
@@ -333,7 +329,6 @@ describe('LogsCommand', function () {
           cli.log.getCapturedLogOutput(),
           `Error: ${errorObj.statusText}`
         );
-        process.emit('SIGINT');
       });
     });
   });

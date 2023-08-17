@@ -15,8 +15,22 @@ const { cli, Flags, commonFlags } = require('../../../../lib/base-command');
 const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
 
 class LogsCommand extends InspectBaseCommand {
+
+  intervalId;
+
+  stopped;
+
+  lastItemId;
+
+  flags;
+
+  constructor(argv, config) {
+    super(argv, config);
+  }
+
   async run() {
     const { flags } = await this.parse(LogsCommand);
+    this.flags = flags || {};
     try {
       const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.getAemLogs(flags.target, {})
@@ -29,17 +43,15 @@ class LogsCommand extends InspectBaseCommand {
           await this.deleteLog(flags.target, json.items[0].id);
         }
         const newLog = await this.createLog(flags);
-        const intervalId = setInterval(() => {
+        this.intervalId = setInterval(() => {
           this.printLogTail(flags.target, newLog.id);
         }, 1500);
 
+        this.lastItemId = json.items?.at(-1)?.id
+
         // `ctl c` stops displaying the logs
-        const listener = () => {
-          clearInterval(intervalId);
-          this.deleteLog(flags.target, json.items?.at(-1)?.id);
-        };
-        process.once('SIGTERM', listener);
-        process.once('SIGINT', listener);
+        process.on('SIGTERM', this.stopAndCleanup);
+        process.on('SIGINT', this.stopAndCleanup);
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
       }
@@ -47,6 +59,17 @@ class LogsCommand extends InspectBaseCommand {
       cli.log(err);
     }
   }
+
+
+  async stopAndCleanup() {
+    if (!this.stopped) {
+      this.stopped = true;
+      process.removeListener('SIGINT', () => this.stopAndCleanup());
+      process.removeListener('SIGTERM', () => this.stopAndCleanup());
+      clearInterval(this.intervalId);
+      await this.deleteLog(this.flags.target, this.lastItemId);
+    }
+  };
 
   async deleteLog(target, id) {
     try {
