@@ -56,14 +56,14 @@ Append the following to your `package.json` file:
 
 When calling the commands under the `inspect` topic the plugin needs additional configurations.
 
-1. Go to Skyline Developer Console of your environment: `https://dev-console-ns-team-aem-cm-stg-n0000.ethos00-stage-va7.dev.adobeaemcloud.com/#release-cm-p00000-e000000`
+1. Go to Skyline Developer Console of your environment: `https://dev-console-ns-team-aem-cm-stg-n0000.ethos00-stage-va7.dev.adobeaemcloud.com/#release-cm-p00000-e000000` or use the `aio cloudmanager:environment:open-developer-console` command
 2. Go to _Integrations_ tab.
 3. Go to _Local token_ sub-tab and click on _Get Local Development Token_ button.
 4. Copy the _accessToken_: `eyJhbGciOiJSUzI1NiIsIng1dSI.....`
 5. Go to terminal and do the following:
 
 ```
-$ aio config:set accessToken <paste access token here>
+$ aio aem rde inspect setup <paste access token here>
 ```
 
 ## Verifying configuration
@@ -73,9 +73,9 @@ $ aio config:set accessToken <paste access token here>
 3. Run `aio aem:rde:install --help ` for help about a specific command.
 4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 
-Only if `inspect` topic is enabled.
+Only if `inspect` topic is [enabled](#configuration-for-aio-aem-rde-inspect-commands).
 
-5. Run `aio aem:rde:inspect --help` to see if the inspect command can be accessed. 
+5. Run `aio aem:rde:inspect --help` to see if the inspect command can be accessed.
 6. Run `aio aem:rde:inspect:logs` to see if the authorization with the set token works.
 
 ## Running unit tests

@@ -33,8 +33,8 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
         });
         body.includePathPatterns = includePathPatternsArray;
       }
-      // TODO: need to check with julian if this is really needed or not?
       // check if there are values for the name key
+      // formats the flags in the right way to pass them to the request
       if (flags.info || flags.debug || flags.warn || flags.error) {
         const namesArray = [];
         flags.info?.forEach((logger) => {

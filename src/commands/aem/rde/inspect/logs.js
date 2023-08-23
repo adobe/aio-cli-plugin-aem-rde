@@ -15,19 +15,6 @@ const { cli, Flags, commonFlags } = require('../../../../lib/base-command');
 const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
 
 class LogsCommand extends InspectBaseCommand {
-
-  intervalId;
-
-  stopped;
-
-  lastItemId;
-
-  flags;
-
-  constructor(argv, config) {
-    super(argv, config);
-  }
-
   async run() {
     const { flags } = await this.parse(LogsCommand);
     this.flags = flags || {};
@@ -39,19 +26,22 @@ class LogsCommand extends InspectBaseCommand {
       if (response.status === 200) {
         const json = await response.json();
 
+        // The log amount is limited to 3
         if (json.items?.length >= 3) {
           await this.deleteLog(flags.target, json.items[0].id);
         }
         const newLog = await this.createLog(flags);
-        this.intervalId = setInterval(() => {
-          this.printLogTail(flags.target, newLog.id);
+
+        // The logs are displayed continuously until they are cancelled with `ctl c`.
+        this.intervalId = setInterval(async () => {
+          await this.printLogTail(flags.target, newLog.id);
         }, 1500);
 
-        this.lastItemId = json.items?.at(-1)?.id
+        this.lastItemId = json.items?.at(-1)?.id;
 
         // `ctl c` stops displaying the logs
-        process.on('SIGTERM', this.stopAndCleanup);
-        process.on('SIGINT', this.stopAndCleanup);
+        process.removeListener('SIGINT', this.stopAndCleanup);
+        process.removeListener('SIGTERM', this.stopAndCleanup);
       } else {
         cli.log(`Error: ${response.status} - ${response.statusText}`);
       }
@@ -59,7 +49,6 @@ class LogsCommand extends InspectBaseCommand {
       cli.log(err);
     }
   }
-
 
   async stopAndCleanup() {
     if (!this.stopped) {
@@ -69,7 +58,7 @@ class LogsCommand extends InspectBaseCommand {
       clearInterval(this.intervalId);
       await this.deleteLog(this.flags.target, this.lastItemId);
     }
-  };
+  }
 
   async deleteLog(target, id) {
     try {
@@ -92,6 +81,7 @@ class LogsCommand extends InspectBaseCommand {
         body.format = flags.format;
       }
       // check if there are values for the name key
+      // formats the flags in the right way to pass them to the request
       if (flags.info || flags.debug || flags.warn || flags.error) {
         const namesArray = [];
         flags?.info?.forEach((logger) => {

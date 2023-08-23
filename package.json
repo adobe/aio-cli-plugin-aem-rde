@@ -64,9 +64,6 @@
       "aem:rde": {
         "description": "Interact with RapidDev Environments."
       }
-    },
-    "experimental-features": [
-      "aem:rde:inspect"
-    ]
+    }
   }
 }

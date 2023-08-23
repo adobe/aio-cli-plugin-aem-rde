@@ -29,7 +29,7 @@ class RequestLogsCommand extends InspectBaseCommand {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getRequestLogs(flags.target, params)
         );
-        if (response.status === 200) {
+        if (response?.status === 200) {
           const json = await response.json();
           if (flags.output === 'json') {
             logInJsonArrayFormat(json?.items);
@@ -43,7 +43,7 @@ class RequestLogsCommand extends InspectBaseCommand {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getRequestLog(flags.target, args.id)
         );
-        if (response.status === 200) {
+        if (response?.status === 200) {
           const requestLog = await response.json();
           if (flags.output === 'json') {
             cli.log(JSON.stringify(requestLog, null, 2));

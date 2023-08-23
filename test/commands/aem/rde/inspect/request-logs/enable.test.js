@@ -35,7 +35,7 @@ const stubbedMethods = {
 describe('EnableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
-  describe('#check if arguments get passed right', function () {
+  describe('#enableRequestLogs', function () {
     const arg = 'test';
     const format =
       '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
@@ -66,7 +66,7 @@ describe('EnableRequestLogsCommand', function () {
       stubbedMethods
     );
 
-    it('should pass the includePathPatterns right', async function () {
+    it('Should pass the includePathPatterns in the right format', async function () {
       await command.run();
       assert.deepStrictEqual(
         cloudSdkApiStub.enableRequestLogs.args[0][1].includePathPatterns,
@@ -74,7 +74,7 @@ describe('EnableRequestLogsCommand', function () {
       );
     });
 
-    it('should formats the format-args right', async function () {
+    it('Should pass the format-args in the right format', async function () {
       await command.run();
       assert.equal(
         cloudSdkApiStub.enableRequestLogs.args[0][1].format,
@@ -82,7 +82,7 @@ describe('EnableRequestLogsCommand', function () {
       );
     });
 
-    it('should formats the level/logger args right', async function () {
+    it('Should pass the level/logger args in the right format', async function () {
       await command.run();
       assert.deepStrictEqual(
         cloudSdkApiStub.enableRequestLogs.args[0][1].names,
@@ -96,18 +96,16 @@ describe('EnableRequestLogsCommand', function () {
       );
     });
 
-    it('should call enableRequestLogs() exactly once', async function () {
+    it('Should be called exactly once', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.enableRequestLogs.calledOnce, true);
     });
 
-    it('should produce the correct textual output for enableRequestLogs.', async function () {
+    it('Should produce the correct textual output.', async function () {
       await command.run();
       assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs enabled.');
     });
-  });
 
-  describe('#handle error cases', function () {
     it('Should print out a error message when status is not 200.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,

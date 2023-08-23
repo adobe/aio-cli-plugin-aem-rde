@@ -12,14 +12,8 @@ const errorObj = Object.assign(
   }
 );
 
-const stubbedThrowErrorMethods = {
-  getRequestLogs: () => {
-    throw new Error(errorObj.statusText);
-  },
-};
-const stubbedErrorMethods = {
-  getRequestLogs: () => errorObj,
-  getRequestLog: () => errorObj,
+const stubbedThrowErrorMethod = () => {
+  throw new Error(errorObj.statusText);
 };
 
 const stubbedMethods = {
@@ -83,19 +77,19 @@ const stubbedMethods = {
 describe('RequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
-  describe('#run as textual results', function () {
+  describe('#getRequestLogs', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
       new RequestLogsCommand([], null),
       stubbedMethods
     );
 
-    it('should call getRequestLogs() exactly once', async function () {
+    it('Should be called exactly once', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getRequestLogs.calledOnce, true);
     });
 
-    it('should produce the correct textual output for getRequestLogs.', async function () {
+    it('Should produce the correct textual output.', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -107,21 +101,13 @@ describe('RequestLogsCommand', function () {
           ' 3                   HEAD   /libs/login.html '
       );
     });
-  });
 
-  describe('#run as json result for getRequestLogs.', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new RequestLogsCommand(['-o', 'json'], null),
-      stubbedMethods
-    );
-
-    it('should call getRequestLogs() exactly once', async function () {
-      await command.run();
-      assert.equal(cloudSdkApiStub.getRequestLogs.calledOnce, true);
-    });
-
-    it('should have the expected json array result', async function () {
+    it('Should have the expected json array result.', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand(['-o', 'json'], null),
+        stubbedMethods
+      );
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -133,9 +119,38 @@ describe('RequestLogsCommand', function () {
           ']'
       );
     });
+
+    it('Should print out a error message when status is not 200', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand([], null),
+        { ...stubbedMethods, getRequestLogs: () => errorObj }
+      );
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        `Error: ${errorObj.status} - ${errorObj.statusText}`
+      );
+    });
+
+    it('Should catch a throw and print out a error message.', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand([], null),
+        {
+          ...stubbedMethods,
+          getRequestLogs: stubbedThrowErrorMethod,
+        }
+      );
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        `Error: ${errorObj.statusText}`
+      );
+    });
   });
 
-  describe('#run specific (id) request-log as textual result', function () {
+  describe('#getRequestLog', function () {
     const reqId = '0';
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
@@ -143,17 +158,17 @@ describe('RequestLogsCommand', function () {
       stubbedMethods
     );
 
-    it('should call getRequestLog() exactly once', async function () {
+    it('Should be called exactly once.', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getRequestLog.calledOnce, true);
     });
 
-    it('should call the getRequestLog() with an id argument', async function () {
+    it('Should be called with an id argument.', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getRequestLog.args[0][1], reqId);
     });
 
-    it('should produce the correct textual output', async function () {
+    it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -162,14 +177,14 @@ describe('RequestLogsCommand', function () {
           ' 0                   HEAD   /libs/test.html '
       );
     });
-  });
-  describe('#run specific (id) request-log as json result', function () {
-    const [command] = createCloudSdkAPIStub(
-      sinon,
-      new RequestLogsCommand(['0', '-o', 'json'], null),
-      stubbedMethods
-    );
-    it('should produce the correct json output for a request-log', async function () {
+
+    it('Should produce the correct json output.', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand(['0', '-o', 'json'], null),
+        stubbedMethods
+      );
+
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -188,26 +203,12 @@ describe('RequestLogsCommand', function () {
           '}'
       );
     });
-  });
 
-  describe('#handle error cases', function () {
-    it('Should print out a error message when status is not 200 (all request-logs).', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand([], null),
-        stubbedErrorMethods
-      );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
-    });
-    it('Should print out a error message when status is not 200. (one request-log [id])', async function () {
+    it('Should print out a error message when status is not 200.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new RequestLogsCommand(['1'], null),
-        stubbedErrorMethods
+        { ...stubbedMethods, getRequestLog: () => errorObj }
       );
       await command.run();
       assert.equal(
@@ -219,8 +220,11 @@ describe('RequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand([], null),
-        stubbedThrowErrorMethods
+        new RequestLogsCommand(['1'], null),
+        {
+          ...stubbedMethods,
+          getRequestLog: stubbedThrowErrorMethod,
+        }
       );
       await command.run();
       assert.equal(

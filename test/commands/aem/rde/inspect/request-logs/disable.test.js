@@ -38,25 +38,23 @@ const stubbedMethods = {
 describe('DisableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
-  describe('# Disable request logs.', function () {
+  describe('#disableRequestLogs', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
       new DisableRequestLogsCommand([], null),
       stubbedMethods
     );
 
-    it('should call disableRequestLogs() exactly once', async function () {
+    it('Should be called exactly once', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.disableRequestLogs.calledOnce, true);
     });
 
-    it('should return a message to the console if the disable action was successful', async function () {
+    it('Should return a message to the console if the disable action was successful', async function () {
       await command.run();
       assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs disabled.');
     });
-  });
 
-  describe('#handle error cases', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,

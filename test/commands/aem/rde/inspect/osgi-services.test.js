@@ -12,14 +12,8 @@ const errorObj = Object.assign(
   }
 );
 
-const stubbedThrowErrorMethods = {
-  getOsgiServices: () => {
-    throw new Error(errorObj.statusText);
-  },
-};
-const stubbedErrorMethods = {
-  getOsgiServices: () => errorObj,
-  getOsgiService: () => errorObj,
+const stubbedThrowErrorMethod = () => {
+  throw new Error(errorObj.statusText);
 };
 
 const stubbedMethods = {
@@ -111,19 +105,19 @@ const stubbedMethods = {
 describe('OsgiServicesCommand', function () {
   setupLogCapturing(sinon, cli);
 
-  describe('#run as textual results', function () {
+  describe('#getOsgiServices', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
       new OsgiServicesCommand([], null),
       stubbedMethods
     );
 
-    it('should call getOsgiServices() exactly once', async function () {
+    it('Should be called exactly once', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getOsgiServices.calledOnce, true);
     });
 
-    it('should produce the correct textual output for getOsgiServices.', async function () {
+    it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -134,30 +128,55 @@ describe('OsgiServicesCommand', function () {
           " 2  bundle 2         [ 'com.adobe.cq.dam.bla.bli.blu' ] "
       );
     });
-  });
 
-  describe('#run as json result for getOsgiServices.', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiServicesCommand(['-o', 'json'], null),
-      stubbedMethods
-    );
-
-    it('should call getOsgiServices() exactly once', async function () {
-      await command.run();
-      assert.equal(cloudSdkApiStub.getOsgiServices.calledOnce, true);
-    });
-
-    it('should have the expected json array result', async function () {
+    it('Should have the expected json array result', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiServicesCommand(['-o', 'json'], null),
+        stubbedMethods
+      );
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
         '[{"id":0,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":0,"properties":{"component.id":0,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":0},"usingBundles":[0]},{"id":1,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":1,"properties":{"component.id":1,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":1},"usingBundles":[1]},{"id":2,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":2,"properties":{"component.id":2,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":2},"usingBundles":[2]}]'
       );
     });
+
+    it('Should print out a error message when status is not 200', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiServicesCommand([], null),
+        {
+          ...stubbedMethods,
+          getOsgiServices: () => errorObj,
+        }
+      );
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        `Error: ${errorObj.status} - ${errorObj.statusText}`
+      );
+    });
+
+    it('Should catch a throw and print out a error message.', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiServicesCommand([], null),
+
+        {
+          ...stubbedMethods,
+          getOsgiServices: stubbedThrowErrorMethod,
+        }
+      );
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        `Error: ${errorObj.statusText}`
+      );
+    });
   });
 
-  describe('#run specific (id) osgi-service as textual result', function () {
+  describe('#getOsgiService', function () {
     const reqId = '0';
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
@@ -165,17 +184,17 @@ describe('OsgiServicesCommand', function () {
       stubbedMethods
     );
 
-    it('should call getOsgiService() exactly once', async function () {
+    it('Should be called exactly once', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getOsgiService.calledOnce, true);
     });
 
-    it('should call the getOsgiService() with an id argument', async function () {
+    it('Should be called with an id argument', async function () {
       await command.run();
       assert.equal(cloudSdkApiStub.getOsgiService.args[0][1], reqId);
     });
 
-    it('should produce the correct textual output', async function () {
+    it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -184,14 +203,13 @@ describe('OsgiServicesCommand', function () {
           " 0  bundle 0         [ 'com.adobe.cq.dam.bla.bli.blu' ] "
       );
     });
-  });
-  describe('#run specific (id) osgi-service as json result', function () {
-    const [command] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiServicesCommand(['0', '-o', 'json'], null),
-      stubbedMethods
-    );
-    it('should produce the correct json output for a osgi service', async function () {
+
+    it('Should produce the correct json output for a osgi service', async function () {
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiServicesCommand(['0', '-o', 'json'], null),
+        stubbedMethods
+      );
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
@@ -214,26 +232,15 @@ describe('OsgiServicesCommand', function () {
           '}'
       );
     });
-  });
 
-  describe('#handle error cases', function () {
-    it('Should print out a error message when status is not 200 (all osgi-services).', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new OsgiServicesCommand([], null),
-        stubbedErrorMethods
-      );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
-    });
-    it('Should print out a error message when status is not 200. (one osgi-service [id])', async function () {
+    it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new OsgiServicesCommand(['1'], null),
-        stubbedErrorMethods
+        {
+          ...stubbedMethods,
+          getOsgiService: () => errorObj,
+        }
       );
       await command.run();
       assert.equal(
@@ -245,8 +252,12 @@ describe('OsgiServicesCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiServicesCommand([], null),
-        stubbedThrowErrorMethods
+        new OsgiServicesCommand(['1'], null),
+
+        {
+          ...stubbedMethods,
+          getOsgiService: stubbedThrowErrorMethod,
+        }
       );
       await command.run();
       assert.equal(
