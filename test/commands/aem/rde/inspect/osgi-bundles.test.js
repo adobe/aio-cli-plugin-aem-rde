@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const OsgiBundlesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-bundles');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -113,10 +114,16 @@ describe('OsgiBundlesCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID                  Name          Version State  State String Start Level \x1B[22m\n' +
-          '\x1B[1m ─────────────────── ───────────── ─────── ────── ──────────── ─────────── \x1B[22m\n' +
-          ' 0                   System Bundle 7.0.1   3      active       0           \n' +
-          ' 1                   test          0.0.1   1      active       1           '
+        [
+          chalk.bold(
+            ' ID                  Name          Version State  State String Start Level '
+          ),
+          chalk.bold(
+            ' ─────────────────── ───────────── ─────── ────── ──────────── ─────────── '
+          ),
+          ' 0                   System Bundle 7.0.1   3      active       0           ',
+          ' 1                   test          0.0.1   1      active       1           ',
+        ].join('\n')
       );
     });
 
@@ -185,9 +192,15 @@ describe('OsgiBundlesCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID                  Name   Version State  State String Start Level \x1B[22m\n' +
-          '\x1B[1m ─────────────────── ────── ─────── ────── ──────────── ─────────── \x1B[22m\n' +
-          ' 1                   test   0.0.1   1      active       1           '
+        [
+          chalk.bold(
+            ' ID                  Name   Version State  State String Start Level '
+          ),
+          chalk.bold(
+            ' ─────────────────── ────── ─────── ────── ──────────── ─────────── '
+          ),
+          ' 1                   test   0.0.1   1      active       1           ',
+        ].join('\n')
       );
     });
 

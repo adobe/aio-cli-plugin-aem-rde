@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const OsgiComponentsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-components');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -150,10 +151,16 @@ describe('OsgiComponentsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m NAME                     Bundle ID Scope     Immediate Implementation Class     \x1B[22m\n' +
-          '\x1B[1m ──────────────────────── ───────── ───────── ───────── ──────────────────────── \x1B[22m\n' +
-          ' com.day.cq.wcm.core.test 1         singleton false     com.day.cq.wcm.core.test \n' +
-          ' org.apache.sling.test    2         singleton false     org.apache.sling.test    '
+        [
+          chalk.bold(
+            ' NAME                     Bundle ID Scope     Immediate Implementation Class     '
+          ),
+          chalk.bold(
+            ' ──────────────────────── ───────── ───────── ───────── ──────────────────────── '
+          ),
+          ' com.day.cq.wcm.core.test 1         singleton false     com.day.cq.wcm.core.test ',
+          ' org.apache.sling.test    2         singleton false     org.apache.sling.test    ',
+        ].join('\n')
       );
     });
 
@@ -222,9 +229,15 @@ describe('OsgiComponentsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m NAME                     Bundle ID Scope     Immediate Implementation Class            \x1B[22m\n' +
-          '\x1B[1m ──────────────────────── ───────── ───────── ───────── ─────────────────────────────── \x1B[22m\n' +
-          ' com.adobe.test           1         singleton false     com.adobe.granite.workflow.test '
+        [
+          chalk.bold(
+            ' NAME                     Bundle ID Scope     Immediate Implementation Class            '
+          ),
+          chalk.bold(
+            ' ──────────────────────── ───────── ───────── ───────── ─────────────────────────────── '
+          ),
+          ' com.adobe.test           1         singleton false     com.adobe.granite.workflow.test ',
+        ].join('\n')
       );
     });
 

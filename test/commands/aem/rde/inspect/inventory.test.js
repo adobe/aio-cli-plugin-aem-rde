@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const Inventory = require('../../../../../src/commands/aem/rde/inspect/inventory');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -74,11 +75,13 @@ describe('Inventory', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        ' Format ID                  \n' +
-          ' ────── ─────────────────── \n' +
-          ' TEXT   test1               \n' +
-          ' TEXT   test2               \n' +
-          ' TEXT   test3               '
+        [
+          chalk.bold(' Format ID                  '),
+          chalk.bold(' ────── ─────────────────── '),
+          ' TEXT   test1               ',
+          ' TEXT   test2               ',
+          ' TEXT   test3               ',
+        ].join('\n')
       );
     });
 
@@ -151,9 +154,11 @@ describe('Inventory', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m Format ID                  \x1B[22m\n' +
-          '\x1B[1m ────── ─────────────────── \x1B[22m\n' +
-          ' TEXT   test                '
+        [
+          chalk.bold(' Format ID                  '),
+          chalk.bold(' ────── ─────────────────── '),
+          ' TEXT   test                ',
+        ].join('\n')
       );
     });
 

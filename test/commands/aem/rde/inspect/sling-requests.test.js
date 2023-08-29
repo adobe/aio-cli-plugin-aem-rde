@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const SlingRequestsCommand = require('../../../../../src/commands/aem/rde/inspect/sling-requests');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -98,12 +99,19 @@ describe('SlingRequestsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID     User ID Method Path                                  \x1B[22m\n' +
-          '\x1B[1m ────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
-          ' 0              HEAD   /libs/granite/core/content/login.html \n' +
-          ' 1              HEAD   /libs/granite/core/content/login.html \n' +
-          ' 2              HEAD   /libs/granite/core/content/login.html \n' +
-          ' 3              HEAD   /libs/granite/core/content/login.html '
+
+        [
+          chalk.bold(
+            ' ID     User ID Method Path                                  '
+          ),
+          chalk.bold(
+            ' ────── ─────── ────── ───────────────────────────────────── '
+          ),
+          ' 0              HEAD   /libs/granite/core/content/login.html ',
+          ' 1              HEAD   /libs/granite/core/content/login.html ',
+          ' 2              HEAD   /libs/granite/core/content/login.html ',
+          ' 3              HEAD   /libs/granite/core/content/login.html ',
+        ].join('\n')
       );
     });
 
@@ -177,9 +185,15 @@ describe('SlingRequestsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID     User ID Method Path                                  \x1B[22m\n' +
-          '\x1B[1m ────── ─────── ────── ───────────────────────────────────── \x1B[22m\n' +
-          ' 1              HEAD   /libs/granite/core/content/login.html '
+        [
+          chalk.bold(
+            ' ID     User ID Method Path                                  '
+          ),
+          chalk.bold(
+            ' ────── ─────── ────── ───────────────────────────────────── '
+          ),
+          ' 1              HEAD   /libs/granite/core/content/login.html ',
+        ].join('\n')
       );
     });
 

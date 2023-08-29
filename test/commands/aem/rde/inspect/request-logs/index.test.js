@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const RequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs');
 const { cli } = require('../../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -93,12 +94,14 @@ describe('RequestLogsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID                  Method Path             \x1B[22m\n' +
-          '\x1B[1m ─────────────────── ────── ──────────────── \x1B[22m\n' +
-          ' 0                   GET    /metrics         \n' +
-          ' 1                   HEAD   /libs/login.html \n' +
-          ' 2                   GET    /metrics         \n' +
-          ' 3                   HEAD   /libs/login.html '
+        [
+          chalk.bold(' ID                  Method Path             '),
+          chalk.bold(' ─────────────────── ────── ──────────────── '),
+          ' 0                   GET    /metrics         ',
+          ' 1                   HEAD   /libs/login.html ',
+          ' 2                   GET    /metrics         ',
+          ' 3                   HEAD   /libs/login.html ',
+        ].join('\n')
       );
     });
 
@@ -172,9 +175,11 @@ describe('RequestLogsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID                  Method Path            \x1B[22m\n' +
-          '\x1B[1m ─────────────────── ────── ─────────────── \x1B[22m\n' +
-          ' 0                   HEAD   /libs/test.html '
+        [
+          chalk.bold(' ID                  Method Path            '),
+          chalk.bold(' ─────────────────── ────── ─────────────── '),
+          ' 0                   HEAD   /libs/test.html ',
+        ].join('\n')
       );
     });
 

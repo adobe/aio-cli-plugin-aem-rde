@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const OsgiConfigurationsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-configurations');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -91,11 +92,13 @@ describe('OsgiConfigurationsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m PID                                 \x1B[22m\n' +
-          '\x1B[1m ─────────────────────────────────── \x1B[22m\n' +
-          ' com.adobe.aem.test                  \n' +
-          ' com.adobe.aem.collaborationapi.test \n' +
-          ' com.adobe.aem.core.test             '
+        [
+          chalk.bold(' PID                                 '),
+          chalk.bold(' ─────────────────────────────────── '),
+          ' com.adobe.aem.test                  ',
+          ' com.adobe.aem.collaborationapi.test ',
+          ' com.adobe.aem.core.test             ',
+        ].join('\n')
       );
     });
 
@@ -165,9 +168,11 @@ describe('OsgiConfigurationsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m PID                \x1B[22m\n' +
-          '\x1B[1m ────────────────── \x1B[22m\n' +
-          ' com.adobe.aem.test '
+        [
+          chalk.bold(' PID                '),
+          chalk.bold(' ────────────────── '),
+          ' com.adobe.aem.test ',
+        ].join('\n')
       );
     });
 

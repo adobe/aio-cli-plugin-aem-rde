@@ -3,6 +3,7 @@ const sinon = require('sinon').createSandbox();
 const OsgiServicesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-services');
 const { cli } = require('../../../../../src/lib/base-command.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
@@ -121,11 +122,17 @@ describe('OsgiServicesCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID Scope  Bundle ID Types                              \x1B[22m\n' +
-          '\x1B[1m ── ────── ───────── ────────────────────────────────── \x1B[22m\n' +
-          " 0  bundle 0         [ 'com.adobe.cq.dam.bla.bli.blu' ] \n" +
-          " 1  bundle 1         [ 'com.adobe.cq.dam.bla.bli.blu' ] \n" +
-          " 2  bundle 2         [ 'com.adobe.cq.dam.bla.bli.blu' ] "
+        [
+          chalk.bold(
+            ' ID Scope  Bundle ID Types                              '
+          ),
+          chalk.bold(
+            ' ── ────── ───────── ────────────────────────────────── '
+          ),
+          " 0  bundle 0         [ 'com.adobe.cq.dam.bla.bli.blu' ] ",
+          " 1  bundle 1         [ 'com.adobe.cq.dam.bla.bli.blu' ] ",
+          " 2  bundle 2         [ 'com.adobe.cq.dam.bla.bli.blu' ] ",
+        ].join('\n')
       );
     });
 
@@ -198,9 +205,15 @@ describe('OsgiServicesCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        '\x1B[1m ID Scope  Bundle ID Types                              \x1B[22m\n' +
-          '\x1B[1m ── ────── ───────── ────────────────────────────────── \x1B[22m\n' +
-          " 0  bundle 0         [ 'com.adobe.cq.dam.bla.bli.blu' ] "
+        [
+          chalk.bold(
+            ' ID Scope  Bundle ID Types                              '
+          ),
+          chalk.bold(
+            ' ── ────── ───────── ────────────────────────────────── '
+          ),
+          " 0  bundle 0         [ 'com.adobe.cq.dam.bla.bli.blu' ] ",
+        ].join('\n')
       );
     });
 
