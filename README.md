@@ -50,7 +50,7 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 1. Run `npm run test`
 
 This both runs the mocha-based unit tests as well as produces a test report table at the end.
-A more detailed test report can be found in the `coverage/index.thml` file.
+A more detailed test report can be found in the `coverage/index.html` file.
 
 ## Steps for testing local modifications
 

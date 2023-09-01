@@ -19,7 +19,8 @@
     "cli-progress": "^3.11.2",
     "form-data": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "archiver": "^6.0.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^2.0.0",

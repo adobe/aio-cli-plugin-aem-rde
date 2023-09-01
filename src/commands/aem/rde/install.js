@@ -18,6 +18,7 @@ const {
   Flags,
 } = require('../../../lib/base-command');
 const { loadUpdateHistory } = require('../../../lib/rde-utils');
+const { frontendInputBuild } = require('../../../lib/frontend-pipeline');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -32,6 +33,7 @@ const deploymentTypes = [
   'content-file',
   'content-xml',
   'dispatcher-config',
+  'frontend-pipeline'
 ];
 
 /**
@@ -107,42 +109,68 @@ async function computeStats(url) {
   }
 }
 
+async function processInputFile(type, path) {
+  let file = fs.lstatSync(path);
+  switch (type) {
+    case "frontend-pipeline" : {
+      if (!file.isDirectory()) {
+        break;
+      }
+      return await frontendInputBuild(cli, path);
+    }
+    default : {
+      if (file.isDirectory()) {
+        throw new Error('A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend-pipeline]');
+      }
+    }
+  }
+}
+
 class DeployCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(DeployCommand);
-    const progressBar = createProgressBar();
+    try {
+      const { args, flags } = await this.parse(DeployCommand);
+      const progressBar = createProgressBar();
 
-    const originalUrl = args.location;
-    const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
-      originalUrl
-    );
-    let fileName = basename(path);
-    let type = flags.type;
-    if (!type) {
-      let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
-      if (
-        !isLocalFile &&
-        guessedTypes === deploymentTypes &&
-        effectiveUrl !== originalUrl
-      ) {
-        // when there was a redirect, it is possible that the original URL
-        // has a file extension, but not the effective URL, so we try again
-        fileName = basename(originalUrl.pathname);
-        guessedTypes = guessType(fileName, originalUrl, flags.path);
+      const originalUrl = args.location;
+      const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
+        originalUrl
+      );
+      let type = flags.type;
+      let {inputPath, inputPathSize} = await processInputFile(type, path) || {
+        inputPath: path,
+        inputPathSize: fileSize
+      };
+      let fileName = basename(inputPath);
+      if (!type) {
+        let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
+        if (
+          !isLocalFile &&
+          guessedTypes === deploymentTypes &&
+          effectiveUrl !== originalUrl
+        ) {
+          // when there was a redirect, it is possible that the original URL
+          // has a file extension, but not the effective URL, so we try again
+          fileName = basename(originalUrl.pathname);
+          guessedTypes = guessType(fileName, originalUrl, inputPath);
+        }
+        if (guessedTypes.length > 1) {
+          cli.log(`Could not infer the type of the deployed artifact.`);
+          cli.log(
+            `Please specify the -t option with one of the following types: ${guessedTypes.join(
+              ', '
+            )}`
+          );
+          return;
+        } else if (guessedTypes.length === 1) {
+          type = guessedTypes[0];
+        } else {
+          throw new Error('guessedTypes is empty');
+        }
       }
-      if (guessedTypes.length > 1) {
-        cli.log(`Could not infer the type of the deployed artifact.`);
-        cli.log(
-          `Please specify the -t option with one of the following types: ${guessedTypes.join(
-            ', '
-          )}`
-        );
-        return;
-      } else if (guessedTypes.length === 1) {
-        type = guessedTypes[0];
-      } else {
-        throw new Error('guessedTypes is empty');
-      }
+    } catch (err) {
+      cli.log(err);
+      return;
     }
 
     try {
@@ -169,8 +197,8 @@ class DeployCommand extends BaseCommand {
           : cloudSdkAPI.deployURL;
         return deploy.call(
           cloudSdkAPI,
-          fileSize,
-          isLocalFile ? path : effectiveUrl.toString(),
+          inputPathSize || fileSize,
+          isLocalFile ? inputPath : effectiveUrl.toString(),
           fileName,
           type,
           flags.target,
@@ -224,8 +252,12 @@ function guessType(name, url, pathFlag) {
         if (isDispatcherConfig) {
           return ['dispatcher-config'];
         }
+        let isFrontendPipeline = zip.getEntry('dist/') !== null && zip.getEntry('package.json') !== null
+        if (isFrontendPipeline) {
+          return ['frontend-pipeline']
+        }
       }
-      return ['content-package', 'dispatcher-config'];
+      return ['content-package', 'dispatcher-config', 'frontend-pipeline'];
     case '.xml':
       return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
     default:
