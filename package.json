@@ -58,6 +58,7 @@
   "oclif": {
     "commands": "./src/commands",
     "bin": "aio",
+    "experimental-features": ["aem:rde:inspect"], 
     "hooks": {
       "init": "./src/lib/hooks/experimental-features-init-hook"
     },
