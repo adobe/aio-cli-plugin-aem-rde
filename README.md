@@ -44,15 +44,12 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 
 ### Enable `aio aem rde inspect` commands
 
-Append the following to your `package.json` file:
+If you want to enable this experimental feature, run the following command:
+``` 
+$ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
+```
 
-```
-   "experimental-features": {
-      "aem:rde:inspect": {
-        "description": "Inspects the RapidDev Environments."
-      }
-    }
-```
+This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
 
 ### Add user access token to the configuration
 
