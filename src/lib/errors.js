@@ -58,3 +58,15 @@ E(
   'CLI_AUTH_CONTEXT_NO_CLIENT_ID',
   'The decoded access token configured for cli authentication does not have a client_id.'
 );
+E(
+  'TOKEN_HAS_NO_EXPIRY',
+  'The decoded access token configured for the inspect command authentication does not have a created-at or expires-in value.'
+);
+E(
+  'TOKEN_IS_EXPIRED',
+  'This token is or is soon gonna be expired. Please use an new token.'
+);
+E(
+  'MISSING_INSPECT_ACCESS_TOKEN',
+  'The access token for the inspect commands is missing. Please set one up with the `aio aem rde inspect setup` command.'
+);

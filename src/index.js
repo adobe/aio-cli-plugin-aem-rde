@@ -16,6 +16,17 @@ const InstallCommand = require('./commands/aem/rde/install');
 const StatusCommand = require('./commands/aem/rde/status');
 const RestartCommand = require('./commands/aem/rde/restart');
 const ResetCommand = require('./commands/aem/rde/reset');
+const LogsCommand = require('./commands/aem/rde/inspect/logs');
+const RequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/index');
+const SetupCommand = require('./commands/aem/rde/inspect/setup');
+const EnableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/enable');
+const DisableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/disable');
+const InventoryCommand = require('./commands/aem/rde/inspect/inventory');
+const OsgiBundlesCommand = require('./commands/aem/rde/inspect/osgi-bundles');
+const OsgiComponentsCommand = require('./commands/aem/rde/inspect/osgi-components');
+const OsgiConfigurationsCommand = require('./commands/aem/rde/inspect/osgi-configurations');
+const OsgiServicesCommand = require('./commands/aem/rde/inspect/osgi-services');
+const SlingRequestsCommand = require('./commands/aem/rde/inspect/sling-requests');
 
 module.exports = {
   delete: new DeleteCommand().run,
@@ -24,4 +35,15 @@ module.exports = {
   status: new StatusCommand().run,
   restart: new RestartCommand().run,
   reset: new ResetCommand().run,
+  'inspect:logs': new LogsCommand().run,
+  'inspect:setup': new SetupCommand().run,
+  'inspect:request-logs': new RequestLogsCommand().run,
+  'inspect:request-logs:enable': new EnableRequestLogsCommand().run,
+  'inspect:request-logs:disable': new DisableRequestLogsCommand().run,
+  'inspect:inventory': new InventoryCommand().run,
+  'inspect:osgi-bundles': new OsgiBundlesCommand().run,
+  'inspect:osgi-components': new OsgiComponentsCommand().run,
+  'inspect:osgi-configurations': new OsgiConfigurationsCommand().run,
+  'inspect:osgi-services': new OsgiServicesCommand().run,
+  'inspect:sling-requests': new SlingRequestsCommand().run,
 };
