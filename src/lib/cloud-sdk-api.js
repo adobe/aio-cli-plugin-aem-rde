@@ -411,15 +411,14 @@ class CloudSdkAPI {
   }
 
   async _waitForEnv(namespace, ...allowedStates) {
-    return await this._waitForJson(
-      (releaseState) => allowedStates.includes(releaseState),
-      async () => {
-        const status = await this._devConsoleClient.doGet(
-          `/api/releases/${namespace}/status`
-        );
-        return status.releases?.status[this._cmReleaseId]?.releaseState;
-      }
-    );
+    return this._waitForJson(
+      (releaseState) =>
+        allowedStates.includes(
+          releaseState.releases?.status[this._cmReleaseId]?.releaseState
+        ),
+      async () =>
+        await this._devConsoleClient.doGet(`/api/releases/${namespace}/status`)
+    ).then((json) => json.releases.status[this._cmReleaseId].releaseState);
   }
 
   async _hibernateEnv(namespace) {
