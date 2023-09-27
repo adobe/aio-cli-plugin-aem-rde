@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { commonFlags, cli } = require('../../../../lib/base-command');
+const { cli } = require('../../../../lib/base-command');
 const {
   inspectCommonFlags,
   InspectBaseCommand,
@@ -96,7 +96,7 @@ Object.assign(SlingRequestsCommand, {
     },
   ],
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,
   },

@@ -165,11 +165,11 @@ module.exports = {
     }),
     target: Flags.string({
       char: 's',
-      description: "The target instance type. Default 'author'.",
+      description:
+        "The target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
       multiple: false,
-      required: true,
+      required: false,
       options: ['author', 'publish'],
-      default: 'author',
       common: true,
     }),
   },

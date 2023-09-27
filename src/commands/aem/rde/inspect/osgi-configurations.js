@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { cli, commonFlags } = require('../../../../lib/base-command');
+const { cli } = require('../../../../lib/base-command');
 const {
   InspectBaseCommand,
   inspectCommonFlags,
@@ -85,7 +85,7 @@ Object.assign(OsgiConfigurationsCommand, {
     },
   ],
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
     scope: inspectCommonFlags.scope,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,

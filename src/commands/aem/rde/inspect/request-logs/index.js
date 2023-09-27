@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { cli, commonFlags } = require('../../../../../lib/base-command');
+const { cli } = require('../../../../../lib/base-command');
 const {
   logInJsonArrayFormat,
   InspectBaseCommand,
@@ -92,7 +92,7 @@ Object.assign(RequestLogsCommand, {
     },
   ],
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,
   },
