@@ -15,9 +15,9 @@ const { BaseCommand, cli } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 
-class ChangesCommand extends BaseCommand {
+class HistoryCommand extends BaseCommand {
   async run() {
-    const { args } = await this.parse(ChangesCommand);
+    const { args } = await this.parse(HistoryCommand);
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
@@ -54,7 +54,7 @@ class ChangesCommand extends BaseCommand {
   }
 }
 
-Object.assign(ChangesCommand, {
+Object.assign(HistoryCommand, {
   description: 'Get a list of the updates done to the current rde.',
   args: [
     {
@@ -67,4 +67,4 @@ Object.assign(ChangesCommand, {
   aliases: [],
 });
 
-module.exports = ChangesCommand;
+module.exports = HistoryCommand;

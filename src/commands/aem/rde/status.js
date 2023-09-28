@@ -96,6 +96,7 @@ class StatusCommand extends BaseCommand {
 
       cli.log(JSON.stringify(result));
     } catch (err) {
+      spinner.stop();
       cli.log(err);
     }
   }
