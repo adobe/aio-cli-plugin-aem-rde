@@ -11,9 +11,10 @@
  */
 'use strict';
 
-const { cli, Flags, commonFlags } = require('../../../../../lib/base-command');
+const { cli, Flags } = require('../../../../../lib/base-command');
 const {
   InspectBaseCommand,
+  inspectCommonFlags,
 } = require('../../../../../lib/inspect-base-command');
 
 class EnableRequestLogsCommand extends InspectBaseCommand {
@@ -70,7 +71,7 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,

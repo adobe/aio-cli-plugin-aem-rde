@@ -11,8 +11,11 @@
  */
 'use strict';
 
-const { cli, Flags, commonFlags } = require('../../../../lib/base-command');
-const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
+const { cli, Flags } = require('../../../../lib/base-command');
+const {
+  InspectBaseCommand,
+  inspectCommonFlags,
+} = require('../../../../lib/inspect-base-command');
 
 class LogsCommand extends InspectBaseCommand {
   async run() {
@@ -133,7 +136,7 @@ Object.assign(LogsCommand, {
   description:
     'Get the list of logs for the target of a rapid development environment.',
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,

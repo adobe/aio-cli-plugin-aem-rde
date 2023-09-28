@@ -11,9 +11,10 @@
  */
 'use strict';
 
-const { cli, commonFlags } = require('../../../../../lib/base-command');
+const { cli } = require('../../../../../lib/base-command');
 const {
   InspectBaseCommand,
+  inspectCommonFlags,
 } = require('../../../../../lib/inspect-base-command');
 
 class DisableRequestLogsCommand extends InspectBaseCommand {
@@ -37,7 +38,7 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
-    target: commonFlags.target,
+    target: inspectCommonFlags.target,
   },
 });
 
