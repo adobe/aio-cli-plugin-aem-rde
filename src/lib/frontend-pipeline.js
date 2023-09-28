@@ -24,7 +24,7 @@ async function frontendInputBuild (cli, inputPath) {
             cli.log(`Error: There is no 'package.json' file in ${inputPath}. Ensure you're sending the right folder which contains your frontend-pipeline project.`)
         }
         if (!valid) {
-            return reject('There were some validation errors when processing zip file for the frontend-pipeline input path');
+            return reject(new Error('There were some validation errors when processing zip file for the frontend-pipeline input path'));
         }
 
         fs.mkdtemp(path.join(os.tmpdir(), 'aio-rde-'), (err, folder) => {

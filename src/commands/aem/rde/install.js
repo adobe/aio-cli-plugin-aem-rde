@@ -128,20 +128,19 @@ async function processInputFile(type, path) {
 
 class DeployCommand extends BaseCommand {
   async run() {
+    const { args, flags } = await this.parse(DeployCommand);
+    const progressBar = createProgressBar();
+    const originalUrl = args.location;
+    const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
+      originalUrl
+    );
+    let type = flags.type;
+    let {inputPath, inputPathSize} = await processInputFile(type, path) || {
+      inputPath: path,
+      inputPathSize: fileSize
+    };
+    let fileName = basename(inputPath);
     try {
-      const { args, flags } = await this.parse(DeployCommand);
-      const progressBar = createProgressBar();
-
-      const originalUrl = args.location;
-      const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
-        originalUrl
-      );
-      let type = flags.type;
-      let {inputPath, inputPathSize} = await processInputFile(type, path) || {
-        inputPath: path,
-        inputPathSize: fileSize
-      };
-      let fileName = basename(inputPath);
       if (!type) {
         let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
         if (
