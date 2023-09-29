@@ -54,7 +54,7 @@ function getRetryConfigPerType(changeType) {
           retries: 30,
           waitSeconds: 1,
         }
-      case "frontend-pipeline":
+      case "frontend":
         return {
           retries: 90,
           waitSeconds: 1,

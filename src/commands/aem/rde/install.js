@@ -18,7 +18,7 @@ const {
   Flags,
 } = require('../../../lib/base-command');
 const { loadUpdateHistory } = require('../../../lib/rde-utils');
-const { frontendInputBuild } = require('../../../lib/frontend-pipeline');
+const { frontendInputBuild } = require('../../../lib/frontend');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -33,7 +33,7 @@ const deploymentTypes = [
   'content-file',
   'content-xml',
   'dispatcher-config',
-  'frontend-pipeline'
+  'frontend'
 ];
 
 /**
@@ -112,7 +112,7 @@ async function computeStats(url) {
 async function processInputFile(type, path) {
   let file = fs.lstatSync(path);
   switch (type) {
-    case "frontend-pipeline" : {
+    case "frontend" : {
       if (!file.isDirectory()) {
         break;
       }
@@ -120,7 +120,7 @@ async function processInputFile(type, path) {
     }
     default : {
       if (file.isDirectory()) {
-        throw new Error('A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend-pipeline]');
+        throw new Error('A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend]');
       }
     }
   }
@@ -251,12 +251,12 @@ function guessType(name, url, pathFlag) {
         if (isDispatcherConfig) {
           return ['dispatcher-config'];
         }
-        let isFrontendPipeline = zip.getEntry('dist/') !== null && zip.getEntry('package.json') !== null
-        if (isFrontendPipeline) {
-          return ['frontend-pipeline']
+        let isFrontend = zip.getEntry('dist/') !== null && zip.getEntry('package.json') !== null
+        if (isFrontend) {
+          return ['frontend'];
         }
       }
-      return ['content-package', 'dispatcher-config', 'frontend-pipeline'];
+      return ['content-package', 'dispatcher-config', 'frontend'];
     case '.xml':
       return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
     default:
