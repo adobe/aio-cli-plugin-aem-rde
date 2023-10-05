@@ -161,6 +161,22 @@ class DeployCommand extends BaseCommand {
     const { args, flags } = await this.parse(DeployCommand);
     const progressBar = createProgressBar();
 
+    let originalUrl = args.location;
+
+    let dispatcherConfigArchiveName = `DISPATCHER-CONFIG-${new Date().toJSON().slice(0, 10)}.zip`;
+    let type = flags.type;
+
+    if (
+      type == "dispatcher-config" &&
+      originalUrl.protocol == "file:"
+    ) {
+      let path = fs.realpathSync(originalUrl)
+      if (fs.lstatSync(path).isDirectory()) {
+        await archiveDirectory(path, dispatcherConfigArchiveName);
+        originalUrl = pathToFileURL(dispatcherConfigArchiveName);
+      }
+    }
+
     const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
       originalUrl
     );
