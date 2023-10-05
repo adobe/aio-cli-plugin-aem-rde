@@ -161,7 +161,6 @@ class DeployCommand extends BaseCommand {
     const { args, flags } = await this.parse(DeployCommand);
     const progressBar = createProgressBar();
 
-    const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
       originalUrl
     );
