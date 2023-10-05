@@ -24,6 +24,8 @@ const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
+const Archiver = require('archiver');
+const path = require('path');
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -107,6 +109,53 @@ async function computeStats(url) {
   }
 }
 
+/**
+ *
+ * @param sourceDir
+ * @param outputFilePath
+ */
+async function archiveDirectory(sourceDir, outputFilePath) {
+  const output = fs.createWriteStream(outputFilePath);
+  const archiver = Archiver('zip', { zlib: { level: 9 } });
+
+  archiver.pipe(output);
+
+  await addDirectoryToArchive(archiver, sourceDir, '');
+
+  await archiver.finalize()
+    .then(() => { cli.log(`Finished archiving ${outputFilePath}`); })
+    .catch((err) => { throw err; });
+}
+/**
+
+/**
+ *
+ * @param archiver
+ * @param sourceDir
+ * @param archiveDir
+ */
+async function addDirectoryToArchive(archiver, sourceDir, archiveDir) {
+  const files = fs.readdirSync(sourceDir);
+
+  for (const file of files) {
+    const filePath = path.join(sourceDir, file);
+    const archivePath = path.join(archiveDir, file);
+
+    const stat = fs.lstatSync(filePath);
+    if (stat.isDirectory()) {
+      archiver.file(filePath, { name: archivePath });
+      addDirectoryToArchive(archiver, filePath, archivePath);
+    } else {
+      if (stat.isSymbolicLink()) {
+        const targetPath = fs.readlinkSync(filePath);
+        archiver.symlink(archivePath, targetPath, 0o644);
+      } else {
+        archiver.file(filePath, { name: archivePath });
+      }
+    }
+  }
+}
+
 class DeployCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(DeployCommand);
@@ -117,7 +166,6 @@ class DeployCommand extends BaseCommand {
       originalUrl
     );
     let fileName = basename(path);
-    let type = flags.type;
     if (!type) {
       let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
       if (
