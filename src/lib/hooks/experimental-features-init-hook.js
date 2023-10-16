@@ -43,7 +43,11 @@ const descriptors = {
     update: function (hiddenFeatures) {
       for (let i = 0; i < hiddenFeatures.length; i++) {
         let [commandId, flagAndOption] = hiddenFeatures[i].split('#');
-        let [flag, option] = flagAndOption?.split('=');
+        if (!flagAndOption) {
+          // ignoring the case where there's no flagAndOption defined
+          continue;
+        }
+        let [flag, option] = flagAndOption.split('=');
         let command = this.config['_commands'].get(commandId);
         if (command && flag && option) {
           let options = command.flags[flag].options;
