@@ -109,7 +109,11 @@ async function computeStats(url) {
   }
 }
 
-async function processInputFile(type, path) {
+async function processInputFile(isLocalFile, type, path) {
+  if (!isLocalFile) {
+    // don't do anything if we're processing a remote file
+    return;
+  }
   let file = fs.lstatSync(path);
   switch (type) {
     case "frontend" : {
@@ -135,7 +139,7 @@ class DeployCommand extends BaseCommand {
       originalUrl
     );
     let type = flags.type;
-    let {inputPath, inputPathSize} = await processInputFile(type, path) || {
+    let {inputPath, inputPathSize} = await processInputFile(isLocalFile, type, path) || {
       inputPath: path,
       inputPathSize: fileSize
     };
