@@ -22,19 +22,34 @@ const descriptors = {
     update: update('topics', 'name'),
   },
   commands: {
-    update: function(hiddenFeatures) {
+    update: function (hiddenFeatures) {
       if (update('commands', 'id').call(this, hiddenFeatures)) {
         this.config._commandIDs = this.config.commands.map((c) => c.id);
       }
     }
   },
   flags: {
-    update: function(hiddenFeatures) {
+    update: function (hiddenFeatures) {
       for (let i = 0; i < hiddenFeatures.length; i++) {
         let [commandId, flag] = hiddenFeatures[i].split('#');
         let command = this.config['_commands'].get(commandId);
         if (command && flag) {
           delete command.flags[flag];
+        }
+      }
+    },
+  },
+  options: {
+    update: function (hiddenFeatures) {
+      for (let i = 0; i < hiddenFeatures.length; i++) {
+        let [commandId, flagAndOption] = hiddenFeatures[i].split('#');
+        let [flag, option] = flagAndOption?.split('=');
+        let command = this.config['_commands'].get(commandId);
+        if (command && flag && option) {
+          let options = command.flags[flag].options;
+          if (options) {
+            command.flags[flag].options = options.filter(o => o !== option);
+          }
         }
       }
     },
@@ -64,5 +79,6 @@ module.exports = async function () {
     toggleExperimentalFeatures.call(this, 'topics', hidden);
     toggleExperimentalFeatures.call(this, 'commands', hidden);
     toggleExperimentalFeatures.call(this, 'flags', hidden);
+    toggleExperimentalFeatures.call(this, 'options', hidden);
   }
 };
