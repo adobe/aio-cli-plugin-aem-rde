@@ -12,6 +12,17 @@
 'use strict';
 
 const { CliUx } = require('@oclif/core');
+const { codes: internalCodes } = require('./internal-errors');
+const { codes: deploymentErrorCodes } = require('./deployment-errors');
+const { codes: deploymentWarningCodes } = require('./deployment-warnings');
+
+const STATUS = {
+  WAITING: "waiting",
+  PROCESSING: "processing",
+  STAGED: "staged",
+  COMPLETED: "completed",
+  FAILED: "failed"
+}
 
 /**
  * @param seconds
@@ -44,6 +55,39 @@ function logChange(change) {
         : '') +
       ` - done by ${change.user} at ${change.timestamps.received}`
   );
+}
+
+
+/**
+ * @param cloudSdkAPI
+ * @param updateId
+ * @param progressCallback
+ */
+async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
+  progressCallback(false, 'retrieving update status');
+  let response = await handleRetryAfter(
+    null,
+    () => cloudSdkAPI.getChange(updateId),
+    () => progressCallback(false, 'checking status')
+  );
+  progressCallback(true);
+
+  if (response.status === 200) {
+    const change = await response.json();
+    if (change) {
+      switch (change.status) {
+        case STATUS.FAILED:
+          throw new deploymentErrorCodes.INSTALL_FAILED;
+          case STATUS.STAGED:
+          throw new deploymentWarningCodes.INSTALL_STAGED;
+        default:
+          // no error exception is thrown
+          return;
+      }
+    }
+  }
+
+  throw new Error(`cannot check command operation status, error code ${response ? response.status : "unknown"} and error message ${response ? response.statusText : "unknown"}`);
 }
 
 /**
@@ -106,12 +150,12 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
         cli.log('No logs available for this update.');
       }
     } else {
-      cli.log(`Error: ${response.status} - ${response.statusText}`);
+      throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
     }
   } else if (response.status === 404) {
     cli.log(`An update with ID ${updateId} does not exist.`);
   } else {
-    cli.log(`Error: ${response.status} - ${response.statusText}`);
+    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
   }
 }
 
@@ -132,7 +176,7 @@ async function loadAllArtifacts(cloudSdkAPI) {
       hasMore = json.cursor !== undefined;
       items.push(...json.items);
     } else {
-      throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
     }
   }
   return {
@@ -207,6 +251,7 @@ async function withRetries(
 module.exports = {
   sleepSeconds,
   logChange,
+  throwOnInstallError,
   loadUpdateHistory,
   loadAllArtifacts,
   groupArtifacts,

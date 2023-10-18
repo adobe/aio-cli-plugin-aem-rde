@@ -17,6 +17,7 @@ const {
   InspectBaseCommand,
   inspectCommonFlags,
 } = require('../../../../lib/inspect-base-command');
+const { codes: internalCodes } = require('../../../../lib/internal-errors');
 
 class InventoryCommand extends InspectBaseCommand {
   async run() {
@@ -37,7 +38,7 @@ class InventoryCommand extends InspectBaseCommand {
             logInTableFormat(json?.items);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
         }
       } else {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -51,11 +52,11 @@ class InventoryCommand extends InspectBaseCommand {
             logInTableFormat([inventory]);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
         }
       }
     } catch (err) {
-      cli.log(err);
+      throw new internalCodes.INTERNAL_INVENTORY_ERROR({ messageValues: err });
     }
   }
 }

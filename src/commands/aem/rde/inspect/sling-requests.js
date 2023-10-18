@@ -17,6 +17,7 @@ const {
   InspectBaseCommand,
   logInJsonArrayFormat,
 } = require('../../../../lib/inspect-base-command');
+const { codes: internalCodes } = require('../../../../lib/internal-errors');
 
 class SlingRequestsCommand extends InspectBaseCommand {
   async run() {
@@ -37,7 +38,7 @@ class SlingRequestsCommand extends InspectBaseCommand {
             logInTableFormat(json?.items);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
         }
       } else {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -52,11 +53,11 @@ class SlingRequestsCommand extends InspectBaseCommand {
             logInTableFormat([slingRequest]);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
         }
       }
     } catch (err) {
-      cli.log(err);
+      throw new internalCodes.INTERNAL_GET_SLING_REQUESTS_ERROR({ messageValues: err });
     }
   }
 }

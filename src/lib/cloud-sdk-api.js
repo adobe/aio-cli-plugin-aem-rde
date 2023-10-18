@@ -13,6 +13,7 @@ const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
 const { DoRequest } = require('./doRequest');
+const { codes: internalCodes } = require('./internal-errors');
 
 const fetch = createFetch();
 
@@ -332,7 +333,7 @@ class CloudSdkAPI {
   }
 
   async _createError(response) {
-    return `Error: ${response.status} - ${await response.text()}`;
+    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
   }
 
   async _putUpdate(changeId, callbackProgress) {
@@ -448,7 +449,7 @@ class CloudSdkAPI {
       ) {
         return nameSpaceStatus.availableNamespaces[0];
       } else {
-        throw new Error(`Error: no namespace found`);
+        throw new internalCodes.NAMESPACE_NOT_FOUND();
       }
     } else {
       throw await this._createError(nameSpaceRequest);
@@ -479,7 +480,7 @@ class CloudSdkAPI {
     if (status === 'hibernated') {
       await this._startEnv(namespace);
     } else {
-      throw new Error(`Error: environment not hibernated`);
+      throw new internalCodes.ENVIRONMENT_NOT_HIBERNATED();
     }
   }
 
@@ -490,7 +491,7 @@ class CloudSdkAPI {
     if (status === 'running') {
       await this._stopEnv(namespace);
     } else {
-      throw new Error(`Error: environment not running`);
+      throw new internalCodes.ENVIRONMENT_NOT_RUNNING();
     }
   }
 

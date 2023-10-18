@@ -15,7 +15,9 @@ const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
-const configurationCodes = require('../lib/errors');
+const { codes: configurationCodes } = require('../lib/configuration-errors');
+const { codes: validationCodes } = require('../lib/validation-errors');
+const { handleError } = require('./error-helpers')
 
 /**
  *
@@ -44,7 +46,7 @@ async function getTokenAndKey() {
     accessToken = await getToken(contextName);
     const contextData = await context.get(contextName);
     if (!contextData || !contextData.data) {
-      throw new configurationCodes.codes.NO_IMS_CONTEXT({
+      throw new configurationCodes.NO_IMS_CONTEXT({
         messageValues: contextName,
       });
     }
@@ -53,11 +55,11 @@ async function getTokenAndKey() {
     accessToken = await getToken('cli');
     const decodedToken = jwt.decode(accessToken);
     if (!decodedToken) {
-      throw new configurationCodes.codes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
     }
     apiKey = decodedToken.client_id;
     if (!apiKey) {
-      throw new configurationCodes.codes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
     }
   }
   return { accessToken, apiKey };
@@ -81,6 +83,10 @@ class BaseCommand extends Command {
     this._environmentId = environmentId;
   }
 
+  async catch (err) {
+    handleError(err, this.error)
+  }
+
   async getDeveloperConsoleUrl(
     cloudManagerUrl,
     orgId,
@@ -94,10 +100,10 @@ class BaseCommand extends Command {
   async withCloudSdk(fn) {
     if (!this._cloudSdkAPI) {
       if (!this._programId) {
-        throw new Error('No programId');
+        throw new validationCodes.MISSING_PROGRAM_ID()
       }
       if (!this._environmentId) {
-        throw new Error('No environmentId');
+        throw new validationCodes.MISSING_ENVIRONMENT_ID()
       }
       const { accessToken, apiKey } = await getTokenAndKey();
       const cloudManagerUrl = getBaseUrl();

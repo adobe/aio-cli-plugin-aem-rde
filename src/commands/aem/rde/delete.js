@@ -20,6 +20,7 @@ const {
 const { loadUpdateHistory } = require('../../../lib/rde-utils');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const spinner = require('ora')();
+const { codes: deploymentErrorCodes } = require('../../../lib/deployment-errors');
 
 class DeleteCommand extends BaseCommand {
   async run() {
@@ -63,13 +64,11 @@ class DeleteCommand extends BaseCommand {
         const typeInfo = types.length === 1 ? types[0] : 'artifact';
         const serviceInfo =
           services.length === 1 ? `the ${services[0]} of ` : '';
-        cli.log(
-          `Could not delete ${typeInfo} "${args.id}". It is not present on ${serviceInfo}this environment.`
-        );
+        throw new deploymentErrorCodes.DELETE_NOT_FOUND({ messageValues: [typeInfo, args.id, serviceInfo] });
       }
     } catch (err) {
       spinner.stop();
-      cli.log(err);
+      throw new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err });
     }
   }
 }

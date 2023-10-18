@@ -24,7 +24,7 @@ class ResetCommand extends BaseCommand {
       cli.log(`Environment reset.`);
     } catch (err) {
       spinner.stop();
-      cli.log(err);
+      throw new internalCodes.INTERNAL_RESET_ERROR({ messageValues: err });
     }
   }
 }
