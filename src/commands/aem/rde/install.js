@@ -33,7 +33,7 @@ const deploymentTypes = [
   'content-file',
   'content-xml',
   'dispatcher-config',
-  'frontend'
+  'frontend',
 ];
 
 /**
@@ -116,15 +116,17 @@ async function processInputFile(isLocalFile, type, path) {
   }
   let file = fs.lstatSync(path);
   switch (type) {
-    case "frontend" : {
+    case 'frontend': {
       if (!file.isDirectory()) {
         break;
       }
       return await frontendInputBuild(cli, path);
     }
-    default : {
+    default: {
       if (file.isDirectory()) {
-        throw new Error('A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend]');
+        throw new Error(
+          'A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend]'
+        );
       }
     }
   }
@@ -139,9 +141,13 @@ class DeployCommand extends BaseCommand {
       originalUrl
     );
     let type = flags.type;
-    let {inputPath, inputPathSize} = await processInputFile(isLocalFile, type, path) || {
+    let { inputPath, inputPathSize } = (await processInputFile(
+      isLocalFile,
+      type,
+      path
+    )) || {
       inputPath: path,
-      inputPathSize: fileSize
+      inputPathSize: fileSize,
     };
     let fileName = basename(inputPath);
     try {
@@ -255,7 +261,9 @@ function guessType(name, url, pathFlag) {
         if (isDispatcherConfig) {
           return ['dispatcher-config'];
         }
-        let isFrontend = zip.getEntry('dist/') !== null && zip.getEntry('package.json') !== null
+        let isFrontend =
+          zip.getEntry('dist/') !== null &&
+          zip.getEntry('package.json') !== null;
         if (isFrontend) {
           return ['frontend'];
         }

@@ -49,22 +49,22 @@ function logChange(change) {
 function getRetryConfigPerType(changeType) {
   if (changeType) {
     switch (changeType) {
-      case "dispatcher-config":
+      case 'dispatcher-config':
         return {
           retries: 30,
           waitSeconds: 1,
-        }
-      case "frontend":
+        };
+      case 'frontend':
         return {
           retries: 90,
           waitSeconds: 1,
-        }
+        };
     }
   }
   return {
     retries: 20,
     waitSeconds: 1,
-  }
+  };
 }
 
 /**
@@ -91,7 +91,7 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
       () => cloudSdkAPI.getLogs(updateId),
       (response) => response.status !== 404,
       retryConfig.waitSeconds,
-      retryConfig.retries,
+      retryConfig.retries
     );
     const retrySeconds = retryConfig.waitSeconds * retryConfig.retries;
     progressCallback(true);

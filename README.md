@@ -38,14 +38,15 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 > **Note**:
 > If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
 
-## Configuration for `aio aem rde inspect` commands *
-⚠️ * **WARNING**: This is an **experimental feature**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
+## Configuration for `aio aem rde inspect` commands \*
 
+⚠️ \* **WARNING**: This is an **experimental feature**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
 
 ### Enable `aio aem rde inspect` commands
 
 If you want to enable this experimental feature, run the following command:
-``` 
+
+```
 $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 ```
 

@@ -1,9 +1,9 @@
 const Config = require('@adobe/aio-lib-core-config');
 
-let update = function(type, key) {
+let update = function (type, key) {
   return function (hiddenFeatures) {
     let filtered = this.config[type].filter(
-        (e) => !hiddenFeatures.find((h) => e[key].startsWith(h))
+      (e) => !hiddenFeatures.find((h) => e[key].startsWith(h))
     );
     const removedCount = this.config[type].length - filtered.length;
     if (removedCount !== 0) {
@@ -26,7 +26,7 @@ const descriptors = {
       if (update('commands', 'id').call(this, hiddenFeatures)) {
         this.config._commandIDs = this.config.commands.map((c) => c.id);
       }
-    }
+    },
   },
   flags: {
     update: function (hiddenFeatures) {
@@ -52,12 +52,12 @@ const descriptors = {
         if (command && flag && option) {
           let options = command.flags[flag].options;
           if (options) {
-            command.flags[flag].options = options.filter(o => o !== option);
+            command.flags[flag].options = options.filter((o) => o !== option);
           }
         }
       }
     },
-  }
+  },
 };
 
 /**
