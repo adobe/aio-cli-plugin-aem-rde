@@ -49,25 +49,10 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('UNSUPPORTED_PROTOCOL', 'Protocol %s is not supported.')
-E('INVALID_GUESS_TYPE', 'We could not infer the deployment type. Please specify the -t option with one of the following types: %s')
-E('MISSING_PROGRAM_ID', 'Program ID must be specified either as --programId flag or through cloudmanager_programid config value.')
-E('MISSING_ENVIRONMENT_ID', 'Environment ID must be specified either as --environmentId flag or through cloudmanager_environmentid config value.')
-E('INVALID_UPDATE_ID', 'Invalid update ID "%s". Please use a positive update ID number as the input.')
-E('CONCURRENT_MODIFICATION', 'Your RDE is waiting for the upload of a previous invocation of the "install" command. You can ignore this by using the "--force" flag.')
+E('UNSUPPORTED_PROTOCOL', 'Protocol %s is not supported.');
+E('INVALID_GUESS_TYPE', 'We could not infer the deployment type. Please specify the -t option with one of the following types: %s');
+E('MISSING_PROGRAM_ID', 'Program ID must be specified either as --programId flag or through cloudmanager_programid config value.');
+E('MISSING_ENVIRONMENT_ID', 'Environment ID must be specified either as --environmentId flag or through cloudmanager_environmentid config value.');
+E('INVALID_UPDATE_ID', 'Invalid update ID "%s". Please use a positive update ID number as the input.');
+E('CONCURRENT_MODIFICATION', 'Your RDE is waiting for the upload of a previous invocation of the "install" command. You can ignore this by using the "--force" flag.');
 E('DEPLOYMENT_IN_PROGRESS', 'AEM instances are receiving a deployment and new packages are not accepted temporarily until the instances are done.');
-
-
-
-
-// Define your error codes with the wrapper
-E('INTERNAL_VARIABLE_USAGE', 'The variable name %s is reserved for internal usage and will be ignored.')
-E('IP_ALLOWLIST_NOT_FOUND', 'Could not find IP Allowlist with id %s in program id %s.')
-E('VARIABLES_JSON_PARSE_ERROR', 'Unable to parse variables from provided data.')
-E('VARIABLES_JSON_NOT_ARRAY', 'Provided variables input was not an array.')
-E('BOTH_BRANCH_AND_TAG_PROVIDED', 'Both branch and tag cannot be specified.')
-E('MISSING_METRICS', 'Metrics for action %s on execution %s could not be found.')
-E('INVALID_TAG_SYNTAX', 'tag flag should not be specified with "refs/tags/" prefix. Value provided was %s')
-E('JSON_PARSE_NUMBER', 'parsed flag value as a number')
-E('BLANK_VARIABLE_VALUE', 'Blank variable values are not allowed. Use the proper flag if you intend to delete a variable.')
-E('MALFORMED_NAME_VALUE_PAIR', 'Please provide correct values for flags')
