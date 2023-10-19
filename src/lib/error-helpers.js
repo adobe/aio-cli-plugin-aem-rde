@@ -51,4 +51,5 @@ function handleError(_error, errorFn) {
 
 module.exports = {
     handleError,
+    exitCodes,
 }

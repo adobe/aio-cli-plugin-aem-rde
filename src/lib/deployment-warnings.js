@@ -12,6 +12,8 @@
 const { ErrorWrapper, createUpdater } =
   require('@adobe/aio-lib-core-errors').AioCoreSDKErrorWrapper;
 
+const { exitCodes } = require('./error-helpers');
+
 const codes = {};
 const messages = new Map();
 
@@ -49,4 +51,4 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('INSTALL_STAGED', 'Install command was staged. Please check logs.');
+E('INSTALL_STAGED', 'Install command was staged, analysers detected missing packages that can be fixed with another deployment on top of this one. Please check logs. If this is expected, you can ignore exit code ' + exitCodes.DEPLOYMENT_WARNING);
