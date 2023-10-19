@@ -11,9 +11,11 @@
  */
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
-const { handleRetryAfter, sleepSeconds } = require('./rde-utils');
+const { handleRetryAfter } = require('./rde-utils');
+const { sleepSeconds } = require('./utils');
 const { DoRequest } = require('./doRequest');
 const { codes: internalCodes } = require('./internal-errors');
+const { codes: validationCodes } = require('./validation-errors');
 
 const fetch = createFetch();
 
@@ -333,7 +335,20 @@ class CloudSdkAPI {
   }
 
   async _createError(response) {
-    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+    let errMessage = response.statusText;
+    try {
+      errMessage = await response.text();
+    } catch(err) {}
+
+    if (errMessage) {
+      switch (errMessage) {
+        case "Concurrent modification":
+          throw new validationCodes.CONCURRENT_MODIFICATION();
+        case "Deployment in progress":
+          throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
+      }
+    }
+    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, errMessage] });
   }
 
   async _putUpdate(changeId, callbackProgress) {

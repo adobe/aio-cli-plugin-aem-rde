@@ -26,6 +26,7 @@ const spinner = require('ora')();
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
+const { AioError } = require('../../../lib/errors');
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -184,10 +185,9 @@ class DeployCommand extends BaseCommand {
     } catch (err) {
       progressBar.stop();
       spinner.stop();
-      if (err instanceof String && err.endsWith('Concurrent modification')) {
-        throw new validationCodes.CONCURRENT_MODIFICATION();
+      if (err instanceof AioError) {
+        throw err;
       }
-
       throw new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err });
     }
 

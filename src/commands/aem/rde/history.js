@@ -16,6 +16,7 @@ const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
+const { AioError } = require('../../../lib/errors');
 
 class HistoryCommand extends BaseCommand {
   async run() {
@@ -47,6 +48,9 @@ class HistoryCommand extends BaseCommand {
         );
       }
     } catch (err) {
+      if (err instanceof AioError) {
+        throw err;
+      }
       throw new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err });
     } finally {
       spinner.stop();

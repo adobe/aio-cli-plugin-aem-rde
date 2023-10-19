@@ -55,6 +55,7 @@ E('MISSING_PROGRAM_ID', 'Program ID must be specified either as --programId flag
 E('MISSING_ENVIRONMENT_ID', 'Environment ID must be specified either as --environmentId flag or through cloudmanager_environmentid config value.')
 E('INVALID_UPDATE_ID', 'Invalid update ID "%s". Please use a positive update ID number as the input.')
 E('CONCURRENT_MODIFICATION', 'Your RDE is waiting for the upload of a previous invocation of the "install" command. You can ignore this by using the "--force" flag.')
+E('DEPLOYMENT_IN_PROGRESS', 'AEM instances are receiving a deployment and new packages are not accepted temporarily until the instances are done.');
 
 
 

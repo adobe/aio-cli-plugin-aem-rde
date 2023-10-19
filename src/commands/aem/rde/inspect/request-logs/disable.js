@@ -17,6 +17,7 @@ const {
   inspectCommonFlags,
 } = require('../../../../../lib/inspect-base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
+const { AioError } = require('../../../../../lib/errors');
 
 class DisableRequestLogsCommand extends InspectBaseCommand {
   async run() {
@@ -31,6 +32,9 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
         throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
       }
     } catch (err) {
+      if (err instanceof AioError) {
+        throw err;
+      }
       throw new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({ messageValues: err });
     }
   }

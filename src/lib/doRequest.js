@@ -11,6 +11,7 @@
  */
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const FormData = require('form-data');
+const { sleepSeconds } = require('./utils');
 
 const fetch = createFetch();
 
@@ -27,7 +28,12 @@ class DoRequest {
   }
 
   async doGet(path, body) {
-    return this.doRequest('get', path, body);
+    return await withRetries(
+      async () => await this.doRequest('get', path, body),
+      (response) => response && ((response.status >= 200 && response.status < 300) || response.status === 404),
+      1,
+      20
+    );
   }
 
   async doPost(path, body) {
@@ -60,6 +66,29 @@ class DoRequest {
   }
 }
 
+
+/**
+ * @param closure
+ * @param successPredicate
+ * @param retryIntervalSeconds
+ * @param maxRetries
+ */
+async function withRetries(
+  closure,
+  successPredicate,
+  retryIntervalSeconds,
+  maxRetries
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    const result = await closure();
+    if (successPredicate(result)) {
+      return result;
+    }
+    await sleepSeconds(retryIntervalSeconds);
+  }
+}
+
 module.exports = {
   DoRequest,
+  withRetries,
 };

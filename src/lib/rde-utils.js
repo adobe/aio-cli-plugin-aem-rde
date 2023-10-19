@@ -15,6 +15,8 @@ const { CliUx } = require('@oclif/core');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: deploymentErrorCodes } = require('./deployment-errors');
 const { codes: deploymentWarningCodes } = require('./deployment-warnings');
+const { withRetries } = require('./doRequest');
+const { sleepSeconds } = require('./utils');
 
 const STATUS = {
   WAITING: "waiting",
@@ -22,13 +24,6 @@ const STATUS = {
   STAGED: "staged",
   COMPLETED: "completed",
   FAILED: "failed"
-}
-
-/**
- * @param seconds
- */
-function sleepSeconds(seconds) {
-  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 /**
@@ -227,29 +222,7 @@ async function handleRetryAfter(
   return response;
 }
 
-/**
- * @param closure
- * @param successPredicate
- * @param retryIntervalSeconds
- * @param maxRetries
- */
-async function withRetries(
-  closure,
-  successPredicate,
-  retryIntervalSeconds,
-  maxRetries
-) {
-  for (let i = 0; i < maxRetries; i++) {
-    const result = await closure();
-    if (successPredicate(result)) {
-      return result;
-    }
-    await sleepSeconds(retryIntervalSeconds);
-  }
-}
-
 module.exports = {
-  sleepSeconds,
   logChange,
   throwOnInstallError,
   loadUpdateHistory,

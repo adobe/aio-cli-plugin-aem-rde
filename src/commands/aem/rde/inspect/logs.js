@@ -13,6 +13,7 @@
 
 const { cli, Flags } = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const { AioError } = require('../../../../lib/errors');
 const {
   InspectBaseCommand,
   inspectCommonFlags,
@@ -50,6 +51,9 @@ class LogsCommand extends InspectBaseCommand {
         throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
       }
     } catch (err) {
+      if (err instanceof AioError) {
+        throw err;
+      }
       throw new internalCodes.INTERNAL_GET_LOG_ERROR({ messageValues: err });
     }
   }

@@ -17,6 +17,7 @@ const {
   inspectCommonFlags,
 } = require('../../../../lib/inspect-base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const { AioError } = require('../../../../lib/errors');
 
 class OsgiComponentsCommand extends InspectBaseCommand {
   async run() {
@@ -56,6 +57,9 @@ class OsgiComponentsCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
+      if (err instanceof AioError) {
+        throw err;
+      }
       throw new internalCodes.INTERNAL_GET_OSGI_COMPONENTS_ERROR({ messageValues: err });
     }
   }

@@ -18,6 +18,7 @@ const {
   logInJsonArrayFormat,
 } = require('../../../../lib/inspect-base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const { AioError } = require('../../../../lib/errors');
 
 class SlingRequestsCommand extends InspectBaseCommand {
   async run() {
@@ -57,6 +58,9 @@ class SlingRequestsCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
+      if (err instanceof AioError) {
+        throw err;
+      }
       throw new internalCodes.INTERNAL_GET_SLING_REQUESTS_ERROR({ messageValues: err });
     }
   }
