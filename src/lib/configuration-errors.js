@@ -49,16 +49,36 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('CLI_ONLY_COMMAND', 'This command is only intended to be used with a user token, not a service account. The org id for a service account must be provided in the service account configuration.')
-E('NO_CM_ORGS', 'No Cloud Manager authorized organizations found.')
-E('NO_IMS_CONTEXT', 'Unable to find IMS context %s.')
-E('CLI_AUTH_NO_ORG', 'The CLI has been authenticated, but no organization has been selected. To select an organization, run "aio cloudmanager:org:select". Alternatively, define the IMS context configuration %s with a service account.')
-E('NO_DEFAULT_IMS_CONTEXT', 'There is no IMS context configuration defined for %s. Either define this context configuration or authenticate using "aio auth:login" and select an organization using "aio cloudmanager:org:select".')
-E('IMS_CONTEXT_MISSING_FIELDS', 'One or more of the required fields in %s were not set. Missing keys were %s.')
-E('IMS_CONTEXT_MISSING_METASCOPE', 'The configuration %s is missing the required metascope %s.')
-E('CLI_AUTH_EXPLICIT_NO_AUTH', 'cli context explicitly enabled, but not authenticated. You must run "aio auth:login" first.')
-E('CLI_AUTH_EXPLICIT_NO_ORG', 'cli context explicitly enabled but no org id specified. Configure using either "cloudmanager_orgid" or by running "aio cloudmanager:org:select"')
-
+E(
+  'CLI_ONLY_COMMAND',
+  'This command is only intended to be used with a user token, not a service account. The org id for a service account must be provided in the service account configuration.'
+);
+E('NO_CM_ORGS', 'No Cloud Manager authorized organizations found.');
+E('NO_IMS_CONTEXT', 'Unable to find IMS context %s.');
+E(
+  'CLI_AUTH_NO_ORG',
+  'The CLI has been authenticated, but no organization has been selected. To select an organization, run "aio cloudmanager:org:select". Alternatively, define the IMS context configuration %s with a service account.'
+);
+E(
+  'NO_DEFAULT_IMS_CONTEXT',
+  'There is no IMS context configuration defined for %s. Either define this context configuration or authenticate using "aio auth:login" and select an organization using "aio cloudmanager:org:select".'
+);
+E(
+  'IMS_CONTEXT_MISSING_FIELDS',
+  'One or more of the required fields in %s were not set. Missing keys were %s.'
+);
+E(
+  'IMS_CONTEXT_MISSING_METASCOPE',
+  'The configuration %s is missing the required metascope %s.'
+);
+E(
+  'CLI_AUTH_EXPLICIT_NO_AUTH',
+  'cli context explicitly enabled, but not authenticated. You must run "aio auth:login" first.'
+);
+E(
+  'CLI_AUTH_EXPLICIT_NO_ORG',
+  'cli context explicitly enabled but no org id specified. Configure using either "cloudmanager_orgid" or by running "aio cloudmanager:org:select"'
+);
 
 // Define your error codes with the wrapper
 E('NO_IMS_CONTEXT', 'Unable to find IMS context %s.');

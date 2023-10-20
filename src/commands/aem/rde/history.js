@@ -36,10 +36,12 @@ class HistoryCommand extends BaseCommand {
             json.items.forEach(rdeUtils.logChange);
           }
         } else {
-          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
-        throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id})
+        throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id });
       } else {
         await this.withCloudSdk((cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>

@@ -13,7 +13,9 @@
 
 const jwt = require('jsonwebtoken');
 const Config = require('@adobe/aio-lib-core-config');
-const { codes: configurationCodes } = require('../../../../lib/configuration-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
 
 /**

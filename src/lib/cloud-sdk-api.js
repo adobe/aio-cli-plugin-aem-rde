@@ -338,17 +338,19 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch(err) {}
+    } catch (err) {}
 
     if (errMessage) {
       switch (errMessage) {
-        case "Concurrent modification":
+        case 'Concurrent modification':
           throw new validationCodes.CONCURRENT_MODIFICATION();
-        case "Deployment in progress":
+        case 'Deployment in progress':
           throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
       }
     }
-    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, errMessage] });
+    throw new internalCodes.UNEXPECTED_API_ERROR({
+      messageValues: [response.status, errMessage],
+    });
   }
 
   async _putUpdate(changeId, callbackProgress) {

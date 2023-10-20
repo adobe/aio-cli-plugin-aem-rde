@@ -62,13 +62,17 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
       if (response.status === 201) {
         cli.log('Request-logs enabled.');
       } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
       if (err instanceof AioError) {
         throw err;
       }
-      throw new internalCodes.INTERNAL_REQUEST_LOGS_ENABLE_ERROR({ messageValues: err });
+      throw new internalCodes.INTERNAL_REQUEST_LOGS_ENABLE_ERROR({
+        messageValues: err,
+      });
     }
   }
 }

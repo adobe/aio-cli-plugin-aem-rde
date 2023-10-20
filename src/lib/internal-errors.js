@@ -49,25 +49,82 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('NAMESPACE_NOT_FOUND', 'No namespace was found.')
-E('ENVIRONMENT_NOT_HIBERNATED', 'No namespace was found.')
-E('ENVIRONMENT_NOT_RUNNING', 'No namespace was found.')
-E('UNEXPECTED_API_ERROR', 'There was an unexpected API error code %s with message %s. Please, try again later and if the error persists, report it.')
-E('INTERNAL_REQUEST_LOGS_DISABLE_ERROR', 'There was an unexpected error when running request logs command disable option. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_REQUEST_LOGS_ENABLE_ERROR', 'There was an unexpected error when running request logs command enable option. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_REQUEST_LOGS_ERROR', 'There was an unexpected error when running request logs command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_INVENTORY_ERROR', 'There was an unexpected error when running inventory command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_LOG_ERROR', 'There was an unexpected error when running get log command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_DELETE_LOG_ERROR', 'There was an unexpected error when running delete log command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_CREATE_LOG_ERROR', 'There was an unexpected error when running create log command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_OSGI_BUNDLES_ERROR', 'There was an unexpected error when running get osgi bundles command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_OSGI_COMPONENTS_ERROR', 'There was an unexpected error when running get osgi components command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR', 'There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_OSGI_SERVICES_ERROR', 'There was an unexpected error when running get osgi services command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_GET_SLING_REQUESTS_ERROR', 'There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_DELETE_ERROR', 'There was an unexpected error when running delete command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_HISTORY_ERROR', 'There was an unexpected error when running history command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_INSTALL_ERROR', 'There was an unexpected error when running install command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_RESET_ERROR', 'There was an unexpected error when running reset command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_RESTART_ERROR', 'There was an unexpected error when running restart command. Please, try again later and if the error persists, report it. Error %s')
-E('INTERNAL_STATUS_ERROR', 'There was an unexpected error when running status command. Please, try again later and if the error persists, report it. Error %s')
+E('NAMESPACE_NOT_FOUND', 'No namespace was found.');
+E('ENVIRONMENT_NOT_HIBERNATED', 'No namespace was found.');
+E('ENVIRONMENT_NOT_RUNNING', 'No namespace was found.');
+E(
+  'UNEXPECTED_API_ERROR',
+  'There was an unexpected API error code %s with message %s. Please, try again later and if the error persists, report it.'
+);
+E(
+  'INTERNAL_REQUEST_LOGS_DISABLE_ERROR',
+  'There was an unexpected error when running request logs command disable option. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_REQUEST_LOGS_ENABLE_ERROR',
+  'There was an unexpected error when running request logs command enable option. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_REQUEST_LOGS_ERROR',
+  'There was an unexpected error when running request logs command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_INVENTORY_ERROR',
+  'There was an unexpected error when running inventory command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_LOG_ERROR',
+  'There was an unexpected error when running get log command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_DELETE_LOG_ERROR',
+  'There was an unexpected error when running delete log command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_CREATE_LOG_ERROR',
+  'There was an unexpected error when running create log command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_OSGI_BUNDLES_ERROR',
+  'There was an unexpected error when running get osgi bundles command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_OSGI_COMPONENTS_ERROR',
+  'There was an unexpected error when running get osgi components command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR',
+  'There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_OSGI_SERVICES_ERROR',
+  'There was an unexpected error when running get osgi services command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_GET_SLING_REQUESTS_ERROR',
+  'There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_DELETE_ERROR',
+  'There was an unexpected error when running delete command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_HISTORY_ERROR',
+  'There was an unexpected error when running history command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_INSTALL_ERROR',
+  'There was an unexpected error when running install command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_RESET_ERROR',
+  'There was an unexpected error when running reset command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_RESTART_ERROR',
+  'There was an unexpected error when running restart command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_STATUS_ERROR',
+  'There was an unexpected error when running status command. Please, try again later and if the error persists, report it. Error %s'
+);

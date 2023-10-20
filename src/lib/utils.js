@@ -15,9 +15,9 @@
  * @param seconds
  */
 function sleepSeconds(seconds) {
-    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 module.exports = {
-    sleepSeconds,
+  sleepSeconds,
 };

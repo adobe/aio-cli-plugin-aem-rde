@@ -17,7 +17,7 @@ const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
-const { handleError } = require('./error-helpers')
+const { handleError } = require('./error-helpers');
 
 /**
  *
@@ -83,8 +83,8 @@ class BaseCommand extends Command {
     this._environmentId = environmentId;
   }
 
-  async catch (err) {
-    handleError(err, this.error)
+  async catch(err) {
+    handleError(err, this.error);
   }
 
   async getDeveloperConsoleUrl(
@@ -100,10 +100,10 @@ class BaseCommand extends Command {
   async withCloudSdk(fn) {
     if (!this._cloudSdkAPI) {
       if (!this._programId) {
-        throw new validationCodes.MISSING_PROGRAM_ID()
+        throw new validationCodes.MISSING_PROGRAM_ID();
       }
       if (!this._environmentId) {
-        throw new validationCodes.MISSING_ENVIRONMENT_ID()
+        throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
       const { accessToken, apiKey } = await getTokenAndKey();
       const cloudManagerUrl = getBaseUrl();

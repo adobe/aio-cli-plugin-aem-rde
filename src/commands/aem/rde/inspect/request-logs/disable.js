@@ -29,13 +29,17 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
       if (response.status === 200) {
         cli.log('Request-logs disabled.');
       } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
       if (err instanceof AioError) {
         throw err;
       }
-      throw new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({ messageValues: err });
+      throw new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
+        messageValues: err,
+      });
     }
   }
 }

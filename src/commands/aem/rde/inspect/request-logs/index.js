@@ -39,7 +39,9 @@ class RequestLogsCommand extends InspectBaseCommand {
             logInTableFormat(json?.items);
           }
         } else {
-          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       } else {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -53,14 +55,18 @@ class RequestLogsCommand extends InspectBaseCommand {
             logInTableFormat([requestLog]);
           }
         } else {
-          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       }
     } catch (err) {
       if (err instanceof AioError) {
         throw err;
       }
-      throw new internalCodes.INTERNAL_REQUEST_LOGS_ERROR({ messageValues: err });
+      throw new internalCodes.INTERNAL_REQUEST_LOGS_ERROR({
+        messageValues: err,
+      });
     }
   }
 }

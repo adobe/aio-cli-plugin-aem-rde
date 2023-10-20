@@ -30,7 +30,10 @@ class DoRequest {
   async doGet(path, body) {
     return await withRetries(
       async () => await this.doRequest('get', path, body),
-      (response) => response && ((response.status >= 200 && response.status < 300) || response.status === 404),
+      (response) =>
+        response &&
+        ((response.status >= 200 && response.status < 300) ||
+          response.status === 404),
       1,
       20
     );
@@ -65,7 +68,6 @@ class DoRequest {
     return fetch(url, options);
   }
 }
-
 
 /**
  * @param closure

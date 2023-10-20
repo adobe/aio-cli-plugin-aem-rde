@@ -51,4 +51,8 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('INSTALL_STAGED', 'Install command was staged, analysers detected missing packages that can be fixed with another deployment on top of this one. Please check logs. If this is expected, you can ignore exit code ' + exitCodes.DEPLOYMENT_WARNING);
+E(
+  'INSTALL_STAGED',
+  'Install command was staged, analysers detected missing packages that can be fixed with another deployment on top of this one. Please check logs. If this is expected, you can ignore exit code ' +
+    exitCodes.DEPLOYMENT_WARNING
+);

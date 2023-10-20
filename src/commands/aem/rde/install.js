@@ -17,7 +17,10 @@ const {
   commonFlags,
   Flags,
 } = require('../../../lib/base-command');
-const { loadUpdateHistory, throwOnInstallError } = require('../../../lib/rde-utils');
+const {
+  loadUpdateHistory,
+  throwOnInstallError,
+} = require('../../../lib/rde-utils');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -106,7 +109,9 @@ async function computeStats(url) {
       };
     }
     default:
-      throw new validationCodes.UNSUPPORTED_PROTOCOL({messageValues: url.protocol});
+      throw new validationCodes.UNSUPPORTED_PROTOCOL({
+        messageValues: url.protocol,
+      });
   }
 }
 
@@ -134,7 +139,9 @@ class DeployCommand extends BaseCommand {
         guessedTypes = guessType(fileName, originalUrl, flags.path);
       }
       if (guessedTypes.length !== 1) {
-        throw new validationCodes.INVALID_GUESS_TYPE({ messageValues: guessedTypes.join(', ') });
+        throw new validationCodes.INVALID_GUESS_TYPE({
+          messageValues: guessedTypes.join(', '),
+        });
       } else {
         type = guessedTypes[0];
       }

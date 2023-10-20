@@ -39,7 +39,9 @@ class InventoryCommand extends InspectBaseCommand {
             logInTableFormat(json?.items);
           }
         } else {
-          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       } else {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -53,7 +55,9 @@ class InventoryCommand extends InspectBaseCommand {
             logInTableFormat([inventory]);
           }
         } else {
-          throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       }
     } catch (err) {

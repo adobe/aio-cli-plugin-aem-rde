@@ -37,7 +37,9 @@ class StatusCommand extends BaseCommand {
       spinner.stop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [status.status, status.error],
+        });
       }
 
       const grouped = groupArtifacts(status.items);

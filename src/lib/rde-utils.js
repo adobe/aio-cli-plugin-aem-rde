@@ -19,12 +19,12 @@ const { withRetries } = require('./doRequest');
 const { sleepSeconds } = require('./utils');
 
 const STATUS = {
-  WAITING: "waiting",
-  PROCESSING: "processing",
-  STAGED: "staged",
-  COMPLETED: "completed",
-  FAILED: "failed"
-}
+  WAITING: 'waiting',
+  PROCESSING: 'processing',
+  STAGED: 'staged',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+};
 
 /**
  * @param change
@@ -52,7 +52,6 @@ function logChange(change) {
   );
 }
 
-
 /**
  * @param cloudSdkAPI
  * @param updateId
@@ -60,7 +59,7 @@ function logChange(change) {
  */
 async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
   progressCallback(false, 'retrieving update status');
-  let response = await handleRetryAfter(
+  const response = await handleRetryAfter(
     null,
     () => cloudSdkAPI.getChange(updateId),
     () => progressCallback(false, 'checking status')
@@ -72,9 +71,9 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
     if (change) {
       switch (change.status) {
         case STATUS.FAILED:
-          throw new deploymentErrorCodes.INSTALL_FAILED;
-          case STATUS.STAGED:
-          throw new deploymentWarningCodes.INSTALL_STAGED;
+          throw new deploymentErrorCodes.INSTALL_FAILED();
+        case STATUS.STAGED:
+          throw new deploymentWarningCodes.INSTALL_STAGED();
         default:
           // no error exception is thrown
           return;
@@ -82,7 +81,11 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
     }
   }
 
-  throw new Error(`cannot check command operation status, error code ${response ? response.status : "unknown"} and error message ${response ? response.statusText : "unknown"}`);
+  throw new Error(
+    `cannot check command operation status, error code ${
+      response ? response.status : 'unknown'
+    } and error message ${response ? response.statusText : 'unknown'}`
+  );
 }
 
 /**
@@ -145,12 +148,16 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
         cli.log('No logs available for this update.');
       }
     } else {
-      throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+      throw new internalCodes.UNEXPECTED_API_ERROR({
+        messageValues: [response.status, response.statusText],
+      });
     }
   } else if (response.status === 404) {
     cli.log(`An update with ID ${updateId} does not exist.`);
   } else {
-    throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+    throw new internalCodes.UNEXPECTED_API_ERROR({
+      messageValues: [response.status, response.statusText],
+    });
   }
 }
 
@@ -171,7 +178,9 @@ async function loadAllArtifacts(cloudSdkAPI) {
       hasMore = json.cursor !== undefined;
       items.push(...json.items);
     } else {
-      throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+      throw new internalCodes.UNEXPECTED_API_ERROR({
+        messageValues: [response.status, response.statusText],
+      });
     }
   }
   return {

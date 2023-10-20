@@ -48,7 +48,9 @@ class LogsCommand extends InspectBaseCommand {
         process.removeListener('SIGINT', this.stopAndCleanup);
         process.removeListener('SIGTERM', this.stopAndCleanup);
       } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
       if (err instanceof AioError) {
@@ -74,7 +76,9 @@ class LogsCommand extends InspectBaseCommand {
         cloudSdkAPI.deleteAemLog(target, id)
       );
       if (response.status !== 200) {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
       throw new internalCodes.INTERNAL_DELETE_LOG_ERROR({ messageValues: err });
@@ -115,7 +119,9 @@ class LogsCommand extends InspectBaseCommand {
         const log = await response.json();
         return log;
       } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
       throw new internalCodes.INTERNAL_CREATE_LOG_ERROR({ messageValues: err });
@@ -132,7 +138,9 @@ class LogsCommand extends InspectBaseCommand {
         cli.log(aemLogTail.trim());
       }
     } else {
-      throw new internalCodes.UNEXPECTED_API_ERROR({ messageValues: [response.status, response.statusText] });
+      throw new internalCodes.UNEXPECTED_API_ERROR({
+        messageValues: [response.status, response.statusText],
+      });
     }
   }
 }

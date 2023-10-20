@@ -49,5 +49,8 @@ module.exports = {
 };
 
 // Define your error codes with the wrapper
-E('DELETE_NOT_FOUND', 'Could not delete %s "%s". It is not present on %s this environment.');
+E(
+  'DELETE_NOT_FOUND',
+  'Could not delete %s "%s". It is not present on %s this environment.'
+);
 E('INSTALL_FAILED', 'Install command failed. Please check logs.');
