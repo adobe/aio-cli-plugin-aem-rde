@@ -9,7 +9,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const { cli } = require('cli-ux');
+const { CliUx } = require('@oclif/core');
 const exitCodes = {
   GENERAL: 1,
   CONFIGURATION: 2,
@@ -24,8 +24,8 @@ const exitCodes = {
  * @param errorFn
  */
 function handleError(_error, errorFn) {
-  if (cli.action.running) {
-    cli.action.stop('failed');
+  if (CliUx.ux.action.running) {
+    CliUx.ux.action.stop('failed');
   }
 
   let exitCode = exitCodes.GENERAL;
