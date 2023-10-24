@@ -122,11 +122,12 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand([], null),
         { ...stubbedMethods, getOsgiConfigurations: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -138,11 +139,12 @@ describe('OsgiConfigurationsCommand', function () {
           getOsgiConfigurations: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 
@@ -201,11 +203,12 @@ describe('OsgiConfigurationsCommand', function () {
 
         { ...stubbedMethods, getOsgiConfiguration: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -217,11 +220,12 @@ describe('OsgiConfigurationsCommand', function () {
           getOsgiConfiguration: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 });

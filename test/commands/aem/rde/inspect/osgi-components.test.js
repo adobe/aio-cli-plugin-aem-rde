@@ -183,11 +183,12 @@ describe('OsgiComponentsCommand', function () {
         new OsgiComponentsCommand([], null),
         { ...stubbedMethods, getOsgiComponents: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -199,11 +200,12 @@ describe('OsgiComponentsCommand', function () {
           getOsgiComponents: stubbedThrowErrorMethods,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_COMPONENTS_ERROR] There was an unexpected error when running get osgi components command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 
@@ -268,11 +270,12 @@ describe('OsgiComponentsCommand', function () {
         new OsgiComponentsCommand(['1'], null),
         { ...stubbedMethods, getOsgiComponent: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -284,11 +287,12 @@ describe('OsgiComponentsCommand', function () {
           getOsgiComponent: stubbedThrowErrorMethods,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_COMPONENTS_ERROR] There was an unexpected error when running get osgi components command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 });

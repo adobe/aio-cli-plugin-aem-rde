@@ -139,11 +139,12 @@ describe('SlingRequestsCommand', function () {
         new SlingRequestsCommand([], null),
         { ...stubbedMethods, getSlingRequests: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -155,11 +156,12 @@ describe('SlingRequestsCommand', function () {
           getSlingRequests: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_SLING_REQUESTS_ERROR] There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 
@@ -222,11 +224,12 @@ describe('SlingRequestsCommand', function () {
         new SlingRequestsCommand(['1'], null),
         { ...stubbedMethods, getSlingRequest: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message', async function () {
@@ -238,11 +241,12 @@ describe('SlingRequestsCommand', function () {
           getSlingRequest: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_GET_SLING_REQUESTS_ERROR] There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 });

@@ -129,11 +129,12 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand([], null),
         { ...stubbedMethods, getRequestLogs: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -145,11 +146,12 @@ describe('RequestLogsCommand', function () {
           getRequestLogs: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_REQUEST_LOGS_ERROR] There was an unexpected error when running request logs command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 
@@ -215,11 +217,12 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['1'], null),
         { ...stubbedMethods, getRequestLog: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -231,11 +234,12 @@ describe('RequestLogsCommand', function () {
           getRequestLog: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(e.message.includes( `[RDECLI:INTERNAL_REQUEST_LOGS_ERROR] There was an unexpected error when running request logs command. Please, try again later and if the error persists, report it.`));
+      }
     });
   });
 });
