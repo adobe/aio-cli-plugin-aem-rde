@@ -2,7 +2,10 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiBundlesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-bundles');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(
@@ -146,11 +149,15 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand([], null),
         { ...stubbedMethods, getOsgiBundles: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -162,11 +169,16 @@ describe('OsgiBundlesCommand', function () {
           getOsgiBundles: stubbedThrowErrorMethods,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_BUNDLES_ERROR] There was an unexpected error when running get osgi bundles command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
   });
 
@@ -258,11 +270,15 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand([reqId], null),
         { ...stubbedMethods, getOsgiBundle: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -274,11 +290,16 @@ describe('OsgiBundlesCommand', function () {
           getOsgiBundle: stubbedThrowErrorMethods,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_BUNDLES_ERROR] There was an unexpected error when running get osgi bundles command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
   });
 });

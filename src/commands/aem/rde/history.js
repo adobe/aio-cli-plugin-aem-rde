@@ -14,6 +14,9 @@
 const { BaseCommand, cli } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
+const { codes: internalCodes } = require('../../../lib/internal-errors');
+const { codes: validationCodes } = require('../../../lib/validation-errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 
 class HistoryCommand extends BaseCommand {
   async run() {
@@ -33,12 +36,12 @@ class HistoryCommand extends BaseCommand {
             json.items.forEach(rdeUtils.logChange);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
-        cli.log(
-          `Invalid update ID "${args.id}". Please use a positive update ID number as the input.`
-        );
+        throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id });
       } else {
         await this.withCloudSdk((cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
@@ -47,7 +50,10 @@ class HistoryCommand extends BaseCommand {
         );
       }
     } catch (err) {
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
+      );
     } finally {
       spinner.stop();
     }

@@ -12,6 +12,8 @@
 'use strict';
 
 const { cli, Flags } = require('../../../../lib/base-command');
+const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const { throwAioError } = require('../../../../lib/error-helpers');
 const {
   InspectBaseCommand,
   inspectCommonFlags,
@@ -46,10 +48,15 @@ class LogsCommand extends InspectBaseCommand {
         process.removeListener('SIGINT', this.stopAndCleanup);
         process.removeListener('SIGTERM', this.stopAndCleanup);
       } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`);
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_LOG_ERROR({ messageValues: err })
+      );
     }
   }
 
@@ -69,10 +76,12 @@ class LogsCommand extends InspectBaseCommand {
         cloudSdkAPI.deleteAemLog(target, id)
       );
       if (response.status !== 200) {
-        cli.log(`Error: ${response.status} - ${response.statusText}`);
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
-      cli.log(err);
+      throw new internalCodes.INTERNAL_DELETE_LOG_ERROR({ messageValues: err });
     }
   }
 
@@ -110,10 +119,12 @@ class LogsCommand extends InspectBaseCommand {
         const log = await response.json();
         return log;
       } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`);
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
-      cli.log(err);
+      throw new internalCodes.INTERNAL_CREATE_LOG_ERROR({ messageValues: err });
     }
   }
 
@@ -127,7 +138,9 @@ class LogsCommand extends InspectBaseCommand {
         cli.log(aemLogTail.trim());
       }
     } else {
-      cli.log(`Error: ${response.status} - ${response.statusText}`);
+      throw new internalCodes.UNEXPECTED_API_ERROR({
+        messageValues: [response.status, response.statusText],
+      });
     }
   }
 }

@@ -2,7 +2,10 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiServicesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-services');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(
@@ -158,11 +161,15 @@ describe('OsgiServicesCommand', function () {
           getOsgiServices: () => errorObj,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -175,11 +182,16 @@ describe('OsgiServicesCommand', function () {
           getOsgiServices: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_SERVICES_ERROR] There was an unexpected error when running get osgi services command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
   });
 
@@ -255,11 +267,15 @@ describe('OsgiServicesCommand', function () {
           getOsgiService: () => errorObj,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
     it('Should catch a throw and print out a error message.', async function () {
@@ -272,11 +288,16 @@ describe('OsgiServicesCommand', function () {
           getOsgiService: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_SERVICES_ERROR] There was an unexpected error when running get osgi services command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
   });
 });

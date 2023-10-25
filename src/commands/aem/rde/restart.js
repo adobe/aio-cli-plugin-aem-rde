@@ -12,6 +12,8 @@
 'use strict';
 
 const { BaseCommand, cli } = require('../../../lib/base-command');
+const { codes: internalCodes } = require('../../../lib/internal-errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class RestartCommand extends BaseCommand {
@@ -24,7 +26,10 @@ class RestartCommand extends BaseCommand {
       cli.log(`Environment restarted.`);
     } catch (err) {
       spinner.stop();
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_RESTART_ERROR({ messageValues: err })
+      );
     }
   }
 }

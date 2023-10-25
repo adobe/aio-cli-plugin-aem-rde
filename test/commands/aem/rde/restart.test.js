@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const RestartCommand = require('../../../../src/commands/aem/rde/restart.js');
-const { createCloudSdkAPIStub, setupLogCapturing } = require('./util');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 const { cli } = require('../../../../src/lib/base-command');
 
 describe('RestartCommand', function () {
