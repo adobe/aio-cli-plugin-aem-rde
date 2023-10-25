@@ -61,9 +61,12 @@ class OsgiBundlesCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_GET_OSGI_BUNDLES_ERROR({
-        messageValues: err,
-      }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_OSGI_BUNDLES_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

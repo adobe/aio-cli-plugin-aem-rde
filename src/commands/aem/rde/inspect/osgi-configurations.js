@@ -61,9 +61,12 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR({
-        messageValues: err,
-      }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

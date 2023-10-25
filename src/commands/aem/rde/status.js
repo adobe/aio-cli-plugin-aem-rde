@@ -66,7 +66,10 @@ class StatusCommand extends BaseCommand {
       );
     } catch (err) {
       spinner.stop();
-      throwAioError(err, new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
+      );
     }
   }
 

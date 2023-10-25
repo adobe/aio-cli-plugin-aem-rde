@@ -54,7 +54,10 @@ class LogsCommand extends InspectBaseCommand {
         });
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_GET_LOG_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_LOG_ERROR({ messageValues: err })
+      );
     }
   }
 

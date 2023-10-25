@@ -2,7 +2,10 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiConfigurationsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-configurations');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(
@@ -126,7 +129,10 @@ describe('OsgiConfigurationsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
       }
     });
 
@@ -143,7 +149,11 @@ describe('OsgiConfigurationsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`));
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`
+          )
+        );
       }
     });
   });
@@ -207,7 +217,10 @@ describe('OsgiConfigurationsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
       }
     });
 
@@ -224,7 +237,11 @@ describe('OsgiConfigurationsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert(e.message.includes( `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`));
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR] There was an unexpected error when running get osgi configurations command. Please, try again later and if the error persists, report it.`
+          )
+        );
       }
     });
   });

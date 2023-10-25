@@ -26,7 +26,10 @@ class RestartCommand extends BaseCommand {
       cli.log(`Environment restarted.`);
     } catch (err) {
       spinner.stop();
-      throwAioError(err, new internalCodes.INTERNAL_RESTART_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_RESTART_ERROR({ messageValues: err })
+      );
     }
   }
 }

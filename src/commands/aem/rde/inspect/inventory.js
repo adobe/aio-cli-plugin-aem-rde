@@ -61,7 +61,10 @@ class InventoryCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_INVENTORY_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_INVENTORY_ERROR({ messageValues: err })
+      );
     }
   }
 }

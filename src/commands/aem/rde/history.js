@@ -50,7 +50,10 @@ class HistoryCommand extends BaseCommand {
         );
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
+      );
     } finally {
       spinner.stop();
     }

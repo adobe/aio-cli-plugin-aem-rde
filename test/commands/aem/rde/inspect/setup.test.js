@@ -1,7 +1,9 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const SetupCommand = require('../../../../../src/commands/aem/rde/inspect/setup');
-const { codes: configurationCodes } = require('../../../../../src/lib/configuration-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../../src/lib/configuration-errors');
 const Config = require('@adobe/aio-lib-core-config');
 const { createCloudSdkAPIStub } = require('../../../../util.js');
 
@@ -33,7 +35,8 @@ describe('SetupCommand', function () {
       sinon.assert.calledOnce(Config.set);
     });
     it('Should validate the token and throw error if not valid', async function () {
-      const errorCanNotDecode = new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      const errorCanNotDecode =
+        new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
       const token = 'not valid token';
       const [command] = createCloudSdkAPIStub(
         sinon,

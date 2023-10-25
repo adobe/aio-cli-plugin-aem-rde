@@ -34,9 +34,12 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
         });
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
-        messageValues: err,
-      }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

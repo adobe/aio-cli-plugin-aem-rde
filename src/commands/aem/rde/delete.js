@@ -74,7 +74,10 @@ class DeleteCommand extends BaseCommand {
       }
     } catch (err) {
       spinner.stop();
-      throwAioError(err, new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err })
+      );
     }
   }
 }

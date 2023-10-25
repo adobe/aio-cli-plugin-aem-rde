@@ -62,9 +62,12 @@ class SlingRequestsCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
-      throwAioError(err, new internalCodes.INTERNAL_GET_SLING_REQUESTS_ERROR({
-        messageValues: err,
-      }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_SLING_REQUESTS_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

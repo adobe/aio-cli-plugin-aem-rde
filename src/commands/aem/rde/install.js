@@ -192,7 +192,10 @@ class DeployCommand extends BaseCommand {
     } catch (err) {
       progressBar.stop();
       spinner.stop();
-      throwAioError(err, new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err }));
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
+      );
     }
 
     await this.withCloudSdk((cloudSdkAPI) =>

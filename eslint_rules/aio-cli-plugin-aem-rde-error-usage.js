@@ -10,53 +10,68 @@ governing permissions and limitations under the License.
 */
 
 module.exports = {
-    create: function (context) {
-        return {
-            CallExpression: (node) => {
-                if (node.callee.object && node.callee.object.type === 'ThisExpression' && node.callee.property && node.callee.property.name === 'error') {
-                    if (node.parent && node.parent.parent && node.parent.parent.parent && node.parent.parent.parent.type === 'CatchClause') {
-                        context.report({
-                            node: node,
-                            message: 'this.error should not be used in catch blocks.',
-                        })
-                    } else if (node.arguments.length !== 2) {
-                        context.report({
-                            node: node,
-                            message: 'this.error must be called with two arguments.',
-                        })
-                    } else {
-                        const secondArgument = node.arguments[1]
-                        if (secondArgument.type !== 'ObjectExpression') {
-                            context.report({
-                                node: node,
-                                message: 'second argument to this.error must be an object.',
-                            })
-                        } else {
-                            const propertyNames = secondArgument.properties.map(property => property.key.name)
-                            if (!propertyNames.includes('code')) {
-                                context.report({
-                                    node: node,
-                                    message: 'second argument to this.error must contain an error code.',
-                                })
-                            }
-                            if (!propertyNames.includes('exit')) {
-                                context.report({
-                                    node: node,
-                                    message: 'second argument to this.error must contain an exit code.',
-                                })
-                            }
-                        }
-                    }
-                }
-            },
-            NewExpression: (node) => {
-                if (node.callee.name === 'Error') {
-                    context.report({
-                        node: node,
-                        message: 'Error constructor should not be used. ValidationErrors or ConfigurationErrors should be used instead.',
-                    })
-                }
-            },
+  create: function (context) {
+    return {
+      CallExpression: (node) => {
+        if (
+          node.callee.object &&
+          node.callee.object.type === 'ThisExpression' &&
+          node.callee.property &&
+          node.callee.property.name === 'error'
+        ) {
+          if (
+            node.parent &&
+            node.parent.parent &&
+            node.parent.parent.parent &&
+            node.parent.parent.parent.type === 'CatchClause'
+          ) {
+            context.report({
+              node: node,
+              message: 'this.error should not be used in catch blocks.',
+            });
+          } else if (node.arguments.length !== 2) {
+            context.report({
+              node: node,
+              message: 'this.error must be called with two arguments.',
+            });
+          } else {
+            const secondArgument = node.arguments[1];
+            if (secondArgument.type !== 'ObjectExpression') {
+              context.report({
+                node: node,
+                message: 'second argument to this.error must be an object.',
+              });
+            } else {
+              const propertyNames = secondArgument.properties.map(
+                (property) => property.key.name
+              );
+              if (!propertyNames.includes('code')) {
+                context.report({
+                  node: node,
+                  message:
+                    'second argument to this.error must contain an error code.',
+                });
+              }
+              if (!propertyNames.includes('exit')) {
+                context.report({
+                  node: node,
+                  message:
+                    'second argument to this.error must contain an exit code.',
+                });
+              }
+            }
+          }
         }
-    },
-}
+      },
+      NewExpression: (node) => {
+        if (node.callee.name === 'Error') {
+          context.report({
+            node: node,
+            message:
+              'Error constructor should not be used. ValidationErrors or ConfigurationErrors should be used instead.',
+          });
+        }
+      },
+    };
+  },
+};

@@ -2,7 +2,10 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const EnableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/enable');
 const { cli } = require('../../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../../util.js');
 
 const errorObj = Object.assign(
   {},
@@ -116,7 +119,10 @@ describe('EnableRequestLogsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert.equal(e.message, `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`);
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
       }
     });
 
@@ -130,7 +136,11 @@ describe('EnableRequestLogsCommand', function () {
         await command.run();
         assert.fail('Command should have failed with an exception');
       } catch (e) {
-        assert(e.message.includes( `[RDECLI:INTERNAL_REQUEST_LOGS_ENABLE_ERROR] There was an unexpected error when running request logs command enable option. Please, try again later and if the error persists, report it.`));
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_REQUEST_LOGS_ENABLE_ERROR] There was an unexpected error when running request logs command enable option. Please, try again later and if the error persists, report it.`
+          )
+        );
       }
     });
   });
