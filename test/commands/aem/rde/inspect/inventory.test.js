@@ -2,10 +2,8 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const Inventory = require('../../../../../src/commands/aem/rde/inspect/inventory');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { codes: internalCodes } = require('../../../../../src/lib/internal-errors');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../util.js');
 const chalk = require('chalk');
-const { ErrorWrapper } = require('@adobe/aio-lib-core-errors/src/AioCoreSDKErrorWrapper');
 
 const errorObj = Object.assign(
   {},

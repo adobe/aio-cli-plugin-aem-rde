@@ -2,7 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const SlingRequestsCommand = require('../../../../../src/commands/aem/rde/inspect/sling-requests');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(

@@ -3,7 +3,7 @@ const sinon = require('sinon').createSandbox();
 const SetupCommand = require('../../../../../src/commands/aem/rde/inspect/setup');
 const { codes: configurationCodes } = require('../../../../../src/lib/configuration-errors');
 const Config = require('@adobe/aio-lib-core-config');
-const { createCloudSdkAPIStub } = require('../util.js');
+const { createCloudSdkAPIStub } = require('../../../../util.js');
 
 describe('SetupCommand', function () {
   before(() => {

@@ -2,7 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const LogsCommand = require('../../../../../src/commands/aem/rde/inspect/logs');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../util.js');
 
 const errorObj = Object.assign(
   {},

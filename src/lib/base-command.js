@@ -75,12 +75,13 @@ async function initSdk(cloudManagerUrl, orgId) {
 }
 
 class BaseCommand extends Command {
-  constructor(argv, config) {
+  constructor(argv, config, error) {
     super(argv, config);
     const programId = Config.get('cloudmanager_programid');
     const environmentId = Config.get('cloudmanager_environmentid');
     this._programId = programId;
     this._environmentId = environmentId;
+    this.error = error || this.error;
   }
 
   async catch(err) {

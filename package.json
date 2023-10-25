@@ -30,8 +30,8 @@
     "eslint-plugin-prettier": "^4.2.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "prettier": "2.8.3",
-    "sinon": "15.0"
+    "prettier": "^2.8.3",
+    "sinon": "^15.0.0"
   },
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"

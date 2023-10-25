@@ -2,7 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiBundlesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-bundles');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(
