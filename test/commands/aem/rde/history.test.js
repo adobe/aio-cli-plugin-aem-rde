@@ -3,7 +3,7 @@ const sinon = require('sinon').createSandbox();
 
 const { cli } = require('../../../../src/lib/base-command');
 const HistoryCommand = require('../../../../src/commands/aem/rde/history.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('./util');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 
 const stubbedCloudSdkMethods = {
   getChanges: sinon.fake(() =>

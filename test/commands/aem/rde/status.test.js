@@ -3,7 +3,7 @@ const sinon = require('sinon').createSandbox();
 const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 const { cli } = require('../../../../src/lib/base-command.js');
 const Config = require('@adobe/aio-lib-core-config');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('./util.js');
+const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 
 const stubbedMethods = {
   getArtifacts: () =>

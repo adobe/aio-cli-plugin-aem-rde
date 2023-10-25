@@ -9,8 +9,15 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-const AioCoreSDKError = require('@adobe/aio-lib-core-errors').AioCoreSDKError;
+'use strict';
+
+/**
+ * @param seconds
+ */
+function sleepSeconds(seconds) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
 
 module.exports = {
-  AioError: AioCoreSDKError,
+  sleepSeconds,
 };

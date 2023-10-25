@@ -2,14 +2,17 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const Inventory = require('../../../../../src/commands/aem/rde/inspect/inventory');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../util.js');
 const chalk = require('chalk');
 
 const errorObj = Object.assign(
   {},
   {
     status: 404,
-    statusText: 'Test error message.',
+    statusText: 'Test error message',
   }
 );
 
@@ -102,19 +105,23 @@ describe('Inventory', function () {
       );
     });
 
-    it('Should print out a error message when status is not 200', async function () {
+    it('Should trigger an error', async function () {
       const [command] = createCloudSdkAPIStub(sinon, new Inventory([], null), {
         ...stubbedMethods,
         getInventories: () => errorObj,
       });
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
-    it('Should catch a throw and print out a error message.', async function () {
+    it('Should throw an internal error when inventory config is null.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new Inventory([], null),
@@ -124,11 +131,17 @@ describe('Inventory', function () {
           getInventories: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_INVENTORY_ERROR] There was an unexpected error when running inventory command. Please, try again later and if the error persists, report it.`,
+            `Error message ${e.message} is not the expected one`
+          )
+        );
+      }
     });
   });
 
@@ -181,14 +194,18 @@ describe('Inventory', function () {
 
         { ...stubbedMethods, getInventory: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
 
-    it('Should catch a throw and print out a error message.', async function () {
+    it('Should throw an internal error when config is null despite having non empty args.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new Inventory(['1'], null),
@@ -197,11 +214,17 @@ describe('Inventory', function () {
           getInventory: stubbedThrowErrorMethod,
         }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_INVENTORY_ERROR] There was an unexpected error when running inventory command. Please, try again later and if the error persists, report it.`,
+            `Error message ${e.message} is not the expected one`
+          )
+        );
+      }
     });
   });
 });

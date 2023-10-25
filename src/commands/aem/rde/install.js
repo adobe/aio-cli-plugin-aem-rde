@@ -17,7 +17,10 @@ const {
   commonFlags,
   Flags,
 } = require('../../../lib/base-command');
-const { loadUpdateHistory } = require('../../../lib/rde-utils');
+const {
+  loadUpdateHistory,
+  throwOnInstallError,
+} = require('../../../lib/rde-utils');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -25,6 +28,9 @@ const { URL, pathToFileURL } = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
 const path = require('path');
+const { codes: validationCodes } = require('../../../lib/validation-errors');
+const { codes: internalCodes } = require('../../../lib/internal-errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -104,7 +110,9 @@ async function computeStats(url) {
       };
     }
     default:
-      throw new Error(`Unsupported protocol ${url.protocol}`);
+      throw new validationCodes.UNSUPPORTED_PROTOCOL({
+        messageValues: url.protocol,
+      });
   }
 }
 
@@ -187,23 +195,18 @@ class DeployCommand extends BaseCommand {
         fileName = basename(originalUrl.pathname);
         guessedTypes = guessType(fileName, originalUrl, flags.path);
       }
-      if (guessedTypes.length > 1) {
-        cli.log(`Could not infer the type of the deployed artifact.`);
-        cli.log(
-          `Please specify the -t option with one of the following types: ${guessedTypes.join(
-            ', '
-          )}`
-        );
-        return;
-      } else if (guessedTypes.length === 1) {
-        type = guessedTypes[0];
+      if (guessedTypes.length !== 1) {
+        throw new validationCodes.INVALID_GUESS_TYPE({
+          messageValues: guessedTypes.join(', '),
+        });
       } else {
-        throw new Error('guessedTypes is empty');
+        type = guessedTypes[0];
       }
     }
 
+    let change;
     try {
-      const change = await this.withCloudSdk((cloudSdkAPI) => {
+      change = await this.withCloudSdk((cloudSdkAPI) => {
         const uploadCallbacks = {
           progress: (copiedBytes) => progressBar.update(copiedBytes),
           abort: () => progressBar.stop(),
@@ -246,15 +249,17 @@ class DeployCommand extends BaseCommand {
     } catch (err) {
       progressBar.stop();
       spinner.stop();
-      if (err instanceof String && err.endsWith('Concurrent modification')) {
-        cli.log(
-          'Your RDE is waiting for the upload of a previous invocation of the "install" command.'
-        );
-        cli.log('You can ignore this by using the "--force" flag.');
-      } else {
-        cli.log(err);
-      }
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
+      );
     }
+
+    await this.withCloudSdk((cloudSdkAPI) =>
+      throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
+        done ? spinner.stop() : spinner.start(text)
+      )
+    );
   }
 }
 
