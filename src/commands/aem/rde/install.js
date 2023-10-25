@@ -29,7 +29,7 @@ const spinner = require('ora')();
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
-const { AioError } = require('../../../lib/errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -192,10 +192,7 @@ class DeployCommand extends BaseCommand {
     } catch (err) {
       progressBar.stop();
       spinner.stop();
-      if (err instanceof AioError) {
-        throw err;
-      }
-      throw new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err });
+      throwAioError(err, new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err }));
     }
 
     await this.withCloudSdk((cloudSdkAPI) =>

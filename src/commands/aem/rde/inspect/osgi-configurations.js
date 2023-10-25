@@ -17,7 +17,7 @@ const {
   inspectCommonFlags,
 } = require('../../../../lib/inspect-base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
-const { AioError } = require('../../../../lib/errors');
+const { throwAioError } = require('../../../../lib/error-helpers');
 
 class OsgiConfigurationsCommand extends InspectBaseCommand {
   async run() {
@@ -61,12 +61,9 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
         }
       }
     } catch (err) {
-      if (err instanceof AioError) {
-        throw err;
-      }
-      throw new internalCodes.INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR({
+      throwAioError(err, new internalCodes.INTERNAL_GET_OSGI_CONFIGURATIONS_ERROR({
         messageValues: err,
-      });
+      }));
     }
   }
 }

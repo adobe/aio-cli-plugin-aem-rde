@@ -14,7 +14,7 @@
 const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
-const { AioError } = require('../../../lib/errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
@@ -66,10 +66,7 @@ class StatusCommand extends BaseCommand {
       );
     } catch (err) {
       spinner.stop();
-      if (err instanceof AioError) {
-        throw err;
-      }
-      throw new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err });
+      throwAioError(err, new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err }));
     }
   }
 

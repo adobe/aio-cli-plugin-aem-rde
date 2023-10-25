@@ -9,6 +9,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+const { AioError } = require('./errors');
 const { CliUx } = require('@oclif/core');
 const exitCodes = {
   GENERAL: 1,
@@ -53,7 +54,16 @@ function handleError(_error, errorFn) {
   });
 }
 
+function throwAioError(aioErr, defaultErr) {
+  if (aioErr instanceof AioError) {
+    throw aioErr;
+  }
+
+  throw defaultErr;
+}
+
 module.exports = {
   handleError,
+  throwAioError,
   exitCodes,
 };

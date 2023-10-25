@@ -24,7 +24,7 @@ const {
   codes: deploymentErrorCodes,
 } = require('../../../lib/deployment-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
-const { AioError } = require('../../../lib/errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 
 class DeleteCommand extends BaseCommand {
   async run() {
@@ -74,10 +74,7 @@ class DeleteCommand extends BaseCommand {
       }
     } catch (err) {
       spinner.stop();
-      if (err instanceof AioError) {
-        throw err;
-      }
-      throw new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err });
+      throwAioError(err, new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err }));
     }
   }
 }

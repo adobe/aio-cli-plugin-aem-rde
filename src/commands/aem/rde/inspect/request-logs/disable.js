@@ -17,7 +17,7 @@ const {
   inspectCommonFlags,
 } = require('../../../../../lib/inspect-base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
-const { AioError } = require('../../../../../lib/errors');
+const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class DisableRequestLogsCommand extends InspectBaseCommand {
   async run() {
@@ -34,12 +34,9 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
         });
       }
     } catch (err) {
-      if (err instanceof AioError) {
-        throw err;
-      }
-      throw new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
+      throwAioError(err, new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
         messageValues: err,
-      });
+      }));
     }
   }
 }
