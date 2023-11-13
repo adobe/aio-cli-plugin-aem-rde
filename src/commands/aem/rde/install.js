@@ -346,5 +346,5 @@ Object.assign(DeployCommand, {
 });
 
 module.exports = DeployCommand;
-module.exports = { DeployCommand, archiveDirectory, addDirectoryToArchive };
+module.exports = { archiveDirectory, addDirectoryToArchive };
 
