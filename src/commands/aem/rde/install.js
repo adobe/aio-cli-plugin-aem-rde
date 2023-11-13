@@ -27,6 +27,7 @@ const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
+const Archiver = require('archiver');
 const path = require('path');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -122,19 +123,26 @@ async function computeStats(url) {
  * @param outputFilePath
  */
 async function archiveDirectory(sourceDir, outputFilePath) {
-  const zip = new Zip();
-  addDirectoryToArchive(zip, sourceDir, '');
+  const output = fs.createWriteStream(outputFilePath);
+  const archiver = Archiver('zip', { zlib: { level: 9 } });
 
-  zip.writeZip(outputFilePath);
-  console.log(`Finished archiving ${outputFilePath}`);
+  archiver.pipe(output);
+
+  await addDirectoryToArchive(archiver, sourceDir, '');
+
+  await archiver.finalize()
+    .then(() => { cli.log(`Finished archiving ${outputFilePath}`); })
+    .catch((err) => { throw err; });
 }
+/**
 
 /**
- * @param zip
+ *
+ * @param archiver
  * @param sourceDir
  * @param archiveDir
  */
-async function addDirectoryToArchive(zip, sourceDir, archiveDir) {
+async function addDirectoryToArchive(archiver, sourceDir, archiveDir) {
   const files = fs.readdirSync(sourceDir);
 
   for (const file of files) {
@@ -143,15 +151,14 @@ async function addDirectoryToArchive(zip, sourceDir, archiveDir) {
 
     const stat = fs.lstatSync(filePath);
     if (stat.isDirectory()) {
-      // Create a directory entry in the ZIP archive
-      zip.addLocalFolder(filePath, archivePath);
-      addDirectoryToArchive(zip, filePath, archivePath);
+      archiver.file(filePath, { name: archivePath });
+      addDirectoryToArchive(archiver, filePath, archivePath);
     } else {
       if (stat.isSymbolicLink()) {
         const targetPath = fs.readlinkSync(filePath);
+        archiver.symlink(archivePath, targetPath, 0o644);
       } else {
-        // Add a file to the ZIP archive
-        zip.addLocalFile(filePath, archivePath);
+        archiver.file(filePath, { name: archivePath });
       }
     }
   }
