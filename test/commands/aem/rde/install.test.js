@@ -29,7 +29,7 @@ describe('Archive Utility', function () {
     }
 
     // Delete temporary directories
-    await fs.rmdir(sourceDir, { recursive: true });
+    await fs.rm(sourceDir, { recursive: true });
   });
 
   describe('#archiveDirectory', function () {
