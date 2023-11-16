@@ -53,6 +53,30 @@ function logChange(change) {
 }
 
 /**
+ * @param changeType
+ */
+function getRetryConfigPerType(changeType) {
+  if (changeType) {
+    switch (changeType) {
+      case 'dispatcher-config':
+        return {
+          retries: 30,
+          waitSeconds: 1,
+        };
+      case 'frontend':
+        return {
+          retries: 90,
+          waitSeconds: 1,
+        };
+    }
+  }
+  return {
+    retries: 20,
+    waitSeconds: 1,
+  };
+}
+
+/**
  * @param cloudSdkAPI
  * @param updateId
  * @param progressCallback
@@ -106,17 +130,19 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
   if (response.status === 200) {
     progressCallback(false, 'retrieving update logs');
     const change = await response.json();
+    const retryConfig = getRetryConfigPerType(change.type);
     // requesting logs for a dispatcher-config update may cause an intermittent 404 response
     response = await withRetries(
       () => cloudSdkAPI.getLogs(updateId),
       (response) => response.status !== 404,
-      1,
-      20
+      retryConfig.waitSeconds,
+      retryConfig.retries
     );
+    const retrySeconds = retryConfig.waitSeconds * retryConfig.retries;
     progressCallback(true);
     if (!response) {
       cli.log(
-        `No logs have become available within the retry period of 20 seconds.`
+        `No logs have become available within the retry period of ${retrySeconds} seconds.`
       );
       cli.log(
         `Please run "aio aem:rde:history ${updateId}" to check for progress manually.`
