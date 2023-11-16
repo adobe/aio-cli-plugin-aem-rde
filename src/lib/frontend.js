@@ -8,6 +8,8 @@ const archiver = require('archiver');
  * @param successPredicate
  * @param retryIntervalSeconds
  * @param maxRetries
+ * @param cli
+ * @param inputPath
  */
 async function frontendInputBuild(cli, inputPath) {
   return new Promise((resolve, reject) => {
@@ -40,8 +42,8 @@ async function frontendInputBuild(cli, inputPath) {
         return reject(err);
       }
       const targetZipPath = path.join(folder, 'frontend-pipeline.zip');
-      let output = fs.createWriteStream(targetZipPath);
-      let archive = archiver('zip');
+      const output = fs.createWriteStream(targetZipPath);
+      const archive = archiver('zip');
       let zipSizeBytes;
       output.on('close', function () {
         zipSizeBytes = archive.pointer();

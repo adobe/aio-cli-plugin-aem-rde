@@ -52,6 +52,9 @@ function logChange(change) {
   );
 }
 
+/**
+ * @param changeType
+ */
 function getRetryConfigPerType(changeType) {
   if (changeType) {
     switch (changeType) {

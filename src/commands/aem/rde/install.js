@@ -117,12 +117,17 @@ async function computeStats(url) {
   }
 }
 
+/**
+ * @param isLocalFile
+ * @param type
+ * @param path
+ */
 async function processInputFile(isLocalFile, type, path) {
   if (!isLocalFile) {
     // don't do anything if we're processing a remote file
     return;
   }
-  let file = fs.lstatSync(path);
+  const file = fs.lstatSync(path);
   switch (type) {
     case 'frontend': {
       if (!file.isDirectory()) {
@@ -150,7 +155,7 @@ class DeployCommand extends BaseCommand {
     );
     let type = flags.type;
 
-    let { inputPath, inputPathSize } = (await processInputFile(
+    const { inputPath, inputPathSize } = (await processInputFile(
       isLocalFile,
       type,
       path
@@ -267,7 +272,7 @@ function guessType(name, url, pathFlag) {
         if (isDispatcherConfig) {
           return ['dispatcher-config'];
         }
-        let isFrontend =
+        const isFrontend =
           zip.getEntry('dist/') !== null &&
           zip.getEntry('package.json') !== null;
         if (isFrontend) {

@@ -1,8 +1,8 @@
 const Config = require('@adobe/aio-lib-core-config');
 
-let update = function (type, key) {
+const update = function (type, key) {
   return function (hiddenFeatures) {
-    let filtered = this.config[type].filter(
+    const filtered = this.config[type].filter(
       (e) => !hiddenFeatures.find((h) => e[key].startsWith(h))
     );
     const removedCount = this.config[type].length - filtered.length;
@@ -31,8 +31,8 @@ const descriptors = {
   flags: {
     update: function (hiddenFeatures) {
       for (let i = 0; i < hiddenFeatures.length; i++) {
-        let [commandId, flag] = hiddenFeatures[i].split('#');
-        let command = this.config['_commands'].get(commandId);
+        const [commandId, flag] = hiddenFeatures[i].split('#');
+        const command = this.config._commands.get(commandId);
         if (command && flag) {
           delete command.flags[flag];
         }
@@ -42,15 +42,15 @@ const descriptors = {
   options: {
     update: function (hiddenFeatures) {
       for (let i = 0; i < hiddenFeatures.length; i++) {
-        let [commandId, flagAndOption] = hiddenFeatures[i].split('#');
+        const [commandId, flagAndOption] = hiddenFeatures[i].split('#');
         if (!flagAndOption) {
           // ignoring the case where there's no flagAndOption defined
           continue;
         }
-        let [flag, option] = flagAndOption.split('=');
-        let command = this.config['_commands'].get(commandId);
+        const [flag, option] = flagAndOption.split('=');
+        const command = this.config._commands.get(commandId);
         if (command && flag && option) {
-          let options = command.flags[flag].options;
+          const options = command.flags[flag].options;
           if (options) {
             command.flags[flag].options = options.filter((o) => o !== option);
           }
