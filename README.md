@@ -90,3 +90,14 @@ A more detailed test report can be found in the `coverage/index.html` file.
 1. Clone this repository to a folder.
 2. Run `npm install` in the folder.
 3. Run `aio plugins:link .` inside your folder.
+
+## Exit Codes
+
+Primarily for scripting application purposes, the following exit codes are used:
+
+- 1 - A generic (non-catch) error has occurred
+- 2 - A configuration error has occurred
+- 3 - A validation error with the supplied flags or arguments has occurred
+- 4 - A deployment error has occurred
+- 5 - An internal error that might be fixed with a retry has occurred
+- 40 - An error emanating from the deployment not being fully performed has occurred. This error might be interpretable by some users as ok if that's a middle step they need to go through

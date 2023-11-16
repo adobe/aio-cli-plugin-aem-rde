@@ -2,7 +2,10 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const LogsCommand = require('../../../../../src/commands/aem/rde/inspect/logs');
 const { cli } = require('../../../../../src/lib/base-command.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../util.js');
+const {
+  setupLogCapturing,
+  createCloudSdkAPIStub,
+} = require('../../../../util.js');
 
 const errorObj = Object.assign(
   {},
@@ -139,31 +142,41 @@ describe('LogsCommand', function () {
       assert.equal(cloudSdkApiStub.getAemLogs.calledOnce, true);
     });
 
-    it('Should catch the throw and print out a error message.', async function () {
+    it('Should throw an internal error.', async function () {
       [command] = createCloudSdkAPIStub(sinon, new LogsCommand([], null), {
         ...stubbedMethods,
         getAemLogs: stubbedThrowErrorMethods,
       });
-      await command.run();
-      await sinon.clock.runToLastAsync();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        await sinon.clock.runToLastAsync();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_GET_LOG_ERROR] There was an unexpected error when running get log command. Please, try again later and if the error persists, report it.`,
+            `Error message ${e.message} is not the expected one`
+          )
+        );
+      }
     });
-    it('Should print out an error message when status is not 200', async function () {
+    it('Should throw an error message when status is not 200', async function () {
       [command] = createCloudSdkAPIStub(
         sinon,
         new LogsCommand([], null),
         // overwriting the stubbed method with one that is returning 404
         { ...stubbedMethods, getAemLogs: () => errorObj }
       );
-      await command.run();
-      await sinon.clock.runToLastAsync();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        await sinon.clock.runToLastAsync();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert.equal(
+          e.message,
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorObj.status} with message ${errorObj.statusText}. Please, try again later and if the error persists, report it.`
+        );
+      }
     });
   });
 
@@ -183,21 +196,6 @@ describe('LogsCommand', function () {
         '11.08.2023 07:55:24.278 *INFO* [898-59] log.request 11/Aug/2023:07:55:24 +0000 [919] TEST'
       );
     });
-
-    it('Should print out an error message when status is not 200', async function () {
-      [command] = createCloudSdkAPIStub(
-        sinon,
-        new LogsCommand([], null),
-        // overwriting the stubbed method with one that is returning 404
-        { ...stubbedMethods, getAemLogTail: () => errorObj }
-      );
-      await command.run();
-      await sinon.clock.runToLastAsync();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
-    });
   });
 
   describe('#deleteAemLog', function () {
@@ -215,12 +213,17 @@ describe('LogsCommand', function () {
         },
       });
 
-      await command.run();
-      await command.stopAndCleanup();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        await command.stopAndCleanup();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_DELETE_LOG_ERROR] There was an unexpected error when running delete log command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -230,12 +233,17 @@ describe('LogsCommand', function () {
         // overwriting the stubbed method with one that is returning 404
         { ...stubbedMethods, deleteAemLog: () => errorObj }
       );
-      await command.run();
-      await command.stopAndCleanup();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        await command.stopAndCleanup();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_DELETE_LOG_ERROR] There was an unexpected error when running delete log command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
 
     it('Should be called once for cleanup when there are more than 2 logs saved', async function () {
@@ -300,23 +308,33 @@ describe('LogsCommand', function () {
         // overwriting the stubbed method with one that is returning 404
         { ...stubbedMethods, createAemLog: () => errorObj }
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.status} - ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_CREATE_LOG_ERROR] There was an unexpected error when running create log command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
 
-    it('Should catch the throw and print out a error message.', async function () {
+    it('Should throw an error.', async function () {
       [command] = createCloudSdkAPIStub(sinon, new LogsCommand([], null), {
         ...stubbedMethods,
         createAemLog: stubbedThrowErrorMethods,
       });
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        `Error: ${errorObj.statusText}`
-      );
+      try {
+        await command.run();
+        assert.fail('Command should have failed with an exception');
+      } catch (e) {
+        assert(
+          e.message.includes(
+            `[RDECLI:INTERNAL_CREATE_LOG_ERROR] There was an unexpected error when running create log command. Please, try again later and if the error persists, report it.`
+          )
+        );
+      }
     });
   });
 });

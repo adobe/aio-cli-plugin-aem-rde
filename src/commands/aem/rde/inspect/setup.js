@@ -13,13 +13,15 @@
 
 const jwt = require('jsonwebtoken');
 const Config = require('@adobe/aio-lib-core-config');
-const { codes: error } = require('../../../../lib/errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
 
 /**
- * All comands under the `inspect` topic need a additional accessToken, to get access on the aem instance.
+ * All commands under the `inspect` topic need a additional accessToken, to get access on the aem instance.
  * This token can be generated in the Skyline Developer Console. (Tabs: Integrations > Local Token)
- * Whith this comand the token gets written into the config for later use.
+ * With this command the token gets written into the config for later use.
  */
 class SetupCommand extends InspectBaseCommand {
   async run() {
@@ -28,19 +30,19 @@ class SetupCommand extends InspectBaseCommand {
 
     const decodedToken = jwt.decode(imsToken.token);
     if (!decodedToken) {
-      throw new error.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
     }
 
     // Calculate exact moment of expiry
     const expiry =
       parseInt(decodedToken?.created_at) + parseInt(decodedToken?.expires_in);
     if (!expiry) {
-      throw new error.TOKEN_HAS_NO_EXPIRY();
+      throw new configurationCodes.TOKEN_HAS_NO_EXPIRY();
     }
 
     // Checks if token is expired
     if (!(typeof expiry === 'number' && expiry > Date.now())) {
-      throw new error.TOKEN_IS_EXPIRED();
+      throw new configurationCodes.TOKEN_IS_EXPIRED();
     }
     imsToken.expiry = expiry;
 

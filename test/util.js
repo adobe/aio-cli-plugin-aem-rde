@@ -1,4 +1,4 @@
-const { CloudSdkAPI } = require('../../../../src/lib/cloud-sdk-api');
+const { CloudSdkAPI } = require('../src/lib/cloud-sdk-api');
 
 /**
  * @param sinon

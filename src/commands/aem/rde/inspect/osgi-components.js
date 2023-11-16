@@ -16,6 +16,8 @@ const {
   InspectBaseCommand,
   inspectCommonFlags,
 } = require('../../../../lib/inspect-base-command');
+const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const { throwAioError } = require('../../../../lib/error-helpers');
 
 class OsgiComponentsCommand extends InspectBaseCommand {
   async run() {
@@ -37,7 +39,9 @@ class OsgiComponentsCommand extends InspectBaseCommand {
             logInTableFormat(json?.items);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       } else {
         const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -51,11 +55,18 @@ class OsgiComponentsCommand extends InspectBaseCommand {
             logInTableFormat([osgiComponent]);
           }
         } else {
-          cli.log(`Error: ${response.status} - ${response.statusText}`);
+          throw new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
       }
     } catch (err) {
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_GET_OSGI_COMPONENTS_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

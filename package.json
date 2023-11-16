@@ -1,7 +1,7 @@
 {
   "name": "@adobe/aio-cli-plugin-aem-rde",
   "description": "Adobe I/O CLI plugin for interacting with AEM Rapid Development Environments",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "Adobe Inc.",
   "engines": {
     "npm": "^8.0.0",
@@ -31,8 +31,8 @@
     "eslint-plugin-prettier": "^4.2.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "prettier": "2.8.3",
-    "sinon": "15.0"
+    "prettier": "^2.8.3",
+    "sinon": "^15.0.0"
   },
   "bin": {
     "adobe-aem-rde-cli": "./bin/run"
@@ -46,7 +46,7 @@
     "test": "nyc --reporter=text --reporter=html mocha 'test/**/*.test.js'",
     "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",
-    "lint": "eslint src --ext .js"
+    "lint": "eslint src --ext .js --rulesdir eslint_rules"
   },
   "files": [
     "/src",

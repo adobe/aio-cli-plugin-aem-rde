@@ -16,6 +16,8 @@ const {
   InspectBaseCommand,
   inspectCommonFlags,
 } = require('../../../../../lib/inspect-base-command');
+const { codes: internalCodes } = require('../../../../../lib/internal-errors');
+const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class DisableRequestLogsCommand extends InspectBaseCommand {
   async run() {
@@ -27,10 +29,17 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
       if (response.status === 200) {
         cli.log('Request-logs disabled.');
       } else {
-        cli.log(`Error: ${response.status} - ${response.statusText}`);
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
       }
     } catch (err) {
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_REQUEST_LOGS_DISABLE_ERROR({
+          messageValues: err,
+        })
+      );
     }
   }
 }

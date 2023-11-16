@@ -12,7 +12,8 @@
 const { CloudSdkAPI } = require('./cloud-sdk-api');
 const Config = require('@adobe/aio-lib-core-config');
 const jwt = require('jsonwebtoken');
-const { codes: error } = require('./errors');
+const { codes: configurationCodes } = require('./configuration-errors');
+const { codes: validationCodes } = require('./validation-errors');
 const {
   BaseCommand,
   getCliOrgId,
@@ -40,15 +41,15 @@ function logInJsonArrayFormat(items) {
 async function getTokenAndKey() {
   const accessToken = Config.get('aem-rde.inspect.ims_access_token.token');
   if (!accessToken) {
-    throw new error.MISSING_INSPECT_ACCESS_TOKEN().message;
+    throw new configurationCodes.MISSING_INSPECT_ACCESS_TOKEN().message;
   }
   const decodedToken = jwt.decode(accessToken);
   if (!decodedToken) {
-    throw new { codes: error }.CLI_AUTH_CONTEXT_CANNOT_DECODE().message;
+    throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE().message;
   }
   const apiKey = decodedToken.client_id;
   if (!apiKey) {
-    throw new { codes: error }.CLI_AUTH_CONTEXT_NO_CLIENT_ID().message;
+    throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID().message;
   }
   return { accessToken, apiKey };
 }
@@ -63,10 +64,10 @@ class InspectBaseCommand extends BaseCommand {
   async withCloudSdk(fn) {
     if (!this._cloudSdkAPI) {
       if (!this._programId) {
-        throw new Error('No programId');
+        throw new validationCodes.MISSING_PROGRAM_ID();
       }
       if (!this._environmentId) {
-        throw new Error('No environmentId');
+        throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
       const { accessToken, apiKey } = await getTokenAndKey();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;

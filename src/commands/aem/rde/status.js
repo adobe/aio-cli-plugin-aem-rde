@@ -13,6 +13,8 @@
 
 const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
+const { codes: internalCodes } = require('../../../lib/internal-errors');
+const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
@@ -35,8 +37,9 @@ class StatusCommand extends BaseCommand {
       spinner.stop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
-        cli.log(`Error: ${status.status} - ${status.statusText}`);
-        return;
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [status.status, status.error],
+        });
       }
 
       const grouped = groupArtifacts(status.items);
@@ -63,7 +66,10 @@ class StatusCommand extends BaseCommand {
       );
     } catch (err) {
       spinner.stop();
-      cli.log(err);
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
+      );
     }
   }
 
