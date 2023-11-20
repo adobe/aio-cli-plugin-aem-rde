@@ -22,6 +22,7 @@ const {
   throwOnInstallError,
 } = require('../../../lib/rde-utils');
 const { frontendInputBuild } = require('../../../lib/frontend');
+const { dispatcherInputBuild } = require('../../../lib/dispatcher');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -122,23 +123,29 @@ async function computeStats(url) {
  * @param type
  * @param path
  */
-async function processInputFile(isLocalFile, type, path) {
+async function processInputFile(isLocalFile, type, inputPath) {
   if (!isLocalFile) {
     // don't do anything if we're processing a remote file
     return;
   }
-  const file = fs.lstatSync(path);
+  const file = fs.lstatSync(inputPath);
   switch (type) {
     case 'frontend': {
       if (!file.isDirectory()) {
         break;
       }
-      return await frontendInputBuild(cli, path);
+      return await frontendInputBuild(cli, inputPath);
+    }
+    case 'dispatcher-config': {
+      if (!file.isDirectory()) {
+        break;
+      }
+      return await dispatcherInputBuild(cli, inputPath);
     }
     default: {
       if (file.isDirectory()) {
         throw new Error(
-          'A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend]'
+          `A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend, dispatcher-config], current input type is "${type}"`
         );
       }
     }
