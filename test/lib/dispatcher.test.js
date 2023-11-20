@@ -23,12 +23,9 @@ const path = require('path');
 describe('Archive Utility', function () {
   let tmpDir;
 
-  before(async function () {
+  beforeEach(async function () {
     // Create temporary directories
-    fs.mkdtemp(path.join(os.tmpdir(), 'aio-rde-dispatcher-test-'), (err, folder) => {
-        if (err) throw err;
-        tmpDir = folder;
-    });
+    tmpDir = await fs.mkdtempSync(path.join(os.tmpdir(), 'aio-rde-dispatcher-test-'));
   });
 
   describe('#archiveDirectory', function () {
@@ -46,7 +43,6 @@ describe('Archive Utility', function () {
       };
       const fsRealPathSyc = sinon.stub(fs, 'realpathSync').returns('new-zip-path');
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
-      sinon.stub(cli, 'log');
 
       let {inputPath, inputPathSize} = await dispatcherInputBuild(cli, tmpDir);
 
@@ -60,7 +56,6 @@ describe('Archive Utility', function () {
       createWriteStreamStub.restore();
       fsRealPathSyc.restore();
       archiver.create.restore();
-      cli.log.restore();
     });
 
     it('should create output zip file', async function () {
@@ -74,8 +69,6 @@ describe('Archive Utility', function () {
         assert.ok(await fs.existsSync(inputPath));
         const zip = new Zip(inputPath, {});
         assert.ok(zip.getEntry('test.txt') !== null);
-  
-        cli.log.restore();
     });
   });
 });
