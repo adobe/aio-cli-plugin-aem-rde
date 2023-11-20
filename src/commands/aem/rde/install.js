@@ -21,14 +21,13 @@ const {
   loadUpdateHistory,
   throwOnInstallError,
 } = require('../../../lib/rde-utils');
+const { frontendInputBuild } = require('../../../lib/frontend');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
 const spinner = require('ora')();
 const Zip = require('adm-zip');
-const Archiver = require('archiver');
-const path = require('path');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -40,6 +39,7 @@ const deploymentTypes = [
   'content-file',
   'content-xml',
   'dispatcher-config',
+  'frontend',
 ];
 
 /**
@@ -118,97 +118,76 @@ async function computeStats(url) {
 }
 
 /**
- *
- * @param sourceDir
- * @param outputFilePath
+ * @param isLocalFile
+ * @param type
+ * @param path
  */
-async function archiveDirectory(sourceDir, outputFilePath) {
-  const output = fs.createWriteStream(outputFilePath);
-  const archiver = Archiver('zip', { zlib: { level: 9 } });
-
-  archiver.pipe(output);
-
-  await addDirectoryToArchive(archiver, sourceDir, '');
-
-  await archiver.finalize()
-    .then(() => { cli.log(`Finished archiving ${outputFilePath}`); })
-    .catch((err) => { throw err; });
-}
-/**
-
-/**
- *
- * @param archiver
- * @param sourceDir
- * @param archiveDir
- */
-async function addDirectoryToArchive(archiver, sourceDir, archiveDir) {
-  const files = fs.readdirSync(sourceDir);
-
-  for (const file of files) {
-    const filePath = path.join(sourceDir, file);
-    const archivePath = path.join(archiveDir, file);
-
-    const stat = fs.lstatSync(filePath);
-    if (stat.isDirectory()) {
-      archiver.file(filePath, { name: archivePath });
-      addDirectoryToArchive(archiver, filePath, archivePath);
-    } else {
-      if (stat.isSymbolicLink()) {
-        const targetPath = fs.readlinkSync(filePath);
-        archiver.symlink(archivePath, targetPath, 0o644);
-      } else {
-        archiver.file(filePath, { name: archivePath });
+async function processInputFile(isLocalFile, type, path) {
+  if (!isLocalFile) {
+    // don't do anything if we're processing a remote file
+    return;
+  }
+  const file = fs.lstatSync(path);
+  switch (type) {
+    case 'frontend': {
+      if (!file.isDirectory()) {
+        break;
+      }
+      return await frontendInputBuild(cli, path);
+    }
+    default: {
+      if (file.isDirectory()) {
+        throw new Error(
+          'A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend]'
+        );
       }
     }
   }
 }
 
-
 class DeployCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(DeployCommand);
     const progressBar = createProgressBar();
-
     const originalUrl = args.location;
-    let modifiedUrl = args.location;
-    let type = flags.type;
-
-    if (
-      type == "dispatcher-config" &&
-      modifiedUrl.protocol == "file:"
-    ) {
-      let path = fs.realpathSync(modifiedUrl)
-      if (fs.lstatSync(path).isDirectory()) {
-        let dispatcherConfigArchiveName = `DISPATCHER-CONFIG-${new Date().toJSON().slice(0, 10)}.zip`;
-        await archiveDirectory(path, dispatcherConfigArchiveName);
-        modifiedUrl = pathToFileURL(dispatcherConfigArchiveName);
-      }
-    }
-
     const { fileSize, effectiveUrl, path, isLocalFile } = await computeStats(
       originalUrl
     );
-    let fileName = basename(path);
-    if (!type) {
-      let guessedTypes = guessType(fileName, effectiveUrl, flags.path);
-      if (
-        !isLocalFile &&
-        guessedTypes === deploymentTypes &&
-        effectiveUrl !== originalUrl
-      ) {
-        // when there was a redirect, it is possible that the original URL
-        // has a file extension, but not the effective URL, so we try again
-        fileName = basename(originalUrl.pathname);
-        guessedTypes = guessType(fileName, originalUrl, flags.path);
+    let type = flags.type;
+
+    const { inputPath, inputPathSize } = (await processInputFile(
+      isLocalFile,
+      type,
+      path
+    )) || {
+      inputPath: path,
+      inputPathSize: fileSize,
+    };
+    let fileName = basename(inputPath);
+    try {
+      if (!type) {
+        let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
+        if (
+          !isLocalFile &&
+          guessedTypes === deploymentTypes &&
+          effectiveUrl !== originalUrl
+        ) {
+          // when there was a redirect, it is possible that the original URL
+          // has a file extension, but not the effective URL, so we try again
+          fileName = basename(originalUrl.pathname);
+          guessedTypes = guessType(fileName, originalUrl, inputPath);
+        }
+        if (guessedTypes.length !== 1) {
+          throw new validationCodes.INVALID_GUESS_TYPE({
+            messageValues: guessedTypes.join(', '),
+          });
+        } else {
+          type = guessedTypes[0];
+        }
       }
-      if (guessedTypes.length !== 1) {
-        throw new validationCodes.INVALID_GUESS_TYPE({
-          messageValues: guessedTypes.join(', '),
-        });
-      } else {
-        type = guessedTypes[0];
-      }
+    } catch (err) {
+      cli.log(err);
+      return;
     }
 
     let change;
@@ -236,8 +215,8 @@ class DeployCommand extends BaseCommand {
           : cloudSdkAPI.deployURL;
         return deploy.call(
           cloudSdkAPI,
-          fileSize,
-          isLocalFile ? path : effectiveUrl.toString(),
+          inputPathSize || fileSize,
+          isLocalFile ? inputPath : effectiveUrl.toString(),
           fileName,
           type,
           flags.target,
@@ -293,8 +272,14 @@ function guessType(name, url, pathFlag) {
         if (isDispatcherConfig) {
           return ['dispatcher-config'];
         }
+        const isFrontend =
+          zip.getEntry('dist/') !== null &&
+          zip.getEntry('package.json') !== null;
+        if (isFrontend) {
+          return ['frontend'];
+        }
       }
-      return ['content-package', 'dispatcher-config'];
+      return ['content-package', 'dispatcher-config', 'frontend'];
     case '.xml':
       return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
     default:
@@ -346,5 +331,3 @@ Object.assign(DeployCommand, {
 });
 
 module.exports = DeployCommand;
-module.exports = { archiveDirectory, addDirectoryToArchive };
-

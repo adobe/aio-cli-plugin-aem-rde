@@ -54,6 +54,10 @@ function handleError(_error, errorFn) {
   });
 }
 
+/**
+ * @param aioErr
+ * @param defaultErr
+ */
 function throwAioError(aioErr, defaultErr) {
   if (aioErr instanceof AioError) {
     throw aioErr;
