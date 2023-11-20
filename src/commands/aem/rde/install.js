@@ -122,6 +122,7 @@ async function computeStats(url) {
  * @param isLocalFile
  * @param type
  * @param path
+ * @param inputPath
  */
 async function processInputFile(isLocalFile, type, inputPath) {
   if (!isLocalFile) {

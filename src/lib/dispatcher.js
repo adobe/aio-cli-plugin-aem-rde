@@ -32,10 +32,12 @@ async function dispatcherInputBuild(cli, inputPath) {
       }
       const targetZipPath = path.join(folder, 'dispatcher.zip');
       return archiveDirectory(cli, inputPath, targetZipPath)
-        .then((zipSizeBytes) => resolve({
-          inputPath: fs.realpathSync(targetZipPath),
-          inputPathSize: zipSizeBytes,
-        }))
+        .then((zipSizeBytes) =>
+          resolve({
+            inputPath: fs.realpathSync(targetZipPath),
+            inputPathSize: zipSizeBytes,
+          })
+        )
         .catch((err) => reject(err));
     });
   });
@@ -43,6 +45,7 @@ async function dispatcherInputBuild(cli, inputPath) {
 
 /**
  *
+ * @param cli
  * @param sourceDir
  * @param outputFilePath
  */
@@ -63,7 +66,7 @@ async function archiveDirectory(cli, sourceDir, outputFilePath) {
 
     archive.pipe(output);
     addDirectoryToArchive(archive, sourceDir, '');
-    archive.finalize().catch(err => reject(err));
+    archive.finalize().catch((err) => reject(err));
   });
 }
 /**
