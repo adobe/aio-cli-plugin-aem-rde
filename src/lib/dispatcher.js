@@ -65,37 +65,9 @@ async function archiveDirectory(cli, sourceDir, outputFilePath) {
     });
 
     archive.pipe(output);
-    addDirectoryToArchive(archive, sourceDir, '');
+    archive.glob('**/*', { cwd: sourceDir });
     archive.finalize().catch((err) => reject(err));
   });
-}
-/**
-/**
- *
- * @param archive
- * @param sourceDir
- * @param archiveDir
- */
-function addDirectoryToArchive(archive, sourceDir, archiveDir) {
-  const files = fs.readdirSync(sourceDir);
-
-  for (const file of files) {
-    const filePath = path.join(sourceDir, file);
-    const archivePath = path.join(archiveDir, file);
-
-    const stat = fs.lstatSync(filePath);
-    if (stat.isDirectory()) {
-      archive.file(filePath, { name: archivePath });
-      addDirectoryToArchive(archive, filePath, archivePath);
-    } else {
-      if (stat.isSymbolicLink()) {
-        const targetPath = fs.readlinkSync(filePath);
-        archive.symlink(archivePath, targetPath, 0o644);
-      } else {
-        archive.file(filePath, { name: archivePath });
-      }
-    }
-  }
 }
 
 module.exports = {
