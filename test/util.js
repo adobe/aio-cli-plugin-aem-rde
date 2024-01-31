@@ -37,8 +37,13 @@ function createCloudSdkAPIStub(sinon, command, stubbedMethods) {
       )
     );
   }
+  flags : {
+    ['--programId',1111,'environmentId',22222]
+  };
 
-  sinon.replace(command, 'withCloudSdk', (fn) => fn(cloudSdkApiStub));
+  sinon.replace(command,'getProgramId', (flags) =>  {return '12345'});
+  sinon.replace(command,'getEnvironmentId',  (flags) =>  {return '54321'});
+  sinon.replace(command, 'withCloudSdk', (flags, fn) => fn(cloudSdkApiStub));
   return [command, cloudSdkApiStub];
 }
 

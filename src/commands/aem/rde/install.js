@@ -200,7 +200,7 @@ class DeployCommand extends BaseCommand {
 
     let change;
     try {
-      change = await this.withCloudSdk((cloudSdkAPI) => {
+      change = await this.withCloudSdk(flags,(cloudSdkAPI) => {
         const uploadCallbacks = {
           progress: (copiedBytes) => progressBar.update(copiedBytes),
           abort: () => progressBar.stop(),
@@ -235,7 +235,7 @@ class DeployCommand extends BaseCommand {
         );
       }).finally(() => spinner.stop());
 
-      await this.withCloudSdk((cloudSdkAPI) =>
+      await this.withCloudSdk(flags, (cloudSdkAPI) =>
         loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
           done ? spinner.stop() : spinner.start(text)
         )
@@ -249,7 +249,7 @@ class DeployCommand extends BaseCommand {
       );
     }
 
-    await this.withCloudSdk((cloudSdkAPI) =>
+    await this.withCloudSdk(flags,(cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
         done ? spinner.stop() : spinner.start(text)
       )
@@ -316,6 +316,7 @@ Object.assign(DeployCommand, {
   ],
   flags: {
     target: commonFlags.target,
+    ...commonFlags.global,
     type: Flags.string({
       char: 't',
       description: 'the type to deploy',

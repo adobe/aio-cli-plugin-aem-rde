@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -20,11 +20,11 @@ const { throwAioError } = require('../../../lib/error-helpers');
 
 class HistoryCommand extends BaseCommand {
   async run() {
-    const { args } = await this.parse(HistoryCommand);
+    const { args, flags } = await this.parse(HistoryCommand);
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags,(cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
@@ -43,7 +43,7 @@ class HistoryCommand extends BaseCommand {
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
         throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id });
       } else {
-        await this.withCloudSdk((cloudSdkAPI) =>
+        await this.withCloudSdk(flags,(cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
             done ? spinner.stop() : spinner.start(text)
           )
@@ -70,6 +70,9 @@ Object.assign(HistoryCommand, {
       required: false,
     },
   ],
+  flags: {
+    ...commonFlags.global,
+  },
   aliases: [],
 });
 

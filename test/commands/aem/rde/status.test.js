@@ -33,13 +33,6 @@ const stubbedMethods = {
     ),
 };
 
-sinon
-  .stub(Config, 'get')
-  .withArgs('cloudmanager_programid')
-  .returns('12345')
-  .withArgs('cloudmanager_environmentid')
-  .returns('54321');
-
 describe('StatusCommand', function () {
   setupLogCapturing(sinon, cli);
 
@@ -73,7 +66,7 @@ describe('StatusCommand', function () {
   describe('#run as json result', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new StatusCommand(['--json'], null),
+      new StatusCommand(['--programId=12345','--environmentId=54321','--json'], null),
       stubbedMethods
     );
 

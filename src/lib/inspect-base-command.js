@@ -57,20 +57,15 @@ async function getTokenAndKey() {
 class InspectBaseCommand extends BaseCommand {
   constructor(argv, config) {
     super(argv, config);
-    this._programId = Config.get('cloudmanager_programid');
-    this._environmentId = Config.get('cloudmanager_environmentid');
   }
 
-  async withCloudSdk(fn) {
+  async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-      if (!this._programId) {
-        throw new validationCodes.MISSING_PROGRAM_ID();
-      }
-      if (!this._environmentId) {
-        throw new validationCodes.MISSING_ENVIRONMENT_ID();
-      }
+      const programId = this.getProgramId(flags);
+      const environmentId = this.getEnvironmentId(flags);
+
       const { accessToken, apiKey } = await getTokenAndKey();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
+      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${programId}-e${environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -83,8 +78,8 @@ class InspectBaseCommand extends BaseCommand {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
           cloudManagerUrl,
           orgId,
-          this._programId,
-          this._environmentId
+          programId,
+          environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
@@ -106,30 +101,51 @@ class InspectBaseCommand extends BaseCommand {
         cacheEntry.rdeApiUrl,
         apiKey,
         getCliOrgId(),
-        this._programId,
-        this._environmentId,
+        programId,
+        environmentId,
         accessToken
       );
     }
     return fn(this._cloudSdkAPI);
+  }
+
+  getProgramId(flags) {
+    const programId = flags.programId || Config.get('cloudmanager_programid');
+    if (!programId) {
+      throw new Error('No programId');
+    }
+    return programId;
+  }
+
+  getEnvironmentId(flags) {
+    const environmentId =
+      flags.environmentId || Config.get('cloudmanager_environmentid');
+    if (!environmentId) {
+      throw new Error('No environmentId');
+    }
+    return environmentId;
   }
 }
 
 module.exports = {
   InspectBaseCommand,
   inspectCommonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "the programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
-      common: true,
-    }),
+    global: {
+      programId: Flags.string({
+        description:
+          "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
+        common: true,
+        multiple: false,
+        required: false,
+      }),
+      environmentId: Flags.string({
+        description:
+          "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+        common: true,
+        multiple: false,
+        required: false,
+      }),
+    },
     target: Flags.string({
       char: 's',
       description: "The target instance type. Default 'author'.",

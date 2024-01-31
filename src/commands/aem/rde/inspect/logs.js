@@ -24,7 +24,7 @@ class LogsCommand extends InspectBaseCommand {
     const { flags } = await this.parse(LogsCommand);
     this.flags = flags || {};
     try {
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk(this.flags, (cloudSdkAPI) =>
         cloudSdkAPI.getAemLogs(flags.target, {})
       );
 
@@ -72,7 +72,7 @@ class LogsCommand extends InspectBaseCommand {
 
   async deleteLog(target, id) {
     try {
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk(this.flags, (cloudSdkAPI) =>
         cloudSdkAPI.deleteAemLog(target, id)
       );
       if (response.status !== 200) {
@@ -111,7 +111,7 @@ class LogsCommand extends InspectBaseCommand {
         body.names = namesArray;
       }
 
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk(this.flags, (cloudSdkAPI) =>
         cloudSdkAPI.createAemLog(flags.target, body)
       );
 
@@ -129,7 +129,7 @@ class LogsCommand extends InspectBaseCommand {
   }
 
   async printLogTail(target, id) {
-    const response = await this.withCloudSdk((cloudSdkAPI) =>
+    const response = await this.withCloudSdk(this.flags, (cloudSdkAPI) =>
       cloudSdkAPI.getAemLogTail(target, id)
     );
     if (response.status === 200) {
@@ -149,6 +149,7 @@ Object.assign(LogsCommand, {
   description:
     'Get the list of logs for the target of a rapid development environment.',
   flags: {
+    ...inspectCommonFlags.global,
     target: inspectCommonFlags.target,
     format: Flags.string({
       char: 'f',

@@ -28,7 +28,7 @@ class InventoryCommand extends InspectBaseCommand {
         const params = {};
         params.filter = flags.include;
 
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getInventories(flags.target, params)
         );
         if (response.status === 200) {
@@ -44,7 +44,7 @@ class InventoryCommand extends InspectBaseCommand {
           });
         }
       } else {
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getInventory(flags.target, args.id)
         );
         if (response.status === 200) {
@@ -98,6 +98,7 @@ Object.assign(InventoryCommand, {
     },
   ],
   flags: {
+    ...inspectCommonFlags.global,
     target: inspectCommonFlags.target,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,

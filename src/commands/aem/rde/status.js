@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
+const { BaseCommand, cli, Flags, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -21,17 +21,17 @@ class StatusCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(StatusCommand);
     if (flags.json) {
-      await this.printAsJson();
+      await this.printAsJson(flags);
     } else {
-      await this.printAsText();
+      await this.printAsText(flags);
     }
   }
 
-  async printAsText() {
+  async printAsText(flags) {
     try {
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
+      cli.log(`Info for cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(flags)}`);
       spinner.start('retrieving environment status information');
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
+      const status = await this.withCloudSdk(flags,(cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
       spinner.stop();
@@ -73,17 +73,17 @@ class StatusCommand extends BaseCommand {
     }
   }
 
-  async printAsJson() {
+  async printAsJson(flags) {
     try {
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
+      const status = await this.withCloudSdk(flags,(cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
 
       const grouped = groupArtifacts(status.items);
 
       const result = {
-        programId: this._programId,
-        environmentId: this._environmentId,
+        programId: this.getProgramId(flags),
+        environmentId: this.getEnvironmentId(flags),
         status: status.status,
       };
 
@@ -113,6 +113,7 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
+    ...commonFlags.global,
     json: Flags.boolean({
       char: 'j',
       hidden: false,

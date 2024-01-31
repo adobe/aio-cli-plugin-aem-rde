@@ -11,17 +11,18 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli,  commonFlags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
   async run() {
+    const { args, flags } = await this.parse(ResetCommand);
     try {
-      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
+      cli.log(`Reset cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(flags)}`);
       spinner.start('resetting environment');
-      await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.resetEnv());
+      await this.withCloudSdk(flags,(cloudSdkAPI) => cloudSdkAPI.resetEnv());
       spinner.stop();
       cli.log(`Environment reset.`);
     } catch (err) {
@@ -37,6 +38,9 @@ class ResetCommand extends BaseCommand {
 Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
+  flags: {
+    ...commonFlags.global,
+  },
   aliases: [],
 });
 

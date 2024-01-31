@@ -55,7 +55,7 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
         body.names = namesArray;
       }
 
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
         cloudSdkAPI.enableRequestLogs(flags.target, body)
       );
 
@@ -80,6 +80,7 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
+    ...inspectCommonFlags.global,
     target: inspectCommonFlags.target,
     format: Flags.string({
       char: 'f',
