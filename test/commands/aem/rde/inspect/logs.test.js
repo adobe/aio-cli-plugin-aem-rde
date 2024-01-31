@@ -263,12 +263,14 @@ describe('LogsCommand', function () {
     const arg = 'test';
     const format =
       '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
-
+    
+    const programId = '1111';
+    const envId="22222";
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new LogsCommand(
-          ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg],
+          ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg, '--programId', programId, '--envId', envId],
           null
         ),
         stubbedMethods
@@ -298,6 +300,22 @@ describe('LogsCommand', function () {
         { level: 'DEBUG', logger: arg },
         { level: 'WARN', logger: arg },
         { level: 'ERROR', logger: arg },
+      ]);
+    });
+
+    it('Should format the programId arg right', async function () {
+      await command.run();
+      await sinon.clock.runToLastAsync();
+      assert.deepStrictEqual(cloudSdkApiStub.createAemLog.args[0][1].programId, [
+        '1111'
+      ]);
+    });
+
+    it('Should format the envId arg right', async function () {
+      await command.run();
+      await sinon.clock.runToLastAsync();
+      assert.deepStrictEqual(cloudSdkApiStub.createAemLog.args[0][1].envId, [
+        '22222'
       ]);
     });
 
