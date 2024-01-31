@@ -92,6 +92,15 @@ class LogsCommand extends InspectBaseCommand {
       if (flags.format) {
         body.format = flags.format;
       }
+
+      if (flags.programId) {
+        body.programId = flags.programId;
+      }
+
+      if (flags.envId) {
+        body.envId = flags.envId;
+      }
+
       // check if there are values for the name key
       // formats the flags in the right way to pass them to the request
       if (flags.info || flags.debug || flags.warn || flags.error) {
@@ -153,6 +162,16 @@ Object.assign(LogsCommand, {
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
+      multiple: false,
+      required: false,
+    }),
+    programId: Flags.string({
+      description: `Specify the programID`,
+      multiple: false,
+      required: false,
+    }),
+    envId: Flags.string({
+      description: `Specify the envID`,
       multiple: false,
       required: false,
     }),
