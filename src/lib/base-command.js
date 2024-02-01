@@ -160,7 +160,7 @@ class BaseCommand extends Command {
   /**
    *
    * @param {*} flags
-   * @returns envirnomentId 
+   * @returns envirnomentId
    */
   getEnvironmentId(flags) {
     const environmentId =

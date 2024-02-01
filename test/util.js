@@ -38,7 +38,7 @@ function createCloudSdkAPIStub(sinon, command, stubbedMethods) {
     );
   }
   const flags = {
-    '--programId': 1111, 
+    '--programId': 1111,
     '--environmentId': 22222,
   };
 
