@@ -24,7 +24,7 @@ class HistoryCommand extends BaseCommand {
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
-        const response = await this.withCloudSdk(flags,(cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
@@ -43,7 +43,7 @@ class HistoryCommand extends BaseCommand {
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
         throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id });
       } else {
-        await this.withCloudSdk(flags,(cloudSdkAPI) =>
+        await this.withCloudSdk(flags, (cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
             done ? spinner.stop() : spinner.start(text)
           )

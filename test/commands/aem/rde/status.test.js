@@ -66,7 +66,10 @@ describe('StatusCommand', function () {
   describe('#run as json result', function () {
     const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new StatusCommand(['--programId=12345','--environmentId=54321','--json'], null),
+      new StatusCommand(
+        ['--programId=12345', '--environmentId=54321', '--json'],
+        null
+      ),
       stubbedMethods
     );
 

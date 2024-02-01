@@ -20,9 +20,13 @@ class RestartCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(RestartCommand);
     try {
-      cli.log(`Restart cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(flags)}`);
+      cli.log(
+        `Restart cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(
+          flags
+        )}`
+      );
       spinner.start('restarting environment');
-      await this.withCloudSdk(flags,(cloudSdkAPI) => cloudSdkAPI.restartEnv());
+      await this.withCloudSdk(flags, (cloudSdkAPI) => cloudSdkAPI.restartEnv());
       spinner.stop();
       cli.log(`Environment restarted.`);
     } catch (err) {
@@ -40,7 +44,7 @@ Object.assign(RestartCommand, {
   args: [],
   aliases: [],
   flags: {
-    ...commonFlags.global
+    ...commonFlags.global,
   },
 });
 

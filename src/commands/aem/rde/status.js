@@ -11,7 +11,12 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -29,9 +34,13 @@ class StatusCommand extends BaseCommand {
 
   async printAsText(flags) {
     try {
-      cli.log(`Info for cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(flags)}`);
+      cli.log(
+        `Info for cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(
+          flags
+        )}`
+      );
       spinner.start('retrieving environment status information');
-      const status = await this.withCloudSdk(flags,(cloudSdkAPI) =>
+      const status = await this.withCloudSdk(flags, (cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
       spinner.stop();
@@ -75,7 +84,7 @@ class StatusCommand extends BaseCommand {
 
   async printAsJson(flags) {
     try {
-      const status = await this.withCloudSdk(flags,(cloudSdkAPI) =>
+      const status = await this.withCloudSdk(flags, (cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
 

@@ -96,7 +96,6 @@ class BaseCommand extends Command {
 
   async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-
       const programId = this.getProgramId(flags);
       const environmentId = this.getEnvironmentId(flags);
 
@@ -146,9 +145,9 @@ class BaseCommand extends Command {
   }
 
   /**
-   * 
-   * @param {*} flags 
-   * @returns 
+   *
+   * @param {*} flags
+   * @returns programId
    */
   getProgramId(flags) {
     const programId = flags.programId || Config.get('cloudmanager_programid');
@@ -159,9 +158,9 @@ class BaseCommand extends Command {
   }
 
   /**
-   * 
-   * @param {*} flags 
-   * @returns 
+   *
+   * @param {*} flags
+   * @returns envirnomentId 
    */
   getEnvironmentId(flags) {
     const environmentId =

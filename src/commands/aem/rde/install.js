@@ -200,7 +200,7 @@ class DeployCommand extends BaseCommand {
 
     let change;
     try {
-      change = await this.withCloudSdk(flags,(cloudSdkAPI) => {
+      change = await this.withCloudSdk(flags, (cloudSdkAPI) => {
         const uploadCallbacks = {
           progress: (copiedBytes) => progressBar.update(copiedBytes),
           abort: () => progressBar.stop(),
@@ -249,7 +249,7 @@ class DeployCommand extends BaseCommand {
       );
     }
 
-    await this.withCloudSdk(flags,(cloudSdkAPI) =>
+    await this.withCloudSdk(flags, (cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
         done ? spinner.stop() : spinner.start(text)
       )
