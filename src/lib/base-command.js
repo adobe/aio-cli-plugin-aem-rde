@@ -145,20 +145,27 @@ class BaseCommand extends Command {
   }
 
   getProgramId(flags) {
-    const programId = flags.programId || Config.get('cloudmanager_programid');
-    if (!this._programId) {
+    if (flags && flags.programId) {
+      this.programId = flags.programId;
+    } else {
+      this.programId = Config.get('cloudmanager_programid');
+    }
+    if (!this.programId) {
       throw new validationCodes.MISSING_PROGRAM_ID();
     }
-    return programId;
+    return this.programId;
   }
 
   getEnvironmentId(flags) {
-    const environmentId =
-      flags.environmentId || Config.get('cloudmanager_environmentid');
-    if (!this._environmentId) {
+    if (flags && flags.environmentId) {
+      this.environmentId = flags.environmentId;
+    } else {
+      this.environmentId = Config.get('cloudmanager_environmentid');
+    }
+    if (!this.environmentId) {
       throw new validationCodes.MISSING_ENVIRONMENT_ID();
     }
-    return environmentId;
+    return this.environmentId;
   }
 }
 
