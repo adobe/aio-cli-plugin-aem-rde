@@ -56,11 +56,11 @@ async function getTokenAndKey() {
 class InspectBaseCommand extends BaseCommand {
   async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-      const programId = this.getProgramId(flags);
-      const environmentId = this.getEnvironmentId(flags);
+      this.getProgramId(flags);
+      this.getEnvironmentId(flags);
 
       const { accessToken, apiKey } = await getTokenAndKey();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${programId}-e${environmentId}`;
+      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this.programId}-e${this.environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -73,8 +73,8 @@ class InspectBaseCommand extends BaseCommand {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
           cloudManagerUrl,
           orgId,
-          programId,
-          environmentId
+          this.programId,
+          this.environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
@@ -96,8 +96,8 @@ class InspectBaseCommand extends BaseCommand {
         cacheEntry.rdeApiUrl,
         apiKey,
         getCliOrgId(),
-        programId,
-        environmentId,
+        this.programId,
+        this.environmentId,
         accessToken
       );
     }

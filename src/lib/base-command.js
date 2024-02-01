@@ -96,13 +96,13 @@ class BaseCommand extends Command {
 
   async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-      const programId = this.getProgramId(flags);
-      const environmentId = this.getEnvironmentId(flags);
+      this.getProgramId(flags);
+      this.getEnvironmentId(flags);
 
       const { accessToken, apiKey } = await getTokenAndKey();
       const cloudManagerUrl = getBaseUrl();
       const orgId = getCliOrgId();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${programId}-e${environmentId}`;
+      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this.programId}-e${this.environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -113,8 +113,8 @@ class BaseCommand extends Command {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
           cloudManagerUrl,
           orgId,
-          programId,
-          environmentId
+          this.programId,
+          this.environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
@@ -131,13 +131,13 @@ class BaseCommand extends Command {
         Config.set(cacheKey, cacheEntry);
       }
       this._cloudSdkAPI = new CloudSdkAPI(
-        `${cloudManagerUrl}/api/program/${programId}/environment/${environmentId}`,
+        `${cloudManagerUrl}/api/program/${this.programId}/environment/${this.environmentId}`,
         cacheEntry.devConsoleUrl,
         cacheEntry.rdeApiUrl,
         apiKey,
         orgId,
-        programId,
-        environmentId,
+        this.programId,
+        this.environmentId,
         accessToken
       );
     }
@@ -145,11 +145,10 @@ class BaseCommand extends Command {
   }
 
   getProgramId(flags) {
-    if (flags && flags.programId) {
-      this.programId = flags.programId;
-    } else {
-      this.programId = Config.get('cloudmanager_programid');
-    }
+    this.programId =
+      flags && flags.programId
+        ? flags.programId
+        : Config.get('cloudmanager_programid');
     if (!this.programId) {
       throw new validationCodes.MISSING_PROGRAM_ID();
     }
@@ -157,11 +156,11 @@ class BaseCommand extends Command {
   }
 
   getEnvironmentId(flags) {
-    if (flags && flags.environmentId) {
-      this.environmentId = flags.environmentId;
-    } else {
-      this.environmentId = Config.get('cloudmanager_environmentid');
-    }
+    this.environmentId =
+      flags && flags.environmentId
+        ? flags.programId
+        : Config.get('cloudmanager_environmentid');
+
     if (!this.environmentId) {
       throw new validationCodes.MISSING_ENVIRONMENT_ID();
     }
