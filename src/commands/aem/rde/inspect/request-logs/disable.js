@@ -23,7 +23,7 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
   async run() {
     const { flags } = await this.parse(DisableRequestLogsCommand);
     try {
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
         cloudSdkAPI.disableRequestLogs(flags.target)
       );
       if (response.status === 200) {
@@ -47,6 +47,7 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
+    ...inspectCommonFlags.flags,
     target: inspectCommonFlags.target,
   },
 });

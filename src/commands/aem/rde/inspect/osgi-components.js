@@ -28,7 +28,7 @@ class OsgiComponentsCommand extends InspectBaseCommand {
         params.scope = flags.scope;
         params.filter = flags.include;
 
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getOsgiComponents(flags.target, params)
         );
         if (response.status === 200) {
@@ -44,7 +44,7 @@ class OsgiComponentsCommand extends InspectBaseCommand {
           });
         }
       } else {
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getOsgiComponent(flags.target, args.name)
         );
         if (response.status === 200) {
@@ -109,6 +109,7 @@ Object.assign(OsgiComponentsCommand, {
     },
   ],
   flags: {
+    ...inspectCommonFlags.global,
     target: inspectCommonFlags.target,
     scope: inspectCommonFlags.scope,
     include: inspectCommonFlags.include,

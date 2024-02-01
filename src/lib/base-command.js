@@ -77,10 +77,6 @@ async function initSdk(cloudManagerUrl, orgId) {
 class BaseCommand extends Command {
   constructor(argv, config, error) {
     super(argv, config);
-    const programId = Config.get('cloudmanager_programid');
-    const environmentId = Config.get('cloudmanager_environmentid');
-    this._programId = programId;
-    this._environmentId = environmentId;
     this.error = error || this.error;
   }
 
@@ -98,18 +94,15 @@ class BaseCommand extends Command {
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
-  async withCloudSdk(fn) {
+  async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
-      if (!this._programId) {
-        throw new validationCodes.MISSING_PROGRAM_ID();
-      }
-      if (!this._environmentId) {
-        throw new validationCodes.MISSING_ENVIRONMENT_ID();
-      }
+      this.getProgramId(flags);
+      this.getEnvironmentId(flags);
+
       const { accessToken, apiKey } = await getTokenAndKey();
       const cloudManagerUrl = getBaseUrl();
       const orgId = getCliOrgId();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
+      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this.programId}-e${this.environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -120,8 +113,8 @@ class BaseCommand extends Command {
         const developerConsoleUrl = await this.getDeveloperConsoleUrl(
           cloudManagerUrl,
           orgId,
-          this._programId,
-          this._environmentId
+          this.programId,
+          this.environmentId
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
@@ -138,17 +131,40 @@ class BaseCommand extends Command {
         Config.set(cacheKey, cacheEntry);
       }
       this._cloudSdkAPI = new CloudSdkAPI(
-        `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
+        `${cloudManagerUrl}/api/program/${this.programId}/environment/${this.environmentId}`,
         cacheEntry.devConsoleUrl,
         cacheEntry.rdeApiUrl,
         apiKey,
         orgId,
-        this._programId,
-        this._environmentId,
+        this.programId,
+        this.environmentId,
         accessToken
       );
     }
     return fn(this._cloudSdkAPI);
+  }
+
+  getProgramId(flags) {
+    this.programId =
+      flags && flags.programId
+        ? flags.programId
+        : Config.get('cloudmanager_programid');
+    if (!this.programId) {
+      throw new validationCodes.MISSING_PROGRAM_ID();
+    }
+    return this.programId;
+  }
+
+  getEnvironmentId(flags) {
+    this.environmentId =
+      flags && flags.environmentId
+        ? flags.programId
+        : Config.get('cloudmanager_environmentid');
+
+    if (!this.environmentId) {
+      throw new validationCodes.MISSING_ENVIRONMENT_ID();
+    }
+    return this.environmentId;
   }
 }
 
@@ -158,18 +174,22 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
-      common: true,
-    }),
+    global: {
+      programId: Flags.string({
+        description:
+          "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
+        common: true,
+        multiple: false,
+        required: false,
+      }),
+      environmentId: Flags.string({
+        description:
+          "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+        common: true,
+        multiple: false,
+        required: false,
+      }),
+    },
     target: Flags.string({
       char: 's',
       description:

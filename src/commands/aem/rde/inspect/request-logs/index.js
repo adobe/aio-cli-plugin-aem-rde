@@ -28,7 +28,7 @@ class RequestLogsCommand extends InspectBaseCommand {
         const params = {};
         params.filter = flags.include;
 
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getRequestLogs(flags.target, params)
         );
         if (response?.status === 200) {
@@ -44,7 +44,7 @@ class RequestLogsCommand extends InspectBaseCommand {
           });
         }
       } else {
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getRequestLog(flags.target, args.id)
         );
         if (response?.status === 200) {
@@ -103,6 +103,7 @@ Object.assign(RequestLogsCommand, {
     },
   ],
   flags: {
+    ...inspectCommonFlags.flags,
     target: inspectCommonFlags.target,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,

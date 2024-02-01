@@ -28,7 +28,7 @@ class SlingRequestsCommand extends InspectBaseCommand {
         const params = {};
         params.filter = flags.include;
 
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getSlingRequests(flags.target, params)
         );
         if (response.status === 200) {
@@ -44,7 +44,7 @@ class SlingRequestsCommand extends InspectBaseCommand {
           });
         }
       } else {
-        const response = await this.withCloudSdk((cloudSdkAPI) =>
+        const response = await this.withCloudSdk(flags, (cloudSdkAPI) =>
           cloudSdkAPI.getSlingRequest(flags.target, args.id)
         );
 
@@ -107,6 +107,7 @@ Object.assign(SlingRequestsCommand, {
     },
   ],
   flags: {
+    ...inspectCommonFlags.global,
     target: inspectCommonFlags.target,
     include: inspectCommonFlags.include,
     output: inspectCommonFlags.output,

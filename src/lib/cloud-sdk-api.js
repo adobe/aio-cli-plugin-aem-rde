@@ -539,6 +539,10 @@ class CloudSdkAPI {
       async () => await this._cloudManagerClient.doGet('')
     );
   }
+
+  getEnvironmentLabel() {
+    return this._cmReleaseId;
+  }
 }
 
 module.exports = {
