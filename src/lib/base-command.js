@@ -144,29 +144,19 @@ class BaseCommand extends Command {
     return fn(this._cloudSdkAPI);
   }
 
-  /**
-   *
-   * @param {*} flags
-   * @returns programId
-   */
   getProgramId(flags) {
     const programId = flags.programId || Config.get('cloudmanager_programid');
-    if (!programId) {
-      throw new Error('No programId');
+    if (!this._programId) {
+      throw new validationCodes.MISSING_PROGRAM_ID();
     }
     return programId;
   }
 
-  /**
-   *
-   * @param {*} flags
-   * @returns envirnomentId
-   */
   getEnvironmentId(flags) {
     const environmentId =
       flags.environmentId || Config.get('cloudmanager_environmentid');
-    if (!environmentId) {
-      throw new Error('No environmentId');
+    if (!this._environmentId) {
+      throw new validationCodes.MISSING_ENVIRONMENT_ID();
     }
     return environmentId;
   }

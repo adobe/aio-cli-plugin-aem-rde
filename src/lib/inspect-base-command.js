@@ -13,7 +13,6 @@ const { CloudSdkAPI } = require('./cloud-sdk-api');
 const Config = require('@adobe/aio-lib-core-config');
 const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('./configuration-errors');
-const { codes: validationCodes } = require('./validation-errors');
 const {
   BaseCommand,
   getCliOrgId,
@@ -55,10 +54,6 @@ async function getTokenAndKey() {
 }
 
 class InspectBaseCommand extends BaseCommand {
-  constructor(argv, config) {
-    super(argv, config);
-  }
-
   async withCloudSdk(flags, fn) {
     if (!this._cloudSdkAPI) {
       const programId = this.getProgramId(flags);
@@ -107,23 +102,6 @@ class InspectBaseCommand extends BaseCommand {
       );
     }
     return fn(this._cloudSdkAPI);
-  }
-
-  getProgramId(flags) {
-    const programId = flags.programId || Config.get('cloudmanager_programid');
-    if (!programId) {
-      throw new Error('No programId');
-    }
-    return programId;
-  }
-
-  getEnvironmentId(flags) {
-    const environmentId =
-      flags.environmentId || Config.get('cloudmanager_environmentid');
-    if (!environmentId) {
-      throw new Error('No environmentId');
-    }
-    return environmentId;
   }
 }
 

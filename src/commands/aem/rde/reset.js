@@ -18,7 +18,7 @@ const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
   async run() {
-    const { args, flags } = await this.parse(ResetCommand);
+    const { flags } = await this.parse(ResetCommand);
     try {
       cli.log(
         `Reset cm-p${this.getProgramId(flags)}-e${this.getEnvironmentId(flags)}`
