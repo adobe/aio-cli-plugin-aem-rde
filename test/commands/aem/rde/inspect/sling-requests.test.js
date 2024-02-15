@@ -7,6 +7,7 @@ const {
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 const chalk = require('chalk');
+const OsgiServicesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-services');
 
 const errorObj = Object.assign(
   {},
@@ -83,15 +84,18 @@ const stubbedMethods = {
     ),
 };
 
+let command, cloudSdkApiStub;
 describe('SlingRequestsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getSlingRequests', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new SlingRequestsCommand([], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new SlingRequestsCommand([], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();
@@ -177,11 +181,13 @@ describe('SlingRequestsCommand', function () {
 
   describe('#getSlingRequest', function () {
     const reqId = '1';
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new SlingRequestsCommand([reqId], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new SlingRequestsCommand([reqId], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();
