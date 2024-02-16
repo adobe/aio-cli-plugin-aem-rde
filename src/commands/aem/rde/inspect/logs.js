@@ -18,55 +18,84 @@ const {
   InspectBaseCommand,
   inspectCommonFlags,
 } = require('../../../../lib/inspect-base-command');
+const chalk = require('chalk');
+const { sleepMillis } = require('../../../../lib/utils');
+
+const REQUEST_INTERVAL_MS = 500;
+const LOG_COLORS = {
+  '*TRACE*': chalk.blackBright,
+  '*DEBUG*': chalk.cyan,
+  '*INFO*': chalk.green,
+  '*WARN*': chalk.yellow,
+  '*ERROR*': chalk.red,
+};
 
 class LogsCommand extends InspectBaseCommand {
+  constructor(argv, config) {
+    super(argv, config);
+    this.stopAndCleanupCallback = this.stopAndCleanup.bind(this);
+  }
+
   async run() {
     const { flags } = await this.parse(LogsCommand);
     this.flags = flags || {};
+    let error;
     try {
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.getAemLogs(flags.target, {})
-      );
-
-      if (response.status === 200) {
-        const json = await response.json();
-
-        // The log amount is limited to 3
-        if (json.items?.length >= 3) {
-          await this.deleteLog(flags.target, json.items[0].id);
+      let [log] = await this.createLog(flags);
+      if (log === undefined) {
+        const response = await this.withCloudSdk((cloudSdkAPI) =>
+          cloudSdkAPI.getAemLogs(this.flags.target, {})
+        );
+        if (response.status === 200) {
+          const json = await response.json();
+          // The log amount is limited to 3
+          if (json.items?.length >= 3) {
+            await this.deleteLog(flags.target, json.items[0].id);
+          }
+          [log, error] = await this.createLog(flags);
+        } else {
+          error = new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          });
         }
-        const newLog = await this.createLog(flags);
-
+      }
+      if (error === undefined && log?.id) {
+        this.lastItemId = log.id;
+        process.addListener('SIGINT', this.stopAndCleanupCallback);
+        process.addListener('SIGTERM', this.stopAndCleanupCallback);
         // The logs are displayed continuously until they are cancelled with `ctl c`.
-        this.intervalId = setInterval(async () => {
-          await this.printLogTail(flags.target, newLog.id);
-        }, 1500);
-
-        this.lastItemId = json.items?.at(-1)?.id;
-
-        // `ctl c` stops displaying the logs
-        process.removeListener('SIGINT', this.stopAndCleanup);
-        process.removeListener('SIGTERM', this.stopAndCleanup);
-      } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({
-          messageValues: [response.status, response.statusText],
-        });
+        this.intervalId = setInterval(() => {
+          if (!this.stopped) {
+            this.printLogTail(log.id, flags.target, flags.color);
+          }
+        }, REQUEST_INTERVAL_MS);
       }
     } catch (err) {
+      await this.stopAndCleanup();
       throwAioError(
         err,
         new internalCodes.INTERNAL_GET_LOG_ERROR({ messageValues: err })
       );
+    }
+
+    if (error) {
+      await this.stopAndCleanup();
+      throw error;
     }
   }
 
   async stopAndCleanup() {
     if (!this.stopped) {
       this.stopped = true;
-      process.removeListener('SIGINT', () => this.stopAndCleanup());
-      process.removeListener('SIGTERM', () => this.stopAndCleanup());
-      clearInterval(this.intervalId);
-      await this.deleteLog(this.flags.target, this.lastItemId);
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+      }
+
+      process.removeListener('SIGINT', this.stopAndCleanupCallback);
+      process.removeListener('SIGTERM', this.stopAndCleanupCallback);
+      if (this.lastItemId !== undefined) {
+        await this.deleteLog(this.flags.target, this.lastItemId);
+      }
     }
   }
 
@@ -96,11 +125,14 @@ class LogsCommand extends InspectBaseCommand {
       // formats the flags in the right way to pass them to the request
       if (flags.info || flags.debug || flags.warn || flags.error) {
         const namesArray = [];
-        flags?.info?.forEach((logger) => {
-          namesArray.push({ logger, level: 'INFO' });
-        });
+        // flags?.trace?.forEach((logger) => {
+        //   namesArray.push({ logger, level: 'TRACE' });
+        // });
         flags?.debug?.forEach((logger) => {
           namesArray.push({ logger, level: 'DEBUG' });
+        });
+        flags?.info?.forEach((logger) => {
+          namesArray.push({ logger, level: 'INFO' });
         });
         flags?.warn?.forEach((logger) => {
           namesArray.push({ logger, level: 'WARN' });
@@ -117,31 +149,65 @@ class LogsCommand extends InspectBaseCommand {
 
       if (response.status === 201) {
         const log = await response.json();
-        return log;
+        return [log, undefined];
       } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({
-          messageValues: [response.status, response.statusText],
-        });
+        return [
+          undefined,
+          new internalCodes.UNEXPECTED_API_ERROR({
+            messageValues: [response.status, response.statusText],
+          }),
+        ];
       }
     } catch (err) {
-      throw new internalCodes.INTERNAL_CREATE_LOG_ERROR({ messageValues: err });
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_CREATE_LOG_ERROR({ messageValues: err })
+      );
     }
   }
 
-  async printLogTail(target, id) {
+  async printLogTail(id, target, colorize) {
     const response = await this.withCloudSdk((cloudSdkAPI) =>
       cloudSdkAPI.getAemLogTail(target, id)
     );
+
     if (response.status === 200) {
       const aemLogTail = await response.text();
-      if (aemLogTail) {
-        cli.log(aemLogTail.trim());
+      const logLines =
+        aemLogTail
+          .trim()
+          .split(/[\r\n]{1,2}/)
+          .filter((s) => s !== '') || [];
+
+      // A small delay between the log lines makes the tail
+      // feel more fluid. It counter-acts the feeling of getting
+      // big chunks of log due to log polling.
+      const perLineDelay = Math.max(
+        1,
+        Math.min(
+          Math.floor(REQUEST_INTERVAL_MS / logLines.length),
+          REQUEST_INTERVAL_MS
+        )
+      );
+      for (let i = 0; i < logLines.length && !this.stopped; i++) {
+        const line = colorize ? this.colorizeLine(logLines[i]) : logLines[i];
+        cli.log(line);
+        await sleepMillis(perLineDelay);
       }
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
         messageValues: [response.status, response.statusText],
       });
     }
+  }
+
+  colorizeLine(line) {
+    for (const level in LOG_COLORS) {
+      if (line.includes(level)) {
+        return LOG_COLORS[level](line);
+      }
+    }
+    return line;
   }
 }
 
@@ -156,15 +222,20 @@ Object.assign(LogsCommand, {
       multiple: false,
       required: false,
     }),
-    info: Flags.string({
-      char: 'i',
-      description: `Optional logger on INFO level.`,
-      multiple: true,
-      required: false,
-    }),
+    // trace: Flags.string({
+    //   description: `Optional logger on TRACE level.`,
+    //   multiple: true,
+    //   required: false,
+    // }),
     debug: Flags.string({
       char: 'd',
       description: `Optional logger on DEBUG level.`,
+      multiple: true,
+      required: false,
+    }),
+    info: Flags.string({
+      char: 'i',
+      description: `Optional logger on INFO level.`,
       multiple: true,
       required: false,
     }),
@@ -179,6 +250,12 @@ Object.assign(LogsCommand, {
       description: `Optional logger on ERROR level.`,
       multiple: true,
       required: false,
+    }),
+    color: Flags.boolean({
+      aliases: ['colour'],
+      description: 'Colorize log output',
+      default: true,
+      allowNo: true,
     }),
   },
 });

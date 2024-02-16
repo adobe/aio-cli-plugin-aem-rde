@@ -15,10 +15,10 @@ function setupLogCapturing(sinon, cli) {
   });
 
   // Resets the internal state of all fakes created through sandbox, see https://sinonjs.org/releases/latest/sandbox/#sandboxreset
-  beforeEach(sinon.reset);
+  afterEach(() => sinon.reset());
 
   // Restores all fakes created through sandbox, see https://sinonjs.org/releases/latest/sandbox/#sandboxrestore
-  after(sinon.restore);
+  after(() => sinon.restore());
 }
 
 /**
@@ -29,13 +29,14 @@ function setupLogCapturing(sinon, cli) {
 function createCloudSdkAPIStub(sinon, command, stubbedMethods) {
   const cloudSdkApiStub = sinon.createStubInstance(CloudSdkAPI);
   if (stubbedMethods) {
-    Object.keys(stubbedMethods).forEach((methodName) =>
-      sinon.replace(
-        cloudSdkApiStub,
-        methodName,
-        sinon.fake(stubbedMethods[methodName])
-      )
-    );
+    Object.keys(stubbedMethods).forEach((methodName) => {
+      const methodOrObject = stubbedMethods[methodName];
+      if (typeof methodOrObject === 'function') {
+        return cloudSdkApiStub[methodName].callsFake(methodOrObject);
+      } else {
+        return cloudSdkApiStub[methodName].returns(methodOrObject);
+      }
+    });
   }
 
   sinon.replace(command, 'withCloudSdk', (fn) => fn(cloudSdkApiStub));

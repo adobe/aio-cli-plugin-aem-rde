@@ -7,6 +7,7 @@ const {
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 const chalk = require('chalk');
+const OsgiComponentsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-components');
 
 const errorObj = Object.assign(
   {},
@@ -76,15 +77,18 @@ const stubbedMethods = {
     ),
 };
 
+let command, cloudSdkApiStub;
 describe('OsgiConfigurationsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getOsgiConfigurations', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiConfigurationsCommand([], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiConfigurationsCommand([], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();
@@ -160,11 +164,13 @@ describe('OsgiConfigurationsCommand', function () {
 
   describe('#getOsgiConfiguration', function () {
     const reqId = 'com.adobe.aem.test';
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiConfigurationsCommand([reqId], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiConfigurationsCommand([reqId], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();

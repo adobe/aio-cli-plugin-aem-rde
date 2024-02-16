@@ -78,15 +78,18 @@ const stubbedMethods = {
     ),
 };
 
+let command, cloudSdkApiStub;
 describe('RequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getRequestLogs', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new RequestLogsCommand([], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand([], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();
@@ -167,11 +170,13 @@ describe('RequestLogsCommand', function () {
 
   describe('#getRequestLog', function () {
     const reqId = '0';
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new RequestLogsCommand([reqId], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand([reqId], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once.', async function () {
       await command.run();

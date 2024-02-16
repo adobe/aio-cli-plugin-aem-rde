@@ -9,7 +9,7 @@ describe('ResetCommand', function () {
 
   describe('#run', function () {
     it('cloudSDKAPI.resetEnv() has been called', async function () {
-      let [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+      const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new ResetCommand([], null),
         {

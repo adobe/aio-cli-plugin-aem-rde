@@ -12,12 +12,26 @@
 'use strict';
 
 /**
- * @param seconds
+ * Sleep a defined number of seconds.
+ * @param seconds The number of seconds to sleep.
+ * @return promise for the sleep duration
  */
 function sleepSeconds(seconds) {
-  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  return sleepMillis(seconds * 1000);
+}
+
+/**
+ * Sleep a defined number of milliseconds.
+ * @param millis The number of milliseconds to sleep.
+ * @return promise for the sleep duration
+ */
+function sleepMillis(millis) {
+  return millis === 0
+    ? Promise.resolve()
+    : new Promise((resolve) => setTimeout(resolve, millis));
 }
 
 module.exports = {
   sleepSeconds,
+  sleepMillis,
 };

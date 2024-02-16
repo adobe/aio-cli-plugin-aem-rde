@@ -98,15 +98,18 @@ const stubbedMethods = {
     ),
 };
 
+let command, cloudSdkApiStub;
 describe('OsgiBundlesCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getOsgiBundles', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiBundlesCommand([], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiBundlesCommand([], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();
@@ -184,11 +187,13 @@ describe('OsgiBundlesCommand', function () {
 
   describe('#getOsgiBundle', function () {
     const reqId = 'com.adobe.aem.test';
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new OsgiBundlesCommand([reqId], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new OsgiBundlesCommand([reqId], null),
+        stubbedMethods
+      );
+    });
 
     it('Should be called exactly once', async function () {
       await command.run();

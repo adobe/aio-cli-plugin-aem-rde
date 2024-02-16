@@ -6,31 +6,29 @@ const HistoryCommand = require('../../../../src/commands/aem/rde/history.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 
 const stubbedCloudSdkMethods = {
-  getChanges: sinon.fake(() =>
-    Object.create({
-      status: 200,
-      json: function () {
-        return {
-          items: [
-            {
-              updateId: 6,
-              action: 'install',
-              status: 'OK',
-              metadata: {},
-              timestamps: {},
-            },
-            {
-              updateId: 8,
-              action: 'delete',
-              status: 'OK',
-              metadata: {},
-              timestamps: {},
-            },
-          ],
-        };
-      },
-    })
-  ),
+  getChanges: {
+    status: 200,
+    json: function () {
+      return {
+        items: [
+          {
+            updateId: 6,
+            action: 'install',
+            status: 'OK',
+            metadata: {},
+            timestamps: {},
+          },
+          {
+            updateId: 8,
+            action: 'delete',
+            status: 'OK',
+            metadata: {},
+            timestamps: {},
+          },
+        ],
+      };
+    },
+  },
   getChange: (id) =>
     Object.create({
       status: 200,
@@ -51,15 +49,19 @@ const stubbedCloudSdkMethods = {
     }),
 };
 
+let command, cloudSdkApiStub;
+
 describe('HistoryCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getChanges', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new HistoryCommand([], null),
-      stubbedCloudSdkMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new HistoryCommand([], null),
+        stubbedCloudSdkMethods
+      );
+    });
 
     it('should be called exactly once', async function () {
       await command.run();
@@ -77,11 +79,13 @@ describe('HistoryCommand', function () {
   });
 
   describe('#getChange', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new HistoryCommand(['123'], null),
-      stubbedCloudSdkMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new HistoryCommand(['123'], null),
+        stubbedCloudSdkMethods
+      );
+    });
 
     it('called the right remote API methods', async function () {
       await command.run();
