@@ -35,6 +35,7 @@ const stubbedMethods = {
     ),
 };
 
+let command, cloudSdkApiStub;
 describe('EnableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
@@ -43,31 +44,33 @@ describe('EnableRequestLogsCommand', function () {
     const format =
       '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
     const includePathPatterns = '*test';
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new EnableRequestLogsCommand(
-        [
-          '-i',
-          arg,
-          '-d',
-          arg,
-          '-f',
-          format,
-          '-e',
-          arg,
-          '-p',
-          includePathPatterns,
-          '-i',
-          arg,
-          '-w',
-          arg,
-          '-p',
-          includePathPatterns,
-        ],
-        null
-      ),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new EnableRequestLogsCommand(
+          [
+            '-i',
+            arg,
+            '-d',
+            arg,
+            '-f',
+            format,
+            '-e',
+            arg,
+            '-p',
+            includePathPatterns,
+            '-i',
+            arg,
+            '-w',
+            arg,
+            '-p',
+            includePathPatterns,
+          ],
+          null
+        ),
+        stubbedMethods
+      );
+    });
 
     it('Should pass the includePathPatterns in the right format', async function () {
       await command.run();

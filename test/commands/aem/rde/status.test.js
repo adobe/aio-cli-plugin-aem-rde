@@ -7,48 +7,58 @@ const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 
 const stubbedMethods = {
   getArtifacts: () =>
-    Object.assign(
-      {},
-      {
-        status: 200,
-        json: () =>
-          Object.create({
-            status: 'Ready',
-            items: [
-              {
-                id: 'test-bundle',
-                updateId: '1',
-                service: 'author',
-                type: 'osgi-bundle',
-                metadata: {
-                  name: 'test.all-1.0.0-SNAPSHOT.zip',
-                  bundleSymbolicName: 'test-bundle',
-                  bundleName: 'Test Bundle',
-                  bundleVersion: '1.0.0',
-                },
+    Object.create({
+      status: 200,
+      json: () =>
+        Object.create({
+          status: 'Ready',
+          items: [
+            {
+              id: 'test-bundle',
+              updateId: '1',
+              service: 'author',
+              type: 'osgi-bundle',
+              metadata: {
+                name: 'test.all-1.0.0-SNAPSHOT.zip',
+                bundleSymbolicName: 'test-bundle',
+                bundleName: 'Test Bundle',
+                bundleVersion: '1.0.0',
               },
-            ],
-          }),
-      }
-    ),
+            },
+          ],
+        }),
+    }),
 };
 
-sinon
-  .stub(Config, 'get')
-  .withArgs('cloudmanager_programid')
-  .returns('12345')
-  .withArgs('cloudmanager_environmentid')
-  .returns('54321');
-
+let command, cloudSdkApiStub;
 describe('StatusCommand', function () {
   setupLogCapturing(sinon, cli);
 
+  before(() => {
+    sinon.useFakeTimers();
+  });
+
+  beforeEach(() => {
+    sinon
+      .stub(Config, 'get')
+      .withArgs('cloudmanager_programid')
+      .returns('12345')
+      .withArgs('cloudmanager_environmentid')
+      .returns('54321');
+  });
+
+  afterEach(() => {
+    Config.get.restore();
+  });
+
   describe('#run as textual result', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new StatusCommand([], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new StatusCommand([], null),
+        stubbedMethods
+      );
+    });
 
     it('should call getArtifacts() exactly once', async function () {
       await command.run();
@@ -71,11 +81,13 @@ describe('StatusCommand', function () {
   });
 
   describe('#run as json result', function () {
-    const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new StatusCommand(['--json'], null),
-      stubbedMethods
-    );
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new StatusCommand(['--json'], null),
+        stubbedMethods
+      );
+    });
 
     it('should call getArtifacts() exactly once', async function () {
       await command.run();
