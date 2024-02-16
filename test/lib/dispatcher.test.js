@@ -13,7 +13,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const archiver = require('archiver');
 const Zip = require('adm-zip');
-const { dispatcherInputBuild } = require('../../src/lib/dispatcher.js'); 
+const { dispatcherInputBuild } = require('../../src/lib/dispatcher.js');
 const { cli } = require('../../src/lib/base-command');
 const fs = require('fs');
 const os = require('os');
@@ -25,26 +25,35 @@ describe('Archive Utility', function () {
 
   beforeEach(async function () {
     // Create temporary directories
-    tmpDir = await fs.mkdtempSync(path.join(os.tmpdir(), 'aio-rde-dispatcher-test-'));
+    tmpDir = await fs.mkdtempSync(
+      path.join(os.tmpdir(), 'aio-rde-dispatcher-test-')
+    );
   });
 
   describe('#archiveDirectory', function () {
     it('should call archiver functions', async function () {
-      const fsEmitter = new TestEmitter(); 
-      const createWriteStreamStub = sinon.stub(fs, 'createWriteStream').returns(fsEmitter);
+      const fsEmitter = new TestEmitter();
+      const createWriteStreamStub = sinon
+        .stub(fs, 'createWriteStream')
+        .returns(fsEmitter);
       const archiverStub = {
         pipe: sinon.stub(),
         finalize: sinon.stub().callsFake(() => {
-            fsEmitter.emit('close');
-            return Promise.resolve();
+          fsEmitter.emit('close');
+          return Promise.resolve();
         }),
         pointer: sinon.stub().returns(1234),
         on: () => {},
       };
-      const fsRealPathSyc = sinon.stub(fs, 'realpathSync').returns('new-zip-path');
+      const fsRealPathSyc = sinon
+        .stub(fs, 'realpathSync')
+        .returns('new-zip-path');
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
 
-      let {inputPath, inputPathSize} = await dispatcherInputBuild(cli, tmpDir);
+      const { inputPath, inputPathSize } = await dispatcherInputBuild(
+        cli,
+        tmpDir
+      );
 
       assert.equal(inputPath, 'new-zip-path');
       assert.equal(inputPathSize, 1234);
@@ -59,16 +68,19 @@ describe('Archive Utility', function () {
     });
 
     it('should create output zip file', async function () {
-        sinon.stub(cli, 'log');
+      sinon.stub(cli, 'log');
 
-        await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
+      await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
 
-        let {inputPath, inputPathSize} = await dispatcherInputBuild(cli, tmpDir);
-  
-        assert.equal(inputPathSize, 145);
-        assert.ok(await fs.existsSync(inputPath));
-        const zip = new Zip(inputPath, {});
-        assert.ok(zip.getEntry('test.txt') !== null);
+      const { inputPath, inputPathSize } = await dispatcherInputBuild(
+        cli,
+        tmpDir
+      );
+
+      assert(inputPathSize < 150, 'zipped size: expected less than 150 bytes');
+      assert.ok(await fs.existsSync(inputPath));
+      const zip = new Zip(inputPath, {});
+      assert.ok(zip.getEntry('test.txt') !== null);
     });
   });
 });

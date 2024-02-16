@@ -46,8 +46,8 @@ function logChange(change) {
       (change.type === 'dispatcher-config'
         ? ' on dispatcher'
         : change.services
-        ? ` on ${change.services}`
-        : '') +
+          ? ` on ${change.services}`
+          : '') +
       ` - done by ${change.user} at ${change.timestamps.received}`
   );
 }
