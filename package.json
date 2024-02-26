@@ -8,11 +8,11 @@
     "node": "^16.13 || ^17 || ^18 || ^19 || ^20"
   },
   "dependencies": {
-    "@adobe/aio-lib-cloudmanager": "^2.0.0",
-    "@adobe/aio-lib-core-config": "^3.1.0",
-    "@adobe/aio-lib-core-errors": "^3.1.1",
-    "@adobe/aio-lib-core-networking": "^3.0.0",
-    "@adobe/aio-lib-ims": "^6.0.1",
+    "@adobe/aio-lib-cloudmanager": "^3.1.0",
+    "@adobe/aio-lib-core-config": "^5.0.1",
+    "@adobe/aio-lib-core-errors": "^4.0.1",
+    "@adobe/aio-lib-core-networking": "^5.0.1",
+    "@adobe/aio-lib-ims": "^7.0.1",
     "@azure/storage-file-share": "^12.12.0",
     "@oclif/core": "^1.20.4",
     "adm-zip": "^0.5.9",
