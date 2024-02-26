@@ -20,7 +20,7 @@
     "chalk": "^4.1.2",
     "cli-progress": "^3.11.2",
     "form-data": "^4.0.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "ora": "^5.4.1"
   },
   "devDependencies": {
