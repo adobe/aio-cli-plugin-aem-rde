@@ -24,7 +24,7 @@
     "ora": "^5.4.1"
   },
   "devDependencies": {
-    "@adobe/eslint-config-aio-lib-config": "^3.0.0",
+    "@adobe/eslint-config-aio-lib-config": "^4.0.0",
     "@oclif/dev-cli": "^1.26.10",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
