@@ -5,7 +5,7 @@
   "author": "Adobe Inc.",
   "engines": {
     "npm": ">= 8.0.0",
-    "node": "^16.13 || ^17 || ^18 || ^19 || ^20"
+    "node": "^16.13 || ^18 || ^20"
   },
   "dependencies": {
     "@adobe/aio-lib-cloudmanager": "^3.1.0",
