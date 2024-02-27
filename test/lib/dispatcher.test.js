@@ -77,7 +77,10 @@ describe('Archive Utility', function () {
         tmpDir
       );
 
-      assert(inputPathSize < 150, 'zipped size: expected less than 150 bytes');
+      assert(
+        inputPathSize > 140 && inputPathSize < 150,
+        'zipped size: expected 140..150 bytes'
+      );
       assert.ok(await fs.existsSync(inputPath));
       const zip = new Zip(inputPath, {});
       assert.ok(zip.getEntry('test.txt') !== null);
