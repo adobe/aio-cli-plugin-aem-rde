@@ -158,7 +158,7 @@ class BaseCommand extends Command {
   getEnvironmentId(flags) {
     this.environmentId =
       flags && flags.environmentId
-        ? flags.programId
+        ? flags.environmentId
         : Config.get('cloudmanager_environmentid');
 
     if (!this.environmentId) {
