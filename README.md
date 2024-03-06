@@ -9,6 +9,7 @@ AEM Rapid Development Environments.
 - Node.js version compatibility:
   - 16.x -- 16.13.0 or higher.
   - 18.x -- 18.0.0 or higher.
+  - 20.x -- 20.11.0 or higher.
   - Use with odd Node versions is _not_ recommended.
 
 # Installation
