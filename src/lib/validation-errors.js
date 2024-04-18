@@ -55,6 +55,10 @@ E(
   'We could not infer the deployment type. Please specify the -t option with one of the following types: %s'
 );
 E(
+  'MISSING_ORG_ID',
+  'Organization ID must be specified through cloudmanager_orgid config value.'
+);
+E(
   'MISSING_PROGRAM_ID',
   'Program ID must be specified either as --programId flag or through cloudmanager_programid config value.'
 );

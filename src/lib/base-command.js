@@ -11,6 +11,7 @@
  */
 const { Command, Flags, CliUx } = require('@oclif/core');
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
+const { CloudSdkAPIBase } = require('../lib/cloud-sdk-api-base');
 const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
@@ -150,6 +151,24 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPI);
   }
+
+  async withCloudSdkBase(fn) {
+    if (!this._cloudSdkAPIBase) {
+      const { accessToken, apiKey } = await getTokenAndKey();
+      const cloudManagerUrl = getBaseUrl();
+      const orgId = getCliOrgId();
+      if (!orgId) {
+        throw new validationCodes.MISSING_ORG_ID();
+      }
+      this._cloudSdkAPIBase = new CloudSdkAPIBase(
+        `${cloudManagerUrl}/api`,
+        apiKey,
+        orgId,
+        accessToken
+      );
+    }
+    return fn(this._cloudSdkAPIBase);
+  }
 }
 
 module.exports = {
@@ -183,4 +202,5 @@ module.exports = {
   getCliOrgId,
   getBaseUrl,
   initSdk,
+  getTokenAndKey,
 };

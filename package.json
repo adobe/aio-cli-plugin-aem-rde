@@ -8,6 +8,7 @@
     "node": "^16.13 || ^18 || ^20"
   },
   "dependencies": {
+    "@adobe/aio-cli-lib-console": "^5.0.1",
     "@adobe/aio-lib-cloudmanager": "^3.1.0",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-core-errors": "^4.0.1",
@@ -20,6 +21,8 @@
     "chalk": "^4.1.2",
     "cli-progress": "^3.11.2",
     "form-data": "^4.0.0",
+    "inquirer": "^8.2.6",
+    "inquirer-autocomplete-prompt": "^2.0.1",
     "jsonwebtoken": "^9.0.2",
     "ora": "^5.4.1"
   },
