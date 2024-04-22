@@ -24,6 +24,22 @@ const spinner = require('ora')();
 const chalk = require('chalk');
 const LibConsoleCLI = require('@adobe/aio-cli-lib-console');
 
+/**
+ * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
+ * It has methods to get organization ID, program ID, and environment ID.
+ *
+ * @function getOrgId: This method is used to get the organization ID. It first retrieves the access token and API key,
+ * then initializes the consoleCLI with these credentials. It then fetches the organizations associated with these credentials.
+ * If there is only one organization, it selects that one. Otherwise, it prompts the user to select an organization.
+ * @function getProgramId: This method is used to get the program ID. If the programs are not cached, it retrieves the programs
+ * associated with the organization and caches them. It then prompts the user to select a program from the cached list.
+ * @function getEnvironmentId: This method is used to get the environment ID. It retrieves the environments associated with the
+ * selected program and prompts the user to select an environment. When there are no environments found for the selected program,
+ * the user is asked to choose a different program instead.
+ *
+ * The `SetupCommand` class is part of a command-line interface and is used to set up the environment for the CLI.
+ */
+
 let cachedPrograms = null;
 class SetupCommand extends BaseCommand {
   async getOrgId() {
@@ -71,8 +87,6 @@ class SetupCommand extends BaseCommand {
         },
       },
     ]);
-
-    cli.log(`Selected program: ${selectedProgram}`);
     return selectedProgram;
   }
 
@@ -125,6 +139,7 @@ class SetupCommand extends BaseCommand {
       );
 
       const orgId = await this.getOrgId();
+      const prevOrg = Config.get('cloudmanager_orgid');
       Config.set('cloudmanager_orgid', orgId, storeLocal);
 
       inquirer.registerPrompt(
@@ -139,10 +154,23 @@ class SetupCommand extends BaseCommand {
         selectedEnvironment = await this.getEnvironmentId(selectedProgram);
       }
 
-      cli.log(`Selected env: ${selectedEnvironment}`);
+      cli.log(
+        chalk.green(`Selected p${selectedProgram}-e${selectedEnvironment}`)
+      );
 
+      const prevProgram = Config.get('cloudmanager_programid');
+      const prevEnv = Config.get('cloudmanager_environmentid');
       Config.set('cloudmanager_programid', selectedProgram, storeLocal);
       Config.set('cloudmanager_environmentid', selectedEnvironment, storeLocal);
+
+      this.logPreviousConfig(
+        prevOrg,
+        prevProgram,
+        prevEnv,
+        orgId,
+        selectedProgram,
+        selectedEnvironment
+      );
 
       cli.log(
         `Setup complete. Use 'aio help aem rde' to see the available commands.`
@@ -153,6 +181,25 @@ class SetupCommand extends BaseCommand {
         err,
         new internalCodes.UNEXPECTED_API_ERROR({ messageValues: err })
       );
+    }
+  }
+
+  logPreviousConfig(
+    prevOrg,
+    prevProgram,
+    prevEnv,
+    orgId,
+    selectedProgram,
+    selectedEnvironment
+  ) {
+    if (prevOrg && prevOrg !== orgId) {
+      cli.info(chalk.gray(`Your previous organization id was: ${prevOrg}`));
+    }
+    if (prevProgram && prevProgram !== selectedProgram) {
+      cli.info(chalk.gray(`Your previous program id was: ${prevProgram}`));
+    }
+    if (prevEnv && prevEnv !== selectedEnvironment) {
+      cli.info(chalk.gray(`Your previous environment id was: ${prevEnv}`));
     }
   }
 }
