@@ -73,6 +73,13 @@ class SetupCommand extends BaseCommand {
       cachedPrograms = choices;
     }
 
+    //cachedPrograms = [cachedPrograms[1]];
+
+    if (cachedPrograms.length === 1) {
+      cli.log(`Selected only program: ${cachedPrograms[0].value}`);
+      return cachedPrograms[0].value;
+    }
+
     const { selectedProgram } = await inquirer.prompt([
       {
         type: 'autocomplete',
@@ -108,6 +115,11 @@ class SetupCommand extends BaseCommand {
       return null;
     }
 
+    if (environments.length === 1) {
+      cli.log(`Selected only environment: ${environments[0].id}`);
+      return environments[0].id;
+    }
+
     const choicesEnv = environments.map((env) => ({
       name: `(${env.id}) ${env.type}(${env.status}) - ${env.name}`,
       value: env.id,
@@ -134,9 +146,15 @@ class SetupCommand extends BaseCommand {
     try {
       cli.log(`Setup the CLI configuration necessary to use the RDE commands.`);
 
-      const storeLocal = await cli.confirm(
-        'Do you want to store the information you enter in this setup procedure locally? (yes/no)'
-      );
+      const storeLocal = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'storeLocal',
+          message:
+            'Do you want to store the information you enter in this setup procedure locally?',
+          default: false,
+        },
+      ]);
 
       const orgId = await this.getOrgId();
       const prevOrg = Config.get('cloudmanager_orgid');
@@ -152,6 +170,14 @@ class SetupCommand extends BaseCommand {
       while (selectedEnvironment === null) {
         selectedProgram = await this.getProgramId();
         selectedEnvironment = await this.getEnvironmentId(selectedProgram);
+        if (selectedEnvironment === null && cachedPrograms?.length === 1) {
+          cli.log(
+            chalk.red(
+              'No program or environment found for the selected organization.'
+            )
+          );
+          return;
+        }
       }
 
       cli.log(
