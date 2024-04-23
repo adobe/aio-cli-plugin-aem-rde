@@ -41,6 +41,9 @@ const LibConsoleCLI = require('@adobe/aio-cli-lib-console');
  */
 
 let cachedPrograms = null;
+const CONFIG_ENVIRONMENT = 'cloudmanager_environmentid';
+const CONFIG_PROGRAM = 'cloudmanager_programid';
+const CONFIG_ORG = 'cloudmanager_orgid';
 class SetupCommand extends BaseCommand {
   async getOrgId() {
     const { accessToken, apiKey } = await getTokenAndKey();
@@ -73,18 +76,19 @@ class SetupCommand extends BaseCommand {
       cachedPrograms = choices;
     }
 
-    //cachedPrograms = [cachedPrograms[1]];
-
     if (cachedPrograms.length === 1) {
       cli.log(`Selected only program: ${cachedPrograms[0].value}`);
       return cachedPrograms[0].value;
     }
+
+    const prevProgram = this.getProgramFromConf();
 
     const { selectedProgram } = await inquirer.prompt([
       {
         type: 'autocomplete',
         name: 'selectedProgram',
         message: 'Please choose a program (type to filter):',
+        default: prevProgram,
         pageSize: 30,
         source: async (answersSoFar, input) => {
           input = input || '';
@@ -125,11 +129,14 @@ class SetupCommand extends BaseCommand {
       value: env.id,
     }));
 
+    const prevEnv = this.getEnvironmentFromConf();
+
     const { selectedEnvironment } = await inquirer.prompt([
       {
         type: 'autocomplete',
         name: 'selectedEnvironment',
         message: 'Please choose an environment (type to filter):',
+        default: prevEnv,
         pageSize: 30,
         source: async (answersSoFar, input) => {
           input = input || '';
@@ -157,8 +164,8 @@ class SetupCommand extends BaseCommand {
       ]);
 
       const orgId = await this.getOrgId();
-      const prevOrg = Config.get('cloudmanager_orgid');
-      Config.set('cloudmanager_orgid', orgId, storeLocal);
+      const prevOrg = Config.get(CONFIG_ORG);
+      Config.set(CONFIG_ORG, orgId, storeLocal);
 
       inquirer.registerPrompt(
         'autocomplete',
@@ -184,10 +191,10 @@ class SetupCommand extends BaseCommand {
         chalk.green(`Selected p${selectedProgram}-e${selectedEnvironment}`)
       );
 
-      const prevProgram = Config.get('cloudmanager_programid');
-      const prevEnv = Config.get('cloudmanager_environmentid');
-      Config.set('cloudmanager_programid', selectedProgram, storeLocal);
-      Config.set('cloudmanager_environmentid', selectedEnvironment, storeLocal);
+      const prevProgram = this.getProgramFromConf();
+      const prevEnv = this.getEnvironmentFromConf();
+      Config.set(CONFIG_PROGRAM, selectedProgram, storeLocal);
+      Config.set(CONFIG_ENVIRONMENT, selectedEnvironment, storeLocal);
 
       this.logPreviousConfig(
         prevOrg,
@@ -208,6 +215,14 @@ class SetupCommand extends BaseCommand {
         new internalCodes.UNEXPECTED_API_ERROR({ messageValues: err })
       );
     }
+  }
+
+  getEnvironmentFromConf() {
+    return Config.get(CONFIG_ENVIRONMENT);
+  }
+
+  getProgramFromConf() {
+    return Config.get(CONFIG_PROGRAM);
   }
 
   logPreviousConfig(
