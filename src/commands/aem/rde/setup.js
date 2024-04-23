@@ -23,6 +23,7 @@ const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
 const LibConsoleCLI = require('@adobe/aio-cli-lib-console');
+const open = require('open');
 
 /**
  * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
@@ -44,6 +45,8 @@ let cachedPrograms = null;
 const CONFIG_ENVIRONMENT = 'cloudmanager_environmentid';
 const CONFIG_PROGRAM = 'cloudmanager_programid';
 const CONFIG_ORG = 'cloudmanager_orgid';
+const LINK_ORGID =
+  'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
 class SetupCommand extends BaseCommand {
   async getOrgId() {
     const { accessToken, apiKey } = await getTokenAndKey();
@@ -51,14 +54,44 @@ class SetupCommand extends BaseCommand {
       accessToken,
       apiKey,
     });
+    let selectedOrg = null;
     const organizations = await consoleCLI.getOrganizations();
-    if (organizations.length === 1) {
+    if (organizations.length === 0) {
+      selectedOrg = await this.fallbackToManualOrganizationId();
+    } else if (organizations.length === 1) {
       cli.log(`Selected only organization: ${organizations[0].code}`);
       return organizations[0].code;
+    } else if (organizations.length > 1) {
+      selectedOrg =
+        await consoleCLI.promptForSelectOrganization(organizations).code;
     }
-    const org = await consoleCLI.promptForSelectOrganization(organizations);
-    cli.log(`Selected organization: ${org.code}`);
-    return org.code;
+    cli.log(`Selected organization: ${selectedOrg}`);
+    return selectedOrg;
+  }
+
+  async fallbackToManualOrganizationId() {
+    cli.log(chalk.yellow('Could not find an organization ID automatically.'));
+    cli.log(chalk.yellow('Please enter your organization ID manually.'));
+    cli.log(chalk.gray(`See ${LINK_ORGID}`));
+    const openLink = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'openLink',
+        message: 'Would you like to open the link in your browser?',
+        default: false,
+      },
+    ]);
+    if (openLink.openLink) {
+      open(LINK_ORGID);
+    }
+    const manualOrgId = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'manualOrgId',
+        message: 'Manual organization ID:',
+      },
+    ]);
+    return manualOrgId.manualOrgId;
   }
 
   async getProgramId() {
@@ -234,13 +267,13 @@ class SetupCommand extends BaseCommand {
     selectedEnvironment
   ) {
     if (prevOrg && prevOrg !== orgId) {
-      cli.info(chalk.gray(`Your previous organization id was: ${prevOrg}`));
+      cli.info(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
     }
     if (prevProgram && prevProgram !== selectedProgram) {
-      cli.info(chalk.gray(`Your previous program id was: ${prevProgram}`));
+      cli.info(chalk.gray(`Your previous program ID was: ${prevProgram}`));
     }
     if (prevEnv && prevEnv !== selectedEnvironment) {
-      cli.info(chalk.gray(`Your previous environment id was: ${prevEnv}`));
+      cli.info(chalk.gray(`Your previous environment ID was: ${prevEnv}`));
     }
   }
 }
