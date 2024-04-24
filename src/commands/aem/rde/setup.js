@@ -14,7 +14,7 @@
 const {
   BaseCommand,
   cli,
-  getTokenAndKey,
+  getOrganizationsFromToken,
 } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -22,7 +22,6 @@ const Config = require('@adobe/aio-lib-core-config');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
-const LibConsoleCLI = require('@adobe/aio-cli-lib-console');
 const open = require('open');
 
 /**
@@ -49,21 +48,36 @@ const LINK_ORGID =
   'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
 class SetupCommand extends BaseCommand {
   async getOrgId() {
-    const { accessToken, apiKey } = await getTokenAndKey();
-    const consoleCLI = await LibConsoleCLI.init({
-      accessToken,
-      apiKey,
-    });
     let selectedOrg = null;
-    const organizations = await consoleCLI.getOrganizations();
-    if (organizations.length === 0) {
+    const organizations = await getOrganizationsFromToken();
+    const nrOfOrganizations = Object.keys(organizations).length;
+    if (nrOfOrganizations === 0) {
       selectedOrg = await this.fallbackToManualOrganizationId();
-    } else if (organizations.length === 1) {
-      cli.log(`Selected only organization: ${organizations[0].code}`);
-      return organizations[0].code;
-    } else if (organizations.length > 1) {
-      selectedOrg =
-        await consoleCLI.promptForSelectOrganization(organizations).code;
+    } else if (nrOfOrganizations === 1) {
+      const orgName = Object.keys(organizations)[0];
+      const orgId = organizations[orgName];
+      cli.log(`Selected only organization: ${orgName} - ${orgId}`);
+      return orgId;
+    } else {
+      const orgChoices = Object.entries(organizations).map(([name, id]) => ({
+        name: `${name} - ${id}`,
+        value: id,
+      }));
+      const { organizationId } = await inquirer.prompt([
+        {
+          type: 'autocomplete',
+          name: 'organizationId',
+          message: 'Please choose an organization (type to filter):',
+          pageSize: 30,
+          source: async (answersSoFar, input) => {
+            input = input || '';
+            return orgChoices.filter((choice) =>
+              choice.name.toLowerCase().includes(input.toLowerCase())
+            );
+          },
+        },
+      ]);
+      selectedOrg = organizationId;
     }
     cli.log(`Selected organization: ${selectedOrg}`);
     return selectedOrg;
@@ -184,6 +198,11 @@ class SetupCommand extends BaseCommand {
 
   async run() {
     try {
+      inquirer.registerPrompt(
+        'autocomplete',
+        require('inquirer-autocomplete-prompt')
+      );
+
       cli.log(`Setup the CLI configuration necessary to use the RDE commands.`);
 
       const storeLocal = await inquirer.prompt([
@@ -199,11 +218,6 @@ class SetupCommand extends BaseCommand {
       const orgId = await this.getOrgId();
       const prevOrg = Config.get(CONFIG_ORG);
       Config.set(CONFIG_ORG, orgId, storeLocal);
-
-      inquirer.registerPrompt(
-        'autocomplete',
-        require('inquirer-autocomplete-prompt')
-      );
 
       let selectedEnvironment = null;
       let selectedProgram = null;

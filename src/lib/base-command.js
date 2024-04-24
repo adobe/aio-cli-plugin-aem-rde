@@ -12,13 +12,27 @@
 const { Command, Flags, CliUx } = require('@oclif/core');
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
 const { CloudSdkAPIBase } = require('../lib/cloud-sdk-api-base');
-const { getToken, context } = require('@adobe/aio-lib-ims');
+const { getToken, context, Ims } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
+
+/**
+ *
+ */
+async function getOrganizationsFromToken() {
+  const { accessToken } = await getTokenAndKey();
+  const ims = new Ims();
+  const organizations = await ims.getOrganizations(accessToken);
+  const orgMap = organizations.reduce((map, org) => {
+    map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
+    return map;
+  }, {});
+  return orgMap;
+}
 
 /**
  *
@@ -203,4 +217,5 @@ module.exports = {
   getBaseUrl,
   initSdk,
   getTokenAndKey,
+  getOrganizationsFromToken,
 };
