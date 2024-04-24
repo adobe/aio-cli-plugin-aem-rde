@@ -24,14 +24,21 @@ const { handleError } = require('./error-helpers');
  *
  */
 async function getOrganizationsFromToken() {
-  const { accessToken } = await getTokenAndKey();
-  const ims = new Ims();
-  const organizations = await ims.getOrganizations(accessToken);
-  const orgMap = organizations.reduce((map, org) => {
-    map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
-    return map;
-  }, {});
-  return orgMap;
+  try {
+    const { accessToken } = await getTokenAndKey();
+    const ims = new Ims();
+    const organizations = await ims.getOrganizations(accessToken);
+    const orgMap = organizations.reduce((map, org) => {
+      map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
+      return map;
+    }, {});
+    return orgMap;
+  } catch (err) {
+    if (err.code === 'CONTEXT_NOT_CONFIGURED') {
+      CliUx.ux.log('No IMS context found. Please run `aio login` first.');
+    }
+    return null;
+  }
 }
 
 /**

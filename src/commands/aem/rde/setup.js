@@ -50,7 +50,11 @@ class SetupCommand extends BaseCommand {
   async getOrgId() {
     let selectedOrg = null;
     const organizations = await getOrganizationsFromToken();
+    if (!organizations) {
+      return null;
+    }
     const nrOfOrganizations = Object.keys(organizations).length;
+
     if (nrOfOrganizations === 0) {
       selectedOrg = await this.fallbackToManualOrganizationId();
     } else if (nrOfOrganizations === 1) {
@@ -59,28 +63,32 @@ class SetupCommand extends BaseCommand {
       cli.log(`Selected only organization: ${orgName} - ${orgId}`);
       return orgId;
     } else {
-      const orgChoices = Object.entries(organizations).map(([name, id]) => ({
-        name: `${name} - ${id}`,
-        value: id,
-      }));
-      const { organizationId } = await inquirer.prompt([
-        {
-          type: 'autocomplete',
-          name: 'organizationId',
-          message: 'Please choose an organization (type to filter):',
-          pageSize: 30,
-          source: async (answersSoFar, input) => {
-            input = input || '';
-            return orgChoices.filter((choice) =>
-              choice.name.toLowerCase().includes(input.toLowerCase())
-            );
-          },
-        },
-      ]);
-      selectedOrg = organizationId;
+      selectedOrg = await this.chooseOrganizationFromList(organizations);
     }
     cli.log(`Selected organization: ${selectedOrg}`);
     return selectedOrg;
+  }
+
+  async chooseOrganizationFromList(organizations) {
+    const orgChoices = Object.entries(organizations).map(([name, id]) => ({
+      name: `${name} - ${id}`,
+      value: id,
+    }));
+    const { organizationId } = await inquirer.prompt([
+      {
+        type: 'autocomplete',
+        name: 'organizationId',
+        message: 'Please choose an organization (type to filter):',
+        pageSize: 30,
+        source: async (answersSoFar, input) => {
+          input = input || '';
+          return orgChoices.filter((choice) =>
+            choice.name.toLowerCase().includes(input.toLowerCase())
+          );
+        },
+      },
+    ]);
+    return organizationId;
   }
 
   async fallbackToManualOrganizationId() {
@@ -115,6 +123,11 @@ class SetupCommand extends BaseCommand {
         cloudSdkAPI.listProgramsIdAndName()
       );
       spinner.stop();
+
+      if (!programs || programs.length === 0) {
+        cli.log(chalk.red('No programs found for the selected organization.'));
+        return null;
+      }
 
       const choices = programs.map((program) => ({
         name: `(${program.id}) ${program.name}`,
@@ -223,6 +236,10 @@ class SetupCommand extends BaseCommand {
       let selectedProgram = null;
       while (selectedEnvironment === null) {
         selectedProgram = await this.getProgramId();
+        if (!selectedProgram) {
+          return;
+        }
+
         selectedEnvironment = await this.getEnvironmentId(selectedProgram);
         if (selectedEnvironment === null && cachedPrograms?.length === 1) {
           cli.log(

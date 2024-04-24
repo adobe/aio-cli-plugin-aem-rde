@@ -59,8 +59,8 @@ class CloudSdkAPIBase {
         });
       }
     } catch (err) {
-      CliUx.ux.error(`Failed to list programs: ${err.message}`);
-      throw err;
+      CliUx.ux.warn(`Failed to list programs: ${err.message}`);
+      return null;
     }
   }
 
