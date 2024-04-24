@@ -34,7 +34,7 @@ As a user, use below command to do so.
 $ aio login
 $ aio aem:rde:setup
 ```
-This command offers the following functionality:
+The setup command offers the following functionality:
 - Change from one program/environment to another.
 - Display the previously active configuration when changed.
 - Store the configuration locally in a ```.aio``` file in the current folder. This allows to setup a config for each RDE independently.
