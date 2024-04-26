@@ -8,7 +8,6 @@
     "node": "^16.13 || ^18 || ^20"
   },
   "dependencies": {
-    "@adobe/aio-cli-lib-console": "^5.0.1",
     "@adobe/aio-lib-cloudmanager": "^3.1.0",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-core-errors": "^4.0.1",
