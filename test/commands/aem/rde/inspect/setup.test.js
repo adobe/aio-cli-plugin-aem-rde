@@ -1,6 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
-const SetupCommand = require('../../../../../src/commands/aem/rde/inspect/setup');
+const SetupCommand = require('../../../../../src/commands/aem/rde/inspect/setup-inspect');
 const {
   codes: configurationCodes,
 } = require('../../../../../src/lib/configuration-errors');
