@@ -28,6 +28,8 @@ const LOG_COLORS = {
   '*ERROR*': chalk.red,
 };
 
+const HIGHLIGHT_COLOR = chalk.white;
+
 class LogsCommand extends BaseCommand {
   constructor(argv, config) {
     super(argv, config);
@@ -49,6 +51,11 @@ class LogsCommand extends BaseCommand {
         process.addListener('SIGINT', this.stopAndCleanupCallback);
         process.addListener('SIGTERM', this.stopAndCleanupCallback);
         // The logs are displayed continuously until they are cancelled with `ctl c`.
+
+        flags.highlight?.forEach((h) => {
+          LOG_COLORS[h] = HIGHLIGHT_COLOR;
+        });
+
         this.intervalId = setInterval(() => {
           if (!this.stopped) {
             this.printLogTail(log.id, flags.target, flags.color);
@@ -99,6 +106,7 @@ class LogsCommand extends BaseCommand {
         name: `${names.map((n) => `${n.logger}:${n.level}`).join(' ')}`,
         value: id,
       }));
+      logChoices.push({ name: 'cancel', value: 'cancel' });
 
       const nrOfLogs = Object.keys(logChoices).length;
 
@@ -107,7 +115,7 @@ class LogsCommand extends BaseCommand {
       }
 
       const msg = tooManyLogs
-        ? 'Too many log configurations. Choose to remove (type to filter):'
+        ? 'Too many log configurations. Choose one to replace (type to filter):'
         : 'Choose a log configuration (type to filter):';
       const { logId } = await inquirer.prompt([
         {
@@ -123,6 +131,10 @@ class LogsCommand extends BaseCommand {
           },
         },
       ]);
+      if (logId === 'cancel') {
+        // eslint-disable-next-line no-process-exit
+        process.exit(0);
+      }
       return json.items.find((item) => item.id === logId);
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -249,7 +261,7 @@ class LogsCommand extends BaseCommand {
       }
     } else if (response.status === 404) {
       cli.log(
-        'Log configuration not found any longer. It may have been removed by introducing another new log configuration.'
+        'Log configuration not found any longer. It may has been removed by introducing another new log configuration.'
       );
       await this.stopAndCleanup();
     } else {
@@ -260,9 +272,10 @@ class LogsCommand extends BaseCommand {
   }
 
   colorizeLine(line) {
+    const originalLine = line;
     for (const level in LOG_COLORS) {
       if (line.includes(level)) {
-        return LOG_COLORS[level](line);
+        line = LOG_COLORS[level](originalLine);
       }
     }
     return line;
@@ -318,6 +331,12 @@ Object.assign(LogsCommand, {
     choose: Flags.boolean({
       description: 'Choose from existing log configurations to tail',
       default: false,
+    }),
+    highlight: Flags.string({
+      char: 'H',
+      description: `Highlight log lines containing the specified string.`,
+      multiple: true,
+      required: false,
     }),
   },
 });
