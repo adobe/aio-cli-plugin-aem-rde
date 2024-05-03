@@ -55,7 +55,7 @@ class LogsCommand extends BaseCommand {
           }
         }, REQUEST_INTERVAL_MS);
       } else {
-        cli.log('No logs to tail from.');
+        cli.log('No active log configuration found.');
       }
     } catch (err) {
       await this.stopAndCleanup();
@@ -79,8 +79,8 @@ class LogsCommand extends BaseCommand {
   }
 
   async removeLogUserPrompt(flags) {
-    const logId = this.chooseLogConfiguration(flags, true);
-    await this.deleteLog(flags.target, logId);
+    const log = await this.chooseLogConfiguration(flags, true);
+    await this.deleteLog(flags.target, log.id);
   }
 
   async chooseLogConfiguration(flags, tooManyLogs) {
@@ -151,11 +151,14 @@ class LogsCommand extends BaseCommand {
       const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.deleteAemLog(target, id)
       );
-      if (response.status !== 200) {
+      if (response.status === 404) {
+        // the log that is desired to be deleted is not found, which is fine
+      } else if (response.status !== 200) {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
         });
       }
+      cli.log('\nLog configuration removed.');
     } catch (err) {
       throw new internalCodes.INTERNAL_DELETE_LOG_ERROR({ messageValues: err });
     }
@@ -202,10 +205,7 @@ class LogsCommand extends BaseCommand {
         const log = await response.json();
         return log;
       } else if (response.status === 405) {
-        return [
-          undefined,
-          new internalCodes.INTERNAL_CREATE_LOG_TOO_MANY_LOGS_ERROR(),
-        ];
+        throw new internalCodes.INTERNAL_CREATE_LOG_TOO_MANY_LOGS_ERROR();
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
@@ -247,6 +247,11 @@ class LogsCommand extends BaseCommand {
         cli.log(line);
         await sleepMillis(perLineDelay);
       }
+    } else if (response.status === 404) {
+      cli.log(
+        'Log configuration not found any longer. It may have been removed by introducing another new log configuration.'
+      );
+      await this.stopAndCleanup();
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
         messageValues: [response.status, response.statusText],
