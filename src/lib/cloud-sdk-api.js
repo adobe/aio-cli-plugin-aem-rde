@@ -119,78 +119,65 @@ class CloudSdkAPI {
   async getInventories(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/inventory${queryString}`
+      `/runtime/${serviceName}/inventory${queryString}`
     );
   }
 
   async getInventory(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/inventory/${id}`
+      `/runtime/${serviceName}/inventory/${id}`
     );
   }
 
   async getOsgiBundles(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-bundles${queryString}`
+      `/runtime/${serviceName}/osgi-bundles${queryString}`
     );
   }
 
   async getOsgiBundle(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-bundles/${id}`
+      `/runtime/${serviceName}/osgi-bundles/${id}`
     );
   }
 
   async getOsgiComponents(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-components${queryString}`
+      `/runtime/${serviceName}/osgi-components${queryString}`
     );
   }
 
   async getOsgiComponent(serviceName, componentName) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-components/${componentName}`
+      `/runtime/${serviceName}/osgi-components/${componentName}`
     );
   }
 
   async getOsgiConfigurations(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations${queryString}`
+      `/runtime/${serviceName}/osgi-configurations${queryString}`
     );
   }
 
   async getOsgiConfiguration(serviceName, pId) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations/${pId}`
+      `/runtime/${serviceName}/osgi-configurations/${pId}`
     );
   }
 
   async getOsgiServices(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-services${queryString}`
+      `/runtime/${serviceName}/osgi-services${queryString}`
     );
   }
 
   async getOsgiService(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-services/${id}`
-    );
-  }
-
-  async getSlingRequests(serviceName, params) {
-    const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/sling-requests${queryString}`
-    );
-  }
-
-  async getSlingRequest(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/sling-requests/${id}`
+      `/runtime/${serviceName}/osgi-services/${id}`
     );
   }
 
