@@ -69,31 +69,16 @@ $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 
 This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
 
-#### Add user access token to the configuration
-
-When calling the commands under the `inspect` topic the plugin needs additional configurations.
-
-1. Go to Skyline Developer Console of your environment: `https://dev-console-ns-team-aem-cm-stg-n0000.ethos00-stage-va7.dev.adobeaemcloud.com/#release-cm-p00000-e000000` or use the `aio cloudmanager:environment:open-developer-console` command
-2. Go to _Integrations_ tab.
-3. Go to _Local token_ sub-tab and click on _Get Local Development Token_ button.
-4. Copy the _accessToken_: `eyJhbGciOiJSUzI1NiIsIng1dSI.....`
-5. Go to terminal and do the following:
-
-```
-$ aio aem rde inspect setup <paste access token here>
-```
-
 ## Verifying configuration
 
-1. Run `aio login`
-2. Run `aio aem:rde` for general help.
+1. Run `aio aem:rde` for general help.
+2. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 3. Run `aio aem:rde:install --help ` for help about a specific command.
-4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
+4. Run `aio aem:rde:logs --help` to see options for tailing logs.
 
-Only if `inspect` topic is [enabled](#configuration-for-aio-aem-rde-inspect-commands).
+Only if `inspect` topic is [enabled](#configuration-for-aio-aem-rde-inspect-commands):
 
 5. Run `aio aem:rde:inspect --help` to see if the inspect command can be accessed.
-6. Run `aio aem:rde:inspect:logs` to see if the authorization with the set token works.
 
 ## Running unit tests
 

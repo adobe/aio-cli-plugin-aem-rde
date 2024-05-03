@@ -17,11 +17,11 @@ const StatusCommand = require('./commands/aem/rde/status');
 const RestartCommand = require('./commands/aem/rde/restart');
 const SetupCommand = require('./commands/aem/rde/setup');
 const ResetCommand = require('./commands/aem/rde/reset');
-const LogsCommand = require('./commands/aem/rde/inspect/logs');
-const RequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/index');
-const SetupInspectCommand = require('./commands/aem/rde/inspect/setup-inspect');
-const EnableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/enable');
-const DisableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/disable');
+const LogsCommand = require('./commands/aem/rde/logs');
+const RequestLogsCommand = require('./commands/aem/rde/request-logs/index');
+const SetupInspectCommand = require('./commands/aem/rde/inspect/setup');
+const EnableRequestLogsCommand = require('./commands/aem/rde/request-logs/enable');
+const DisableRequestLogsCommand = require('./commands/aem/rde/request-logs/disable');
 const InventoryCommand = require('./commands/aem/rde/inspect/inventory');
 const OsgiBundlesCommand = require('./commands/aem/rde/inspect/osgi-bundles');
 const OsgiComponentsCommand = require('./commands/aem/rde/inspect/osgi-components');
@@ -37,7 +37,7 @@ module.exports = {
   restart: new RestartCommand().run,
   setup: new SetupCommand().run,
   reset: new ResetCommand().run,
-  'inspect:logs': new LogsCommand().run,
+  logs: new LogsCommand().run,
   'inspect:setup': new SetupInspectCommand().run,
   'inspect:request-logs': new RequestLogsCommand().run,
   'inspect:request-logs:enable': new EnableRequestLogsCommand().run,

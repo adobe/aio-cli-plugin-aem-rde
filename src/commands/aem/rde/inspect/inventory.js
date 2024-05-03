@@ -11,16 +11,16 @@
  */
 'use strict';
 
-const { cli } = require('../../../../lib/base-command');
 const {
+  cli,
+  BaseCommand,
   logInJsonArrayFormat,
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../lib/inspect-base-command');
+  commonFlags,
+} = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
-class InventoryCommand extends InspectBaseCommand {
+class InventoryCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(InventoryCommand);
     try {
@@ -98,9 +98,9 @@ Object.assign(InventoryCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    target: commonFlags.target,
+    include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

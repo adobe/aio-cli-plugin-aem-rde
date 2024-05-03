@@ -11,15 +11,15 @@
  */
 'use strict';
 
-const { cli } = require('../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../lib/inspect-base-command');
+  cli,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
-class OsgiConfigurationsCommand extends InspectBaseCommand {
+class OsgiConfigurationsCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(OsgiConfigurationsCommand);
     try {
@@ -96,10 +96,10 @@ Object.assign(OsgiConfigurationsCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    scope: inspectCommonFlags.scope,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    target: commonFlags.target,
+    scope: commonFlags.scope,
+    include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

@@ -11,16 +11,16 @@
  */
 'use strict';
 
-const { cli } = require('../../../../lib/base-command');
 const {
-  inspectCommonFlags,
-  InspectBaseCommand,
+  cli,
+  BaseCommand,
   logInJsonArrayFormat,
-} = require('../../../../lib/inspect-base-command');
+  commonFlags,
+} = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
-class SlingRequestsCommand extends InspectBaseCommand {
+class SlingRequestsCommand extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(SlingRequestsCommand);
     try {
@@ -107,9 +107,9 @@ Object.assign(SlingRequestsCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    target: commonFlags.target,
+    include: commonFlags.include,
+    output: commonFlags.output,
   },
 });
 

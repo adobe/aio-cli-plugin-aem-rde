@@ -11,15 +11,16 @@
  */
 'use strict';
 
-const { cli, Flags } = require('../../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../../lib/inspect-base-command');
+  cli,
+  Flags,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
-class EnableRequestLogsCommand extends InspectBaseCommand {
+class EnableRequestLogsCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(EnableRequestLogsCommand);
     try {
@@ -80,7 +81,7 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
-    target: inspectCommonFlags.target,
+    target: commonFlags.target,
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,

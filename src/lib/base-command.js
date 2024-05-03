@@ -22,6 +22,38 @@ const { handleError } = require('./error-helpers');
 
 /**
  *
+ * @param token
+ * @param decoded
+ */
+function validateTokenExpiry(token, decoded, allowNoExpiry) {
+  let decodedToken = token;
+  if (!decoded) {
+    decodedToken = jwt.decode(token.token);
+  }
+  if (!decodedToken) {
+    throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+  }
+
+  // Calculate exact moment of expiry
+  const expiry =
+    parseInt(decodedToken?.created_at) + parseInt(decodedToken?.expires_in);
+  if (!expiry) {
+    if (allowNoExpiry) {
+      return null;
+    }
+    throw new configurationCodes.TOKEN_HAS_NO_EXPIRY();
+  }
+
+  // Checks if token is expired
+  if (!(typeof expiry === 'number' && expiry > Date.now())) {
+    throw new configurationCodes.TOKEN_IS_EXPIRED();
+  }
+
+  return expiry;
+}
+
+/**
+ *
  */
 async function getOrganizationsFromToken() {
   try {
@@ -190,6 +222,19 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPIBase);
   }
+
+  /**
+   * @param {object} items - The items displayed in the table.
+   */
+  logInJsonArrayFormat(items) {
+    let jsonArray = '[\n';
+    items.forEach((item) => {
+      jsonArray += '  ' + JSON.stringify(item) + ',\n';
+    });
+    jsonArray = jsonArray.slice(0, -2);
+    jsonArray += '\n]';
+    CliUx.ux.log(jsonArray);
+  }
 }
 
 module.exports = {
@@ -212,12 +257,33 @@ module.exports = {
     }),
     target: Flags.string({
       char: 's',
-      description:
-        "The target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
+      description: "The target instance type. Default 'author'.",
+      multiple: false,
+      required: true,
+      options: ['author', 'publish'],
+      default: 'author',
+      common: true,
+    }),
+    scope: Flags.string({
+      description: 'Optional filter for the scope.',
       multiple: false,
       required: false,
-      options: ['author', 'publish'],
+      default: 'custom',
+      options: ['custom', 'product'],
       common: true,
+    }),
+    include: Flags.string({
+      description: 'Optional filter.',
+      multiple: false,
+      required: false,
+      common: true,
+    }),
+    output: Flags.string({
+      char: 'o',
+      description: 'Output format.',
+      multiple: false,
+      required: false,
+      options: ['json'],
     }),
   },
   getCliOrgId,
@@ -225,4 +291,5 @@ module.exports = {
   initSdk,
   getTokenAndKey,
   getOrganizationsFromToken,
+  validateTokenExpiry,
 };

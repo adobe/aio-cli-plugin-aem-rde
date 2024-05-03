@@ -53,6 +53,10 @@ E('NAMESPACE_NOT_FOUND', 'No namespace was found.');
 E('ENVIRONMENT_NOT_HIBERNATED', 'No namespace was found.');
 E('ENVIRONMENT_NOT_RUNNING', 'No namespace was found.');
 E(
+  'NETWORK_ERROR',
+  'Could not communicate with the server on %s. Please, try again later.'
+);
+E(
   'UNEXPECTED_API_ERROR',
   'There was an unexpected API error code %s with message %s. Please, try again later and if the error persists, report it.'
 );
@@ -83,6 +87,14 @@ E(
 E(
   'INTERNAL_CREATE_LOG_ERROR',
   'There was an unexpected error when running create log command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
+  'INTERNAL_CREATE_LOG_TOO_MANY_LOGS_ERROR',
+  'There are too many log configurations. Please, delete some logs before creating new ones.'
+);
+E(
+  'INTERNAL_CREATE_LOG_NO_LOGS_ERROR',
+  'There were no valid definitions found for the log configuration. For further instructions on how to define a log configuration, use "aio aem rde logs --help".'
 );
 E(
   'INTERNAL_GET_OSGI_BUNDLES_ERROR',
