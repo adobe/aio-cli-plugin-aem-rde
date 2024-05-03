@@ -20,7 +20,10 @@
     "chalk": "^4.1.2",
     "cli-progress": "^3.11.2",
     "form-data": "^4.0.0",
+    "inquirer": "^8.2.6",
+    "inquirer-autocomplete-prompt": "^2.0.1",
     "jsonwebtoken": "^9.0.2",
+    "open": "^7.0.0",
     "ora": "^5.4.1"
   },
   "devDependencies": {

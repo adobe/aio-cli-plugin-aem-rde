@@ -15,10 +15,11 @@ const HistoryCommand = require('./commands/aem/rde/history');
 const InstallCommand = require('./commands/aem/rde/install');
 const StatusCommand = require('./commands/aem/rde/status');
 const RestartCommand = require('./commands/aem/rde/restart');
+const SetupCommand = require('./commands/aem/rde/setup');
 const ResetCommand = require('./commands/aem/rde/reset');
 const LogsCommand = require('./commands/aem/rde/inspect/logs');
 const RequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/index');
-const SetupCommand = require('./commands/aem/rde/inspect/setup');
+const SetupInspectCommand = require('./commands/aem/rde/inspect/setup-inspect');
 const EnableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/enable');
 const DisableRequestLogsCommand = require('./commands/aem/rde/inspect/request-logs/disable');
 const InventoryCommand = require('./commands/aem/rde/inspect/inventory');
@@ -34,9 +35,10 @@ module.exports = {
   install: new InstallCommand().run,
   status: new StatusCommand().run,
   restart: new RestartCommand().run,
+  setup: new SetupCommand().run,
   reset: new ResetCommand().run,
   'inspect:logs': new LogsCommand().run,
-  'inspect:setup': new SetupCommand().run,
+  'inspect:setup': new SetupInspectCommand().run,
   'inspect:request-logs': new RequestLogsCommand().run,
   'inspect:request-logs:enable': new EnableRequestLogsCommand().run,
   'inspect:request-logs:disable': new DisableRequestLogsCommand().run,

@@ -23,9 +23,9 @@ const { InspectBaseCommand } = require('../../../../lib/inspect-base-command');
  * This token can be generated in the Skyline Developer Console. (Tabs: Integrations > Local Token)
  * With this command the token gets written into the config for later use.
  */
-class SetupCommand extends InspectBaseCommand {
+class SetupInspectCommand extends InspectBaseCommand {
   async run() {
-    const { args } = await this.parse(SetupCommand);
+    const { args } = await this.parse(SetupInspectCommand);
     const imsToken = { token: args.accessToken };
 
     const decodedToken = jwt.decode(imsToken.token);
@@ -51,7 +51,7 @@ class SetupCommand extends InspectBaseCommand {
   }
 }
 
-Object.assign(SetupCommand, {
+Object.assign(SetupInspectCommand, {
   description: 'Set the authorization token for all the inpect comands.',
   args: [
     {
@@ -62,4 +62,4 @@ Object.assign(SetupCommand, {
   ],
 });
 
-module.exports = SetupCommand;
+module.exports = SetupInspectCommand;

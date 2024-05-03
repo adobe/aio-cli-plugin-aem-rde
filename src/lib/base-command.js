@@ -11,13 +11,35 @@
  */
 const { Command, Flags, CliUx } = require('@oclif/core');
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
-const { getToken, context } = require('@adobe/aio-lib-ims');
+const { CloudSdkAPIBase } = require('../lib/cloud-sdk-api-base');
+const { getToken, context, Ims } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
+
+/**
+ *
+ */
+async function getOrganizationsFromToken() {
+  try {
+    const { accessToken } = await getTokenAndKey();
+    const ims = new Ims();
+    const organizations = await ims.getOrganizations(accessToken);
+    const orgMap = organizations.reduce((map, org) => {
+      map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
+      return map;
+    }, {});
+    return orgMap;
+  } catch (err) {
+    if (err.code === 'CONTEXT_NOT_CONFIGURED') {
+      CliUx.ux.log('No IMS context found. Please run `aio login` first.');
+    }
+    return null;
+  }
+}
 
 /**
  *
@@ -150,6 +172,24 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPI);
   }
+
+  async withCloudSdkBase(fn) {
+    if (!this._cloudSdkAPIBase) {
+      const { accessToken, apiKey } = await getTokenAndKey();
+      const cloudManagerUrl = getBaseUrl();
+      const orgId = getCliOrgId();
+      if (!orgId) {
+        throw new validationCodes.MISSING_ORG_ID();
+      }
+      this._cloudSdkAPIBase = new CloudSdkAPIBase(
+        `${cloudManagerUrl}/api`,
+        apiKey,
+        orgId,
+        accessToken
+      );
+    }
+    return fn(this._cloudSdkAPIBase);
+  }
 }
 
 module.exports = {
@@ -183,4 +223,6 @@ module.exports = {
   getCliOrgId,
   getBaseUrl,
   initSdk,
+  getTokenAndKey,
+  getOrganizationsFromToken,
 };

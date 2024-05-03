@@ -26,10 +26,26 @@ $ aio plugins:update
 
 # Getting started
 
-# Configuration
+## Configuration to be used in command line
 
-The plugin needs to be configured to point to an existing RDE environment as follows:
+The plugin needs to be configured to point to an existing RDE environment. To do so, the organization, program and environment must be configured accordingly.
+As a user, use below command to do so.
+```
+$ aio login
+$ aio aem:rde:setup
+```
+The setup command offers the following functionality:
+- Change from one program/environment to another.
+- Display the previously active configuration when changed.
+- Store the configuration locally in a ```.aio``` file in the current folder. This allows to setup a config for each RDE independently.
+- Switch organization by ```aio logout``` and then use the setup command again.
 
+> **Note**:
+> Working with multiple environments: it is highly recommended to use the local storage. For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations). However, the default is to use global for users who have one environment only.
+
+
+## Configuration to be used in build environments
+For build environments, include below into the scripts.
 ```
  $ aio config:set cloudmanager_orgid <org-id>
  $ aio config:set cloudmanager_programid <program-id>
@@ -37,13 +53,13 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 ```
 
 > **Note**:
-> If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
+> Working with multiple environments: it is highly recommend to use the flag `-l` or `--local` together with the `config:set` so that the configuration is stored in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
 
-## Configuration for `aio aem rde inspect` commands \*
+### Configuration for `aio aem rde inspect` commands \*
 
 ⚠️ \* **WARNING**: This is an **experimental feature**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
 
-### Enable `aio aem rde inspect` commands
+#### Enable `aio aem rde inspect` commands
 
 If you want to enable this experimental feature, run the following command:
 
@@ -53,7 +69,7 @@ $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 
 This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
 
-### Add user access token to the configuration
+#### Add user access token to the configuration
 
 When calling the commands under the `inspect` topic the plugin needs additional configurations.
 
