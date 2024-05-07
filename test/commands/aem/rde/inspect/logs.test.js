@@ -154,7 +154,7 @@ describe('LogsCommand', function () {
     it('Should print out the logs in color', async function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new LogsCommand([]),
+        new LogsCommand(['-d com.adobe'], null),
         stubbedMethods
       );
 
