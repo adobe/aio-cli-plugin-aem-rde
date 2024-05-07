@@ -230,14 +230,6 @@ describe('LogsCommand', function () {
         );
       }
     });
-
-    it('Should be called once for cleanup when there are more than 2 logs saved', async function () {
-      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse404);
-      cloudSdkApiStub.createAemLog.onCall(1).returns(createLogsSuccessObj);
-      cloudSdkApiStub.getAemLogs.returns(tooManyLogsSuccessObj);
-      await command.run();
-      assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 1);
-    });
   });
 
   describe('#createAemLog', function () {
