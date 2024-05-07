@@ -88,7 +88,7 @@ describe('LogsCommand', function () {
   beforeEach(() => {
     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new LogsCommand(['-d com.adobe --no-color'], null),
+      new LogsCommand(['-d com.adobe', '--no-color'], null),
       stubbedMethods
     );
   });
@@ -112,7 +112,7 @@ describe('LogsCommand', function () {
       } catch (e) {
         assert(
           e.message.includes(
-            `[RDECLI:INTERNAL_GET_LOG_ERROR] There was an unexpected error when running get log command. Please, try again later and if the error persists, report it.`,
+            `RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code 404 with message Test error message.. Please, try again later and if the error persists, report it.`,
             `Error message ${e.message} is not the expected one`
           )
         );
