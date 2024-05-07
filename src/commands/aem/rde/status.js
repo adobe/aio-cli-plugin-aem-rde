@@ -11,13 +11,7 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  Flags,
-  validateTokenExpiry,
-  getTokenAndKey,
-} = require('../../../lib/base-command');
+const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -25,7 +19,6 @@ const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
   async run() {
-    validateTokenExpiry((await getTokenAndKey()).accessToken, true, true);
     const { flags } = await this.parse(StatusCommand);
     if (flags.json) {
       await this.printAsJson();

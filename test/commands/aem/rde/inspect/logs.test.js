@@ -88,7 +88,7 @@ describe('LogsCommand', function () {
   beforeEach(() => {
     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new LogsCommand(['--no-color'], null),
+      new LogsCommand(['-d com.adobe --no-color'], null),
       stubbedMethods
     );
   });

@@ -22,38 +22,6 @@ const { handleError } = require('./error-helpers');
 
 /**
  *
- * @param token
- * @param decoded
- */
-function validateTokenExpiry(token, decoded, allowNoExpiry) {
-  let decodedToken = token;
-  if (!decoded) {
-    decodedToken = jwt.decode(token.token);
-  }
-  if (!decodedToken) {
-    throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-  }
-
-  // Calculate exact moment of expiry
-  const expiry =
-    parseInt(decodedToken?.created_at) + parseInt(decodedToken?.expires_in);
-  if (!expiry) {
-    if (allowNoExpiry) {
-      return null;
-    }
-    throw new configurationCodes.TOKEN_HAS_NO_EXPIRY();
-  }
-
-  // Checks if token is expired
-  if (!(typeof expiry === 'number' && expiry > Date.now())) {
-    throw new configurationCodes.TOKEN_IS_EXPIRED();
-  }
-
-  return expiry;
-}
-
-/**
- *
  */
 async function getOrganizationsFromToken() {
   try {
@@ -86,6 +54,19 @@ function getCliOrgId() {
 function getBaseUrl() {
   const configStr = Config.get('cloudmanager.base_url');
   return configStr || 'https://cloudmanager.adobe.io';
+}
+
+/**
+ * @param {object} items - The items displayed in the table.
+ */
+function logInJsonArrayFormat(items) {
+  let jsonArray = '[\n';
+  items.forEach((item) => {
+    jsonArray += '  ' + JSON.stringify(item) + ',\n';
+  });
+  jsonArray = jsonArray.slice(0, -2);
+  jsonArray += '\n]';
+  CliUx.ux.log(jsonArray);
 }
 
 /**
@@ -222,19 +203,6 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPIBase);
   }
-
-  /**
-   * @param {object} items - The items displayed in the table.
-   */
-  logInJsonArrayFormat(items) {
-    let jsonArray = '[\n';
-    items.forEach((item) => {
-      jsonArray += '  ' + JSON.stringify(item) + ',\n';
-    });
-    jsonArray = jsonArray.slice(0, -2);
-    jsonArray += '\n]';
-    CliUx.ux.log(jsonArray);
-  }
 }
 
 module.exports = {
@@ -291,5 +259,5 @@ module.exports = {
   initSdk,
   getTokenAndKey,
   getOrganizationsFromToken,
-  validateTokenExpiry,
+  logInJsonArrayFormat,
 };
