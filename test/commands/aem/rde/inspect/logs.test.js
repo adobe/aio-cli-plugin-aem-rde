@@ -8,12 +8,18 @@ const {
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 
-const errorResponse = {
+const errorResponse404 = {
   status: 404,
   statusText: 'Test error message.',
 };
 
-const errorObj = new Error(errorResponse.statusText);
+const errorResponse403 = {
+  status: 403,
+  statusText: 'Test error message 403.',
+};
+
+
+const errorObj = new Error(errorResponse404.statusText);
 
 const createLogsSuccessObj = {
   status: 201,
@@ -103,7 +109,7 @@ describe('LogsCommand', function () {
 
   describe('#getAemLogs', function () {
     it('Should throw an internal error.', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
       cloudSdkApiStub.getAemLogs.throws(errorObj);
       try {
         await command.run();
@@ -119,8 +125,8 @@ describe('LogsCommand', function () {
       }
     });
     it('Should throw an error message when status is not 200', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
-      cloudSdkApiStub.getAemLogs.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
+      cloudSdkApiStub.getAemLogs.returns(errorResponse404);
       try {
         await command.run();
         await sinon.clock.runToLastAsync();
@@ -128,7 +134,7 @@ describe('LogsCommand', function () {
       } catch (e) {
         assert.equal(
           e.message,
-          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorResponse.status} with message ${errorResponse.statusText}. Please, try again later and if the error persists, report it.`
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorResponse404.status} with message ${errorResponse404.statusText}. Please, try again later and if the error persists, report it.`
         );
       }
     });
@@ -211,7 +217,7 @@ describe('LogsCommand', function () {
     });
 
     it('Should print out a error message when status is not 200', async function () {
-      cloudSdkApiStub.deleteAemLog.returns(errorResponse);
+      cloudSdkApiStub.deleteAemLog.returns(errorResponse403);
       try {
         await command.run();
         await command.stopAndCleanup();
@@ -226,7 +232,7 @@ describe('LogsCommand', function () {
     });
 
     it('Should be called once for cleanup when there are more than 2 logs saved', async function () {
-      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse);
+      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse404);
       cloudSdkApiStub.createAemLog.onCall(1).returns(createLogsSuccessObj);
       cloudSdkApiStub.getAemLogs.returns(tooManyLogsSuccessObj);
       await command.run();
@@ -277,7 +283,7 @@ describe('LogsCommand', function () {
     });
 
     it('Should print out an error message when status is not 201', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');
