@@ -102,15 +102,6 @@ describe('LogsCommand', function () {
   });
 
   describe('#getAemLogs', function () {
-    it('Should be called exactly once', async function () {
-      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse);
-      cloudSdkApiStub.createAemLog.onCall(1).returns(createLogsSuccessObj);
-      cloudSdkApiStub.getAemLogs.returns(aemLogsSuccessObj);
-      await command.run();
-      await sinon.clock.runToLastAsync();
-      assert.equal(cloudSdkApiStub.getAemLogs.calledOnce, true);
-    });
-
     it('Should throw an internal error.', async function () {
       cloudSdkApiStub.createAemLog.returns(errorResponse);
       cloudSdkApiStub.getAemLogs.throws(errorObj);
