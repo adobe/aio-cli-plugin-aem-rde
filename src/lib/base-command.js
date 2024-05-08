@@ -57,6 +57,19 @@ function getBaseUrl() {
 }
 
 /**
+ * @param {object} items - The items displayed in the table.
+ */
+function logInJsonArrayFormat(items) {
+  let jsonArray = '[\n';
+  items.forEach((item) => {
+    jsonArray += '  ' + JSON.stringify(item) + ',\n';
+  });
+  jsonArray = jsonArray.slice(0, -2);
+  jsonArray += '\n]';
+  CliUx.ux.log(jsonArray);
+}
+
+/**
  *
  */
 async function getTokenAndKey() {
@@ -198,16 +211,13 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+    targetInspect: Flags.string({
+      char: 's',
+      description: "The target instance type. Default 'author'.",
+      multiple: false,
+      required: false,
+      options: ['author', 'publish'],
+      default: 'author',
       common: true,
     }),
     target: Flags.string({
@@ -219,10 +229,32 @@ module.exports = {
       options: ['author', 'publish'],
       common: true,
     }),
+    scope: Flags.string({
+      description: 'Optional filter for the scope.',
+      multiple: false,
+      required: false,
+      default: 'custom',
+      options: ['custom', 'product'],
+      common: true,
+    }),
+    include: Flags.string({
+      description: 'Optional filter.',
+      multiple: false,
+      required: false,
+      common: true,
+    }),
+    output: Flags.string({
+      char: 'o',
+      description: 'Output format.',
+      multiple: false,
+      required: false,
+      options: ['json'],
+    }),
   },
   getCliOrgId,
   getBaseUrl,
   initSdk,
   getTokenAndKey,
   getOrganizationsFromToken,
+  logInJsonArrayFormat,
 };

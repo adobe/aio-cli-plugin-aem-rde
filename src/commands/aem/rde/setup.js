@@ -28,13 +28,13 @@ const open = require('open');
  * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
  * It has methods to get organization ID, program ID, and environment ID.
  *
- * @function getOrgId: This method is used to get the organization ID. It first retrieves the access token and API key,
+ * getOrgId: This method is used to get the organization ID. It first retrieves the access token and API key,
  * then fetches the organizations associated with these credentials.
  * If there is only one organization, it selects that one. Otherwise, it prompts the user to select an organization.
  * When thee is no organization available, the user is asked to enter the organization ID manually.
- * @function getProgramId: This method is used to get the program ID. If the programs are not cached, it retrieves the programs
+ * getProgramId: This method is used to get the program ID. If the programs are not cached, it retrieves the programs
  * associated with the organization and caches them. It then prompts the user to select a program from the cached list.
- * @function getEnvironmentId: This method is used to get the environment ID. It retrieves the environments associated with the
+ * getEnvironmentId: This method is used to get the environment ID. It retrieves the environments associated with the
  * selected program and prompts the user to select an environment. When there are no environments found for the selected program,
  * the user is asked to choose a different program instead.
  *

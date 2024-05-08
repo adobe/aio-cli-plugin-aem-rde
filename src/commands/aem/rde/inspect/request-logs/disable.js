@@ -11,15 +11,15 @@
  */
 'use strict';
 
-const { cli } = require('../../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../../lib/inspect-base-command');
+  cli,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
-class DisableRequestLogsCommand extends InspectBaseCommand {
+class DisableRequestLogsCommand extends BaseCommand {
   async run() {
     const { flags } = await this.parse(DisableRequestLogsCommand);
     try {
@@ -47,7 +47,7 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
-    target: inspectCommonFlags.target,
+    target: commonFlags.targetInspect,
   },
 });
 

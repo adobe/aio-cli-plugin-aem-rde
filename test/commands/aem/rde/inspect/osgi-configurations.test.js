@@ -7,7 +7,6 @@ const {
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 const chalk = require('chalk');
-const OsgiComponentsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-components');
 
 const errorObj = Object.assign(
   {},
