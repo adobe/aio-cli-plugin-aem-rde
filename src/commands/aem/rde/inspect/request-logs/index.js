@@ -103,7 +103,7 @@ Object.assign(RequestLogsCommand, {
     },
   ],
   flags: {
-    target: commonFlags.target,
+    target: commonFlags.targetInspect,
     include: commonFlags.include,
     output: commonFlags.output,
   },

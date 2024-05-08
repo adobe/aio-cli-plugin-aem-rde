@@ -96,7 +96,7 @@ Object.assign(OsgiConfigurationsCommand, {
     },
   ],
   flags: {
-    target: commonFlags.target,
+    target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
     output: commonFlags.output,

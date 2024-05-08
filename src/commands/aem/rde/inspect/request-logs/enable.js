@@ -81,7 +81,7 @@ class EnableRequestLogsCommand extends BaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
-    target: commonFlags.target,
+    target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,

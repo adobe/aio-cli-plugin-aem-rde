@@ -211,25 +211,22 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+    targetInspect: Flags.string({
+      char: 's',
+      description: "The target instance type. Default 'author'.",
+      multiple: false,
+      required: false,
+      options: ['author', 'publish'],
+      default: 'author',
       common: true,
     }),
     target: Flags.string({
       char: 's',
-      description: "The target instance type. Default 'author'.",
+      description:
+        "The target instance type; one of 'author' or 'publish'. If not specified, deployments target both 'author' and 'publish' instances.",
       multiple: false,
-      required: true,
+      required: false,
       options: ['author', 'publish'],
-      default: 'author',
       common: true,
     }),
     scope: Flags.string({
