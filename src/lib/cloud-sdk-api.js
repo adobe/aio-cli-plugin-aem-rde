@@ -522,10 +522,13 @@ class CloudSdkAPI {
     await this._startEnv(namespace);
   }
 
-  async resetEnv() {
+  async resetEnv(nowait) {
     await this._checkRDE();
     await this._waitForEnvReady();
     await this._resetEnv();
+    if (nowait) {
+      return;
+    }
     await this._waitForEnvReady();
   }
 
