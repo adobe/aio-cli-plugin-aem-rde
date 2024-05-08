@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
@@ -19,11 +19,20 @@ const spinner = require('ora')();
 class ResetCommand extends BaseCommand {
   async run() {
     try {
+      const { flags } = await this.parse(ResetCommand);
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('resetting environment');
-      await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.resetEnv());
+      await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.resetEnv(flags.nowait)
+      );
       spinner.stop();
-      cli.log(`Environment reset.`);
+      if (flags.nowait) {
+        cli.log(
+          `Not waiting to finish reset. Check using status command for progress. It may take a couple of seconds to indicate 'Deployment in progress'.`
+        );
+      } else {
+        cli.log(`Environment reset.`);
+      }
     } catch (err) {
       spinner.stop();
       throwAioError(
@@ -37,6 +46,16 @@ class ResetCommand extends BaseCommand {
 Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
+  flags: {
+    nowait: Flags.boolean({
+      description:
+        'Do not wait for the environment to be reset. Check using status command for progress.',
+      char: 'nowait',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+  },
   aliases: [],
 });
 
