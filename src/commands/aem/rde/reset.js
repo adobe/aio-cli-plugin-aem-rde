@@ -50,7 +50,6 @@ Object.assign(ResetCommand, {
     nowait: Flags.boolean({
       description:
         'Do not wait for the environment to be reset. Check using status command for progress.',
-      char: 'nowait',
       multiple: false,
       required: false,
       default: false,
