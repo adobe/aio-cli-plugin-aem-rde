@@ -27,7 +27,7 @@ const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
-const spinner = require('ora')();
+
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -211,8 +211,8 @@ class DeployCommand extends BaseCommand {
         };
 
         const deploymentCallbacks = () => {
-          if (!spinner.isSpinning) {
-            spinner.start('applying update');
+          if (!this.spinnerIsSpinning) {
+            this.spinnerStart('applying update');
           }
         };
 
@@ -231,16 +231,16 @@ class DeployCommand extends BaseCommand {
           uploadCallbacks,
           deploymentCallbacks
         );
-      }).finally(() => spinner.stop());
+      }).finally(() => this.spinnerStop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
         loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-          done ? spinner.stop() : spinner.start(text)
+          done ? this.spinnerStop() : this.spinnerStart(text)
         )
       );
     } catch (err) {
       progressBar.stop();
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
@@ -249,7 +249,7 @@ class DeployCommand extends BaseCommand {
 
     await this.withCloudSdk((cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
-        done ? spinner.stop() : spinner.start(text)
+        done ? this.spinnerStop() : this.spinnerStart(text)
       )
     );
   }

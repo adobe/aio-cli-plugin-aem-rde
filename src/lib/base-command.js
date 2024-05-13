@@ -20,6 +20,7 @@ const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
 const { concatEnvironemntId } = require('../lib/utils');
 const inquirer = require('inquirer');
+const spinner = require('ora')();
 
 class BaseCommand extends Command {
   constructor(argv, config, error) {
@@ -33,6 +34,8 @@ class BaseCommand extends Command {
 
   async run() {
     const { args, flags } = await this.parse(this.typeof);
+    this.flags = flags;
+    this.args = args;
 
     if (!this._programId && this.constructor.name !== 'SetupCommand') {
       throw new validationCodes.MISSING_PROGRAM_ID();
@@ -69,6 +72,20 @@ class BaseCommand extends Command {
     throw new Error(
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
+  }
+
+  spinnerStart(message) {
+    if (!this.flags.cicd) {
+      spinner.start(message);
+    }
+  }
+
+  spinnerIsSpinning() {
+    return spinner.isSpinning;
+  }
+
+  spinnerStop() {
+    spinner.stop();
   }
 
   async catch(err) {

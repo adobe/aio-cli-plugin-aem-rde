@@ -13,7 +13,6 @@
 
 const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
-const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -22,13 +21,13 @@ class HistoryCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
       if (args.id === undefined) {
-        spinner.start('fetching updates');
+        this.spinnerStart('fetching updates');
         const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
           const json = await response.json();
-          spinner.stop();
+          this.spinnerStop();
           if (json.items.length === 0) {
             cli.log('There are no updates yet.');
           } else {
@@ -44,7 +43,7 @@ class HistoryCommand extends BaseCommand {
       } else {
         await this.withCloudSdk((cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
-            done ? spinner.stop() : spinner.start(text)
+            done ? this.spinnerStop() : this.spinnerStart(text)
           )
         );
       }
@@ -54,7 +53,7 @@ class HistoryCommand extends BaseCommand {
         new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
       );
     } finally {
-      spinner.stop();
+      this.spinnerStop();
     }
   }
 }

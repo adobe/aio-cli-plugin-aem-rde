@@ -14,17 +14,16 @@
 const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
 
 class RestartCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
-      spinner.start('restarting environment');
+      this.spinnerStart('restarting environment');
       await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.restartEnv());
-      spinner.stop();
+      this.spinnerStop();
       cli.log(`Environment restarted.`);
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_RESTART_ERROR({ messageValues: err })

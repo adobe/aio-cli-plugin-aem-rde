@@ -20,8 +20,6 @@ const {
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
-
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.json || flags.cicd) {
@@ -33,11 +31,11 @@ class StatusCommand extends BaseCommand {
 
   async printAsText() {
     try {
-      spinner.start('retrieving environment status information');
+      this.spinnerStart('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
-      spinner.stop();
+      this.spinnerStop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
         throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -68,7 +66,7 @@ class StatusCommand extends BaseCommand {
         cli.log(` ${config.metadata.configPid} `)
       );
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
@@ -105,7 +103,7 @@ class StatusCommand extends BaseCommand {
 
       cli.log(JSON.stringify(result));
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       cli.log(err);
     }
   }
