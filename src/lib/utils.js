@@ -31,7 +31,18 @@ function sleepMillis(millis) {
     : new Promise((resolve) => setTimeout(resolve, millis));
 }
 
+/**
+ * concats the program and environment id
+ * @param programId the program id
+ * @param environmentId the environment id
+ * @returns cm-pId-eId
+ */
+function concatEnvironemntId(programId, environmentId) {
+  return `cm-p${programId}-e${environmentId}`;
+}
+
 module.exports = {
   sleepSeconds,
   sleepMillis,
+  concatEnvironemntId,
 };

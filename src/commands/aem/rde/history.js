@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
 const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -70,6 +70,9 @@ Object.assign(HistoryCommand, {
     },
   ],
   aliases: [],
+  flags: {
+    cicd: commonFlags.cicd,
+  },
 });
 
 module.exports = HistoryCommand;

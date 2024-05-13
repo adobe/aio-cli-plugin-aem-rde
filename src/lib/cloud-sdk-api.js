@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter } = require('./rde-utils');
-const { sleepSeconds } = require('./utils');
+const { sleepSeconds, concatEnvironemntId } = require('./utils');
 const { DoRequest } = require('./doRequest');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: validationCodes } = require('./validation-errors');
@@ -62,7 +62,7 @@ class CloudSdkAPI {
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
       authorizationHeaders
     );
-    this._cmReleaseId = `cm-p${programId}-e${environmentId}`;
+    this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
   async getAemLogs(serviceName, params) {

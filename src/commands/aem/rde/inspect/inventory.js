@@ -96,6 +96,7 @@ Object.assign(InventoryCommand, {
     },
   ],
   flags: {
+    cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     include: commonFlags.include,
     output: commonFlags.output,

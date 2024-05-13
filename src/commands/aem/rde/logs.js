@@ -285,6 +285,7 @@ Object.assign(LogsCommand, {
   description:
     'Get the list of logs for the target of a rapid development environment.',
   flags: {
+    cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',

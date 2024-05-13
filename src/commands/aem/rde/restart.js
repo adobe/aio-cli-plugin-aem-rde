@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
@@ -19,7 +19,6 @@ const spinner = require('ora')();
 class RestartCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
-      cli.log(`Restart cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('restarting environment');
       await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.restartEnv());
       spinner.stop();
@@ -38,6 +37,9 @@ Object.assign(RestartCommand, {
   description: 'Restart the author and publish of an RDE',
   args: [],
   aliases: [],
+  flags: {
+    cicd: commonFlags.cicd,
+  },
 });
 
 module.exports = RestartCommand;

@@ -108,6 +108,7 @@ Object.assign(OsgiComponentsCommand, {
     },
   ],
   flags: {
+    cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,

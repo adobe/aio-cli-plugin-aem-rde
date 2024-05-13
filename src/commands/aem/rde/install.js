@@ -313,6 +313,7 @@ Object.assign(DeployCommand, {
     },
   ],
   flags: {
+    cicd: commonFlags.cicd,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

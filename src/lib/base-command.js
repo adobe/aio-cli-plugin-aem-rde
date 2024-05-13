@@ -18,6 +18,8 @@ const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
+const { concatEnvironemntId } = require('../lib/utils');
+const inquirer = require('inquirer');
 
 class BaseCommand extends Command {
   constructor(argv, config, error) {
@@ -30,8 +32,36 @@ class BaseCommand extends Command {
   }
 
   async run() {
-    CliUx.ux.log('Run command');
     const { args, flags } = await this.parse(this.typeof);
+
+    if (!this._programId && this.constructor.name !== 'SetupCommand') {
+      throw new validationCodes.MISSING_PROGRAM_ID();
+    }
+    if (!this._environmentId && this.constructor.name !== 'SetupCommand') {
+      throw new validationCodes.MISSING_ENVIRONMENT_ID();
+    }
+
+    if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
+      CliUx.ux.log(
+        `Running command ${this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}`
+      );
+      const lastAction = Config.get('rde_lastaction');
+      if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
+        const executeCommand = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'executeCommand',
+            message: `The last RDE command ran more than 24h ago, do you want to continue running the command on ${concatEnvironemntId(this._programId, this._environmentId)}?`,
+            default: true,
+          },
+        ]);
+        if (!executeCommand.executeCommand) {
+          CliUx.ux.log('Command execution aborted.');
+          return;
+        }
+      }
+      Config.set('rde_lastaction', Date.now());
+    }
     await this.runCommand(args, flags);
   }
 
@@ -134,7 +164,7 @@ class BaseCommand extends Command {
       const { accessToken, apiKey } = await this.getTokenAndKey();
       const cloudManagerUrl = this.getBaseUrl();
       const orgId = this.getCliOrgId();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
+      const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -183,6 +213,13 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
+    cicd: Flags.boolean({
+      description:
+        'Indicates that the command is being run in a CI/CD environment, resulting in machine readable output and avoiding user input.',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
     targetInspect: Flags.string({
       char: 's',
       description: "The target instance type. Default 'author'.",
