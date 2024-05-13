@@ -23,15 +23,15 @@ class ResetCommand extends BaseCommand {
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.resetEnv(flags.nowait)
+        cloudSdkAPI.resetEnv(flags.wait)
       );
       spinner.stop();
-      if (flags.nowait) {
+      if (flags.wait) {
+        cli.log(`Environment reset.`);
+      } else {
         cli.log(
           `Not waiting to finish reset. Check using status command for progress. It may take a couple of seconds to indicate 'Deployment in progress'.`
         );
-      } else {
-        cli.log(`Environment reset.`);
       }
     } catch (err) {
       spinner.stop();
@@ -47,12 +47,13 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
-    nowait: Flags.boolean({
+    wait: Flags.boolean({
       description:
-        'Do not wait for the environment to be reset. Check using status command for progress.',
+        'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',
       multiple: false,
       required: false,
-      default: false,
+      default: true,
+      allowNo: true,
     }),
   },
   aliases: [],
