@@ -19,8 +19,7 @@ const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
 class HistoryCommand extends BaseCommand {
-  async run() {
-    const { args } = await this.parse(HistoryCommand);
+  async runCommand(args, flags) {
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');

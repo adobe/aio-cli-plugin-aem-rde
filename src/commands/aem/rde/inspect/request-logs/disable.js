@@ -20,8 +20,7 @@ const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class DisableRequestLogsCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(DisableRequestLogsCommand);
+  async runCommand(args, flags) {
     try {
       const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.disableRequestLogs(flags.target)

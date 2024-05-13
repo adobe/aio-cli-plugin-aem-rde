@@ -11,103 +11,13 @@
  */
 const { Command, Flags, CliUx } = require('@oclif/core');
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
-const { CloudSdkAPIBase } = require('../lib/cloud-sdk-api-base');
-const { getToken, context, Ims } = require('@adobe/aio-lib-ims');
+const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
 const jwt = require('jsonwebtoken');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
-
-/**
- *
- */
-async function getOrganizationsFromToken() {
-  try {
-    const { accessToken } = await getTokenAndKey();
-    const ims = new Ims();
-    const organizations = await ims.getOrganizations(accessToken);
-    const orgMap = organizations.reduce((map, org) => {
-      map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
-      return map;
-    }, {});
-    return orgMap;
-  } catch (err) {
-    if (err.code === 'CONTEXT_NOT_CONFIGURED') {
-      CliUx.ux.log('No IMS context found. Please run `aio login` first.');
-    }
-    return null;
-  }
-}
-
-/**
- *
- */
-function getCliOrgId() {
-  return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
-}
-
-/**
- *
- */
-function getBaseUrl() {
-  const configStr = Config.get('cloudmanager.base_url');
-  return configStr || 'https://cloudmanager.adobe.io';
-}
-
-/**
- * @param {object} items - The items displayed in the table.
- */
-function logInJsonArrayFormat(items) {
-  let jsonArray = '[\n';
-  items.forEach((item) => {
-    jsonArray += '  ' + JSON.stringify(item) + ',\n';
-  });
-  jsonArray = jsonArray.slice(0, -2);
-  jsonArray += '\n]';
-  CliUx.ux.log(jsonArray);
-}
-
-/**
- *
- */
-async function getTokenAndKey() {
-  let accessToken;
-  let apiKey;
-
-  try {
-    const contextName = 'aio-cli-plugin-cloudmanager';
-    accessToken = await getToken(contextName);
-    const contextData = await context.get(contextName);
-    if (!contextData || !contextData.data) {
-      throw new configurationCodes.NO_IMS_CONTEXT({
-        messageValues: contextName,
-      });
-    }
-    apiKey = contextData.data.client_id;
-  } catch (err) {
-    accessToken = await getToken('cli');
-    const decodedToken = jwt.decode(accessToken);
-    if (!decodedToken) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-    }
-    apiKey = decodedToken.client_id;
-    if (!apiKey) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
-    }
-  }
-  return { accessToken, apiKey };
-}
-
-/**
- * @param cloudManagerUrl
- * @param orgId
- */
-async function initSdk(cloudManagerUrl, orgId) {
-  const { accessToken, apiKey } = await getTokenAndKey();
-  return await init(orgId, apiKey, accessToken, cloudManagerUrl);
-}
 
 class BaseCommand extends Command {
   constructor(argv, config, error) {
@@ -119,8 +29,88 @@ class BaseCommand extends Command {
     this.error = error || this.error;
   }
 
+  async run() {
+    CliUx.ux.log('Run command');
+    const { args, flags } = await this.parse(this.typeof);
+    await this.runCommand(args, flags);
+  }
+
+  runCommand(args, flags) {
+    throw new Error(
+      'You have to implement the method runCommand(args, flags) in the subclass!'
+    );
+  }
+
   async catch(err) {
     handleError(err, this.error);
+  }
+
+  /**
+   *
+   */
+  getCliOrgId() {
+    return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
+  }
+
+  /**
+   *
+   */
+  getBaseUrl() {
+    const configStr = Config.get('cloudmanager.base_url');
+    return configStr || 'https://cloudmanager.adobe.io';
+  }
+
+  /**
+   * @param {object} items - The items displayed in the table.
+   */
+  logInJsonArrayFormat(items) {
+    let jsonArray = '[\n';
+    items.forEach((item) => {
+      jsonArray += '  ' + JSON.stringify(item) + ',\n';
+    });
+    jsonArray = jsonArray.slice(0, -2);
+    jsonArray += '\n]';
+    CliUx.ux.log(jsonArray);
+  }
+
+  /**
+   *
+   */
+  async getTokenAndKey() {
+    let accessToken;
+    let apiKey;
+
+    try {
+      const contextName = 'aio-cli-plugin-cloudmanager';
+      accessToken = await getToken(contextName);
+      const contextData = await context.get(contextName);
+      if (!contextData || !contextData.data) {
+        throw new configurationCodes.NO_IMS_CONTEXT({
+          messageValues: contextName,
+        });
+      }
+      apiKey = contextData.data.client_id;
+    } catch (err) {
+      accessToken = await getToken('cli');
+      const decodedToken = jwt.decode(accessToken);
+      if (!decodedToken) {
+        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      }
+      apiKey = decodedToken.client_id;
+      if (!apiKey) {
+        throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+      }
+    }
+    return { accessToken, apiKey };
+  }
+
+  /**
+   * @param cloudManagerUrl
+   * @param orgId
+   */
+  async initSdk(cloudManagerUrl, orgId) {
+    const { accessToken, apiKey } = await this.getTokenAndKey();
+    return await init(orgId, apiKey, accessToken, cloudManagerUrl);
   }
 
   async getDeveloperConsoleUrl(
@@ -129,7 +119,7 @@ class BaseCommand extends Command {
     programId,
     environmentId
   ) {
-    const sdk = await initSdk(cloudManagerUrl, orgId);
+    const sdk = await this.initSdk(cloudManagerUrl, orgId);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
@@ -141,9 +131,9 @@ class BaseCommand extends Command {
       if (!this._environmentId) {
         throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
-      const { accessToken, apiKey } = await getTokenAndKey();
-      const cloudManagerUrl = getBaseUrl();
-      const orgId = getCliOrgId();
+      const { accessToken, apiKey } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl();
+      const orgId = this.getCliOrgId();
       const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
@@ -184,24 +174,6 @@ class BaseCommand extends Command {
       );
     }
     return fn(this._cloudSdkAPI);
-  }
-
-  async withCloudSdkBase(fn) {
-    if (!this._cloudSdkAPIBase) {
-      const { accessToken, apiKey } = await getTokenAndKey();
-      const cloudManagerUrl = getBaseUrl();
-      const orgId = getCliOrgId();
-      if (!orgId) {
-        throw new validationCodes.MISSING_ORG_ID();
-      }
-      this._cloudSdkAPIBase = new CloudSdkAPIBase(
-        `${cloudManagerUrl}/api`,
-        apiKey,
-        orgId,
-        accessToken
-      );
-    }
-    return fn(this._cloudSdkAPIBase);
   }
 }
 
@@ -251,10 +223,4 @@ module.exports = {
       options: ['json'],
     }),
   },
-  getCliOrgId,
-  getBaseUrl,
-  initSdk,
-  getTokenAndKey,
-  getOrganizationsFromToken,
-  logInJsonArrayFormat,
 };

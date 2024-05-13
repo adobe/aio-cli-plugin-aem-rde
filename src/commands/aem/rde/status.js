@@ -18,8 +18,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class StatusCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(StatusCommand);
+  async runCommand(args, flags) {
     if (flags.json) {
       await this.printAsJson();
     } else {

@@ -27,8 +27,7 @@ const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
 class DeleteCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeleteCommand);
+  async runCommand(args, flags) {
     try {
       const services = !flags.target ? ['author', 'publish'] : [flags.target];
       const types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type];

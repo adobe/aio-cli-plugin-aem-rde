@@ -154,8 +154,7 @@ async function processInputFile(isLocalFile, type, inputPath) {
 }
 
 class DeployCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeployCommand);
+  async runCommand(args, flags) {
     const progressBar = createProgressBar();
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =

@@ -11,14 +11,13 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  getOrganizationsFromToken,
-} = require('../../../lib/base-command');
+const { BaseCommand, cli } = require('../../../lib/base-command');
+const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
+const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const Config = require('@adobe/aio-lib-core-config');
+const { Ims } = require('@adobe/aio-lib-ims');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
@@ -48,9 +47,48 @@ const CONFIG_ORG = 'cloudmanager_orgid';
 const LINK_ORGID =
   'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
 class SetupCommand extends BaseCommand {
+  async withCloudSdkBase(fn) {
+    if (!this._cloudSdkAPIBase) {
+      const { accessToken, apiKey } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl();
+      const orgId = this.getCliOrgId();
+      if (!orgId) {
+        throw new validationCodes.MISSING_ORG_ID();
+      }
+      this._cloudSdkAPIBase = new CloudSdkAPIBase(
+        `${cloudManagerUrl}/api`,
+        apiKey,
+        orgId,
+        accessToken
+      );
+    }
+    return fn(this._cloudSdkAPIBase);
+  }
+
+  /**
+   *
+   */
+  async getOrganizationsFromToken() {
+    try {
+      const { accessToken } = await this.getTokenAndKey();
+      const ims = new Ims();
+      const organizations = await ims.getOrganizations(accessToken);
+      const orgMap = organizations.reduce((map, org) => {
+        map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
+        return map;
+      }, {});
+      return orgMap;
+    } catch (err) {
+      if (err.code === 'CONTEXT_NOT_CONFIGURED') {
+        CliUx.ux.log('No IMS context found. Please run `aio login` first.');
+      }
+      return null;
+    }
+  }
+
   async getOrgId() {
     let selectedOrg = null;
-    const organizations = await getOrganizationsFromToken();
+    const organizations = await this.getOrganizationsFromToken();
     if (!organizations) {
       return null;
     }
@@ -210,7 +248,7 @@ class SetupCommand extends BaseCommand {
     return selectedEnvironment;
   }
 
-  async run() {
+  async runCommand(args, flags) {
     try {
       inquirer.registerPrompt(
         'autocomplete',

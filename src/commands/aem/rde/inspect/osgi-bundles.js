@@ -20,8 +20,7 @@ const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
 class OsgiBundlesCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(OsgiBundlesCommand);
+  async runCommand(args, flags) {
     try {
       if (!args.id) {
         const params = {};

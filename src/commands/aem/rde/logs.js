@@ -36,8 +36,7 @@ class LogsCommand extends BaseCommand {
     this.stopAndCleanupCallback = this.stopAndCleanup.bind(this);
   }
 
-  async run() {
-    const { flags } = await this.parse(LogsCommand);
+  async runCommand(args, flags) {
     this.flags = flags || {};
     try {
       let log;

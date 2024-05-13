@@ -17,9 +17,8 @@ const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
-  async run() {
+  async runCommand(args, flags) {
     try {
-      const { flags } = await this.parse(ResetCommand);
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>

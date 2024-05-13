@@ -17,7 +17,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class RestartCommand extends BaseCommand {
-  async run() {
+  async runCommand(args, flags) {
     try {
       cli.log(`Restart cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('restarting environment');
