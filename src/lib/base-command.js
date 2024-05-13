@@ -9,18 +9,24 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
+// 3rd party dependencies
 const { Command, Flags, CliUx } = require('@oclif/core');
-const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
+const jwt = require('jsonwebtoken');
+const inquirer = require('inquirer');
+const spinner = require('ora')();
+
+// Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
-const jwt = require('jsonwebtoken');
+
+// internals
+const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
+const { concatEnvironemntId } = require('../lib/utils');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
-const { concatEnvironemntId } = require('../lib/utils');
-const inquirer = require('inquirer');
-const spinner = require('ora')();
 
 class BaseCommand extends Command {
   constructor(argv, config, error) {

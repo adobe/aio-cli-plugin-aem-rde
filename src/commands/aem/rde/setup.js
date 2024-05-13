@@ -80,7 +80,7 @@ class SetupCommand extends BaseCommand {
       return orgMap;
     } catch (err) {
       if (err.code === 'CONTEXT_NOT_CONFIGURED') {
-        CliUx.ux.log('No IMS context found. Please run `aio login` first.');
+        cli.log('No IMS context found. Please run `aio login` first.');
       }
       return null;
     }

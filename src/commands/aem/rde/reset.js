@@ -11,7 +11,12 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
