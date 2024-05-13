@@ -11,12 +11,7 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  Flags,
-  commonFlags,
-} = require('../../../lib/base-command');
+const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
@@ -25,15 +20,15 @@ class ResetCommand extends BaseCommand {
     try {
       this.spinnerStart('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.resetEnv(flags.nowait)
+        cloudSdkAPI.resetEnv(flags.wait)
       );
       this.spinnerStop();
-      if (flags.nowait) {
+      if (flags.wait) {
+        cli.log(`Environment reset.`);
+      } else {
         cli.log(
           `Not waiting to finish reset. Check using status command for progress. It may take a couple of seconds to indicate 'Deployment in progress'.`
         );
-      } else {
-        cli.log(`Environment reset.`);
       }
     } catch (err) {
       this.spinnerStop();
@@ -49,13 +44,13 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
-    cicd: commonFlags.cicd,
-    nowait: Flags.boolean({
+    wait: Flags.boolean({
       description:
-        'Do not wait for the environment to be reset. Check using status command for progress.',
+        'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',
       multiple: false,
       required: false,
-      default: false,
+      default: true,
+      allowNo: true,
     }),
   },
   aliases: [],
