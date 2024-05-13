@@ -103,3 +103,6 @@ Primarily for scripting application purposes, the following exit codes are used:
 - 4 - A deployment error has occurred
 - 5 - An internal error that might be fixed with a retry has occurred
 - 40 - An error emanating from the deployment not being fully performed has occurred. This error might be interpretable by some users as ok if that's a middle step they need to go through
+
+# Releasing a new version
+Please read the [RELEASE.md](https://github.com/adobe/aio-cli-plugin-aem-rde/blob/main/RELEASE.md)
