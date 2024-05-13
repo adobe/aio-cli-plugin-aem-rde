@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -22,6 +22,7 @@ const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
 const open = require('open');
+const { concatEnvironemntId } = require('../../../lib/utils');
 
 /**
  * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
@@ -269,7 +270,7 @@ class SetupCommand extends BaseCommand {
 
       const orgId = await this.getOrgId();
       const prevOrg = Config.get(CONFIG_ORG);
-      Config.set(CONFIG_ORG, orgId, storeLocal);
+      Config.set(CONFIG_ORG, orgId, storeLocal.storeLocal);
 
       let selectedEnvironment = null;
       let selectedProgram = null;
@@ -291,13 +292,19 @@ class SetupCommand extends BaseCommand {
       }
 
       cli.log(
-        chalk.green(`Selected p${selectedProgram}-e${selectedEnvironment}`)
+        chalk.green(
+          `Selected ${concatEnvironemntId(selectedProgram, selectedEnvironment)}`
+        )
       );
 
       const prevProgram = this.getProgramFromConf();
       const prevEnv = this.getEnvironmentFromConf();
-      Config.set(CONFIG_PROGRAM, selectedProgram, storeLocal);
-      Config.set(CONFIG_ENVIRONMENT, selectedEnvironment, storeLocal);
+      Config.set(CONFIG_PROGRAM, selectedProgram, storeLocal.storeLocal);
+      Config.set(
+        CONFIG_ENVIRONMENT,
+        selectedEnvironment,
+        storeLocal.storeLocal
+      );
 
       this.logPreviousConfig(
         prevOrg,
@@ -352,6 +359,9 @@ Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',
   args: [],
   aliases: [],
+  flags: {
+    cicd: commonFlags.cicd,
+  },
 });
 
 module.exports = SetupCommand;
