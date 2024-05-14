@@ -76,6 +76,11 @@ class BaseCommand extends Command {
     await this.runCommand(args, flags);
   }
 
+  /**
+   * the commands run method to be implemented by the sub class
+   * @param args the arguments passed to the command
+   * @param flags the flags passed to the command
+   */
   runCommand(args, flags) {
     throw new Error(
       'You have to implement the method runCommand(args, flags) in the subclass!'
