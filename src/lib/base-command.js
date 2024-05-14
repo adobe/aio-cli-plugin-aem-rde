@@ -45,13 +45,6 @@ class BaseCommand extends Command {
     this.flags = flags;
     this.args = args;
 
-    if (!this._programId && this.constructor.name !== 'SetupCommand') {
-      throw new validationCodes.MISSING_PROGRAM_ID();
-    }
-    if (!this._environmentId && this.constructor.name !== 'SetupCommand') {
-      throw new validationCodes.MISSING_ENVIRONMENT_ID();
-    }
-
     if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
       CliUx.ux.log(
         `Running ${this.constructor.name} on ${concatEnvironemntId(this._programId, this._environmentId)} ${this.printNamesWhenAvailable()}`
