@@ -35,6 +35,8 @@ class BaseCommand extends Command {
     const environmentId = Config.get('cloudmanager_environmentid');
     this._programId = programId;
     this._environmentId = environmentId;
+    this._programName = Config.get('cloudmanager_programname');
+    this._environmentName = Config.get('cloudmanager_environmentname');
     this.error = error || this.error;
   }
 
@@ -52,7 +54,7 @@ class BaseCommand extends Command {
 
     if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
       CliUx.ux.log(
-        `Running ${this.constructor.name} on ${concatEnvironemntId(this._programId, this._environmentId)}`
+        `Running ${this.constructor.name} on ${concatEnvironemntId(this._programId, this._environmentId)} ${this.printNamesWhenAvailable()}`
       );
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
@@ -78,6 +80,13 @@ class BaseCommand extends Command {
     throw new Error(
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
+  }
+
+  printNamesWhenAvailable() {
+    if (this._programName && this._environmentName) {
+      return `(${this._programName} - ${this._environmentName})`;
+    }
+    return '';
   }
 
   spinnerStart(message) {
