@@ -11,7 +11,12 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
@@ -44,6 +49,7 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
+    cicd: commonFlags.cicd,
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',
