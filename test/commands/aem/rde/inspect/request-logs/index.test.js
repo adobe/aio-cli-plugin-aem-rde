@@ -86,7 +86,7 @@ describe('RequestLogsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand([], null),
+        new RequestLogsCommand(['--cicd'], null),
         stubbedMethods
       );
     });
@@ -114,7 +114,7 @@ describe('RequestLogsCommand', function () {
     it('Should have the expected json array result.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['-o', 'json'], null),
+        new RequestLogsCommand(['--cicd', '-o', 'json'], null),
         stubbedMethods
       );
       await command.run();
@@ -132,7 +132,7 @@ describe('RequestLogsCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand([], null),
+        new RequestLogsCommand(['--cicd'], null),
         { ...stubbedMethods, getRequestLogs: () => errorObj }
       );
       try {
@@ -149,7 +149,7 @@ describe('RequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand([], null),
+        new RequestLogsCommand(['--cicd'], null),
         {
           ...stubbedMethods,
           getRequestLogs: stubbedThrowErrorMethod,
@@ -173,7 +173,7 @@ describe('RequestLogsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand([reqId], null),
+        new RequestLogsCommand(['--cicd', reqId], null),
         stubbedMethods
       );
     });
@@ -203,7 +203,7 @@ describe('RequestLogsCommand', function () {
     it('Should produce the correct json output.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['0', '-o', 'json'], null),
+        new RequestLogsCommand(['--cicd', '0', '-o', 'json'], null),
         stubbedMethods
       );
 
@@ -229,7 +229,7 @@ describe('RequestLogsCommand', function () {
     it('Should print out a error message when status is not 200.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['1'], null),
+        new RequestLogsCommand(['--cicd', '1'], null),
         { ...stubbedMethods, getRequestLog: () => errorObj }
       );
       try {
@@ -246,7 +246,7 @@ describe('RequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['1'], null),
+        new RequestLogsCommand(['--cicd', '1'], null),
         {
           ...stubbedMethods,
           getRequestLog: stubbedThrowErrorMethod,

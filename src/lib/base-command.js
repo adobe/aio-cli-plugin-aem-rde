@@ -52,7 +52,7 @@ class BaseCommand extends Command {
 
     if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
       CliUx.ux.log(
-        `Running command ${this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}`
+        `Running ${this.constructor.name} on ${concatEnvironemntId(this._programId, this._environmentId)}`
       );
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {

@@ -46,7 +46,7 @@ describe('DisableRequestLogsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand([], null),
+        new DisableRequestLogsCommand(['--cicd'], null),
         stubbedMethods
       );
     });
@@ -64,7 +64,7 @@ describe('DisableRequestLogsCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand([], null),
+        new DisableRequestLogsCommand(['--cicd'], null),
         stubbedErrorMethods
       );
       try {
@@ -81,7 +81,7 @@ describe('DisableRequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand([], null),
+        new DisableRequestLogsCommand(['--cicd'], null),
         stubbedThrowErrorMethods
       );
       try {

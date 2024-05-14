@@ -58,7 +58,7 @@ describe('HistoryCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new HistoryCommand([], null),
+        new HistoryCommand(['--cicd'], null),
         stubbedCloudSdkMethods
       );
     });
@@ -82,7 +82,7 @@ describe('HistoryCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new HistoryCommand(['123'], null),
+        new HistoryCommand(['--cicd', '123'], null),
         stubbedCloudSdkMethods
       );
     });

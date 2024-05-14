@@ -18,7 +18,6 @@ const errorResponse403 = {
   statusText: 'Test error message 403.',
 };
 
-
 const errorObj = new Error(errorResponse404.statusText);
 
 const createLogsSuccessObj = {
@@ -94,7 +93,7 @@ describe('LogsCommand', function () {
   beforeEach(() => {
     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new LogsCommand(['-d com.adobe', '--no-color'], null),
+      new LogsCommand(['--cicd', '-d com.adobe', '--no-color'], null),
       stubbedMethods
     );
   });
@@ -160,7 +159,7 @@ describe('LogsCommand', function () {
     it('Should print out the logs in color', async function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new LogsCommand(['-d com.adobe'], null),
+        new LogsCommand(['--cicd', '-d com.adobe'], null),
         stubbedMethods
       );
 
@@ -241,7 +240,21 @@ describe('LogsCommand', function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new LogsCommand(
-          ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg],
+          [
+            '--cicd',
+            '-i',
+            arg,
+            '-d',
+            arg,
+            '-f',
+            format,
+            '-e',
+            arg,
+            '-i',
+            arg,
+            '-w',
+            arg,
+          ],
           null
         ),
         stubbedMethods
