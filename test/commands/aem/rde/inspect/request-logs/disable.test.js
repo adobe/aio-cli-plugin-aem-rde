@@ -39,7 +39,10 @@ const stubbedMethods = {
     ),
 };
 
-let command, cloudSdkApiStub;
+function createCommandStub(sinon, stubMethods) {
+  return createCloudSdkAPIStub(
+      sinon, new DisableRequestLogsCommand(['--cicd'], null), stubMethods);
+}
 describe('DisableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
