@@ -7,6 +7,7 @@ const {
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 const chalk = require('chalk');
+const RequestLogsCommand = require("../../../../../src/commands/aem/rde/inspect/request-logs");
 
 const errorObj = Object.create({
   status: 404,
@@ -48,16 +49,24 @@ const stubbedMethods = {
   },
 };
 
+function createCommandStub(sinon, stubMethods, args) {
+  return createCloudSdkAPIStub(
+      sinon,
+      new RequestLogsCommand(args, null),
+      stubMethods
+  );
+}
 let command, cloudSdkApiStub;
 describe('Inventory', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getInventories', function () {
     beforeEach(() => {
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd'], null),
-        stubbedMethods
+      [command, cloudSdkApiStub] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd'],
+          stubbedMethods
       );
     });
 
@@ -81,10 +90,11 @@ describe('Inventory', function () {
     });
 
     it('Should have the expected json array result', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd', '-o', 'json'], null),
-        stubbedMethods
+      [command] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd', '-o', 'json'],
+          stubbedMethods
       );
       await command.run();
       assert.equal(
@@ -98,14 +108,15 @@ describe('Inventory', function () {
     });
 
     it('Should trigger an error', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd'], null),
-        {
-          ...stubbedMethods,
-          getInventories: () => errorObj,
-        }
-      );
+       [command] = createCommandStub(
+          sinon,
+           Inventory,
+           ['--cicd'],
+           {
+             ...stubbedMethods,
+             getInventories: () => errorObj,
+           },
+       );
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');
@@ -118,14 +129,14 @@ describe('Inventory', function () {
     });
 
     it('Should throw an internal error when inventory config is null.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd'], null),
-
-        {
-          ...stubbedMethods,
-          getInventories: stubbedThrowErrorMethod,
-        }
+       [command] = createCommandStub(
+          sinon,
+           Inventory,
+          ['--cicd'],
+          {
+            ...stubbedMethods,
+            getInventories: stubbedThrowErrorMethod,
+          }
       );
       try {
         await command.run();
@@ -143,11 +154,13 @@ describe('Inventory', function () {
 
   describe('#getInventory', function () {
     const reqId = 'test';
+    let command, cloudSdkApiStub;
     beforeEach(() => {
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd', reqId], null),
-        stubbedMethods
+      [command, cloudSdkApiStub] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd', reqId],
+          stubbedMethods
       );
     });
 
@@ -174,10 +187,11 @@ describe('Inventory', function () {
     });
 
     it('Should produce the correct json output', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd', '0', '-o', 'json'], null),
-        stubbedMethods
+      [command] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd', '0', '-o', 'json'],
+          stubbedMethods
       );
       await command.run();
       assert.equal(
@@ -186,11 +200,11 @@ describe('Inventory', function () {
       );
     });
     it('Should print out a error message when status is not 200', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd', '1'], null),
-
-        { ...stubbedMethods, getInventory: () => errorObj }
+      [command] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd', '1'],
+          {...stubbedMethods, getInventory: () => errorObj}
       );
       try {
         await command.run();
@@ -204,13 +218,14 @@ describe('Inventory', function () {
     });
 
     it('Should throw an internal error when config is null despite having non empty args.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new Inventory(['--cicd', '1'], null),
-        {
-          ...stubbedMethods,
-          getInventory: stubbedThrowErrorMethod,
-        }
+      [command] = createCommandStub(
+          sinon,
+          Inventory,
+          ['--cicd', '1'],
+          {
+            ...stubbedMethods,
+            getInventory: stubbedThrowErrorMethod,
+          }
       );
       try {
         await command.run();

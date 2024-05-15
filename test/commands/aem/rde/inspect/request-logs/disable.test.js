@@ -38,17 +38,17 @@ const stubbedMethods = {
     ),
 };
 
-let command, cloudSdkApiStub;
+function createCommandStub(sinon, stubMethods) {
+  return createCloudSdkAPIStub(
+      sinon, new DisableRequestLogsCommand(['--cicd'], null), stubMethods);
+}
 describe('DisableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#disableRequestLogs', function () {
+    let command, cloudSdkApiStub;
     beforeEach(() => {
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new DisableRequestLogsCommand(['--cicd'], null),
-        stubbedMethods
-      );
+      [command, cloudSdkApiStub] = createCommandStub(sinon, stubbedMethods)
     });
 
     it('Should be called exactly once', async function () {
@@ -62,11 +62,7 @@ describe('DisableRequestLogsCommand', function () {
     });
 
     it('Should print out a error message when status is not 200', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new DisableRequestLogsCommand(['--cicd'], null),
-        stubbedErrorMethods
-      );
+      [command] = createCommandStub(sinon, stubbedErrorMethods);
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');
@@ -79,11 +75,7 @@ describe('DisableRequestLogsCommand', function () {
     });
 
     it('Should catch a throw and print out a error message.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new DisableRequestLogsCommand(['--cicd'], null),
-        stubbedThrowErrorMethods
-      );
+      [command] = createCommandStub(sinon, stubbedThrowErrorMethods)
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');

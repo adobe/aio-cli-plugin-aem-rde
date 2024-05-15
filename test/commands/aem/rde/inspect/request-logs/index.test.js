@@ -78,16 +78,23 @@ const stubbedMethods = {
     ),
 };
 
+function createCommandStub(sinon, stubMethods, args) {
+    return createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand(args, null),
+        stubMethods
+    );
+}
 let command, cloudSdkApiStub;
 describe('RequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#getRequestLogs', function () {
     beforeEach(() => {
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd'], null),
-        stubbedMethods
+        [command, cloudSdkApiStub] = createCommandStub(
+            sinon,
+            stubbedMethods,
+            ['--cicd']
       );
     });
 
@@ -112,10 +119,10 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should have the expected json array result.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd', '-o', 'json'], null),
-        stubbedMethods
+       [command] = createCommandStub(
+           sinon,
+           stubbedMethods,
+           ['--cicd', '-o', 'json']
       );
       await command.run();
       assert.equal(
@@ -130,10 +137,10 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should print out a error message when status is not 200', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd'], null),
-        { ...stubbedMethods, getRequestLogs: () => errorObj }
+        const [command] = createCommandStub(
+            sinon,
+            {...stubbedMethods, getRequestLogs: () => errorObj},
+            ['--cicd']
       );
       try {
         await command.run();
@@ -147,13 +154,13 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should catch a throw and print out a error message.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd'], null),
-        {
-          ...stubbedMethods,
-          getRequestLogs: stubbedThrowErrorMethod,
-        }
+      const [command] = createCommandStub(
+          sinon,
+          {
+              ...stubbedMethods,
+              getRequestLogs: stubbedThrowErrorMethod,
+          },
+          ['--cicd']
       );
       try {
         await command.run();
@@ -171,10 +178,10 @@ describe('RequestLogsCommand', function () {
   describe('#getRequestLog', function () {
     const reqId = '0';
     beforeEach(() => {
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd', reqId], null),
-        stubbedMethods
+        [command, cloudSdkApiStub] = createCommandStub(
+            sinon,
+            stubbedMethods,
+            ['--cicd', reqId]
       );
     });
 
@@ -201,10 +208,10 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should produce the correct json output.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd', '0', '-o', 'json'], null),
-        stubbedMethods
+        const [command] = createCommandStub(
+            sinon,
+            stubbedMethods,
+            ['--cicd', '0', '-o', 'json']
       );
 
       await command.run();
@@ -227,10 +234,10 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should print out a error message when status is not 200.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd', '1'], null),
-        { ...stubbedMethods, getRequestLog: () => errorObj }
+        const [command] = createCommandStub(
+            sinon,
+            {...stubbedMethods, getRequestLog: () => errorObj},
+            ['--cicd', '1']
       );
       try {
         await command.run();
@@ -244,13 +251,13 @@ describe('RequestLogsCommand', function () {
     });
 
     it('Should catch a throw and print out a error message.', async function () {
-      const [command] = createCloudSdkAPIStub(
-        sinon,
-        new RequestLogsCommand(['--cicd', '1'], null),
-        {
-          ...stubbedMethods,
-          getRequestLog: stubbedThrowErrorMethod,
-        }
+        const [command] = createCommandStub(
+            sinon,
+            {
+                ...stubbedMethods,
+                getRequestLog: stubbedThrowErrorMethod,
+            },
+            ['--cicd', '1']
       );
       try {
         await command.run();
