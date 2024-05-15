@@ -49,9 +49,7 @@ class BaseCommand extends Command {
     this.setupParams(flags);
 
     if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
-      CliUx.ux.log(
-        `Running ${this.constructor.name} on ${concatEnvironemntId(this._programId, this._environmentId)} ${this.printNamesWhenAvailable()}`
-      );
+      CliUx.ux.log(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
         const executeCommand = await inquirer.prompt([
@@ -70,6 +68,17 @@ class BaseCommand extends Command {
       Config.set('rde_lastaction', Date.now());
     }
     await this.runCommand(args, flags);
+  }
+
+  getLogHeader() {
+    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+  }
+
+  printNamesWhenAvailable() {
+    if (this._programName && this._environmentName) {
+      return ` (${this._programName} - ${this._environmentName})`;
+    }
+    return '';
   }
 
   setupParams(flags) {
@@ -101,13 +110,6 @@ class BaseCommand extends Command {
     throw new Error(
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
-  }
-
-  printNamesWhenAvailable() {
-    if (this._programName && this._environmentName) {
-      return `(${this._programName} - ${this._environmentName})`;
-    }
-    return '';
   }
 
   spinnerStart(message) {

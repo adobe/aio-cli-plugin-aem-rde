@@ -22,7 +22,7 @@ const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
-    if (flags.json) {
+    if (flags.json || flags.cicd) {
       await this.printAsJson();
     } else {
       await this.printAsText();
