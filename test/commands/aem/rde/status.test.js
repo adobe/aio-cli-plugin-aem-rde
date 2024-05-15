@@ -69,7 +69,8 @@ describe('StatusCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        'Environment: Ready\n' +
+        'Info for cm-p12345-e54321\n' +
+          'Environment: Ready\n' +
           '- Bundles Author:\n' +
           ' test-bundle-1.0.0\n' +
           '- Bundles Publish:\n' +
