@@ -23,6 +23,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 class ResetCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
+      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.resetEnv(flags.wait)
