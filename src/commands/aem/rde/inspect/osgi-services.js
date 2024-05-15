@@ -106,6 +106,9 @@ Object.assign(OsgiServicesCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,

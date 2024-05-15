@@ -31,12 +31,6 @@ const { handleError } = require('./error-helpers');
 class BaseCommand extends Command {
   constructor(argv, config, error) {
     super(argv, config);
-    const programId = Config.get('cloudmanager_programid');
-    const environmentId = Config.get('cloudmanager_environmentid');
-    this._programId = programId;
-    this._environmentId = environmentId;
-    this._programName = Config.get('cloudmanager_programname');
-    this._environmentName = Config.get('cloudmanager_environmentname');
     this.error = error || this.error;
   }
 
@@ -44,6 +38,15 @@ class BaseCommand extends Command {
     const { args, flags } = await this.parse(this.typeof);
     this.flags = flags;
     this.args = args;
+
+    if (!flags.programId) {
+      this._programName = Config.get('cloudmanager_programname');
+    }
+    if (!flags.environmentId) {
+      this._environmentName = Config.get('cloudmanager_environmentname');
+    }
+
+    this.setupParams(flags);
 
     if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
       CliUx.ux.log(
@@ -67,6 +70,26 @@ class BaseCommand extends Command {
       Config.set('rde_lastaction', Date.now());
     }
     await this.runCommand(args, flags);
+  }
+
+  setupParams(flags) {
+    this._orgId = this.readFromFlagsOrDefault(
+      flags.organizationId,
+      'cloudmanager_orgid'
+    );
+    this._programId = this.readFromFlagsOrDefault(
+      flags.programId,
+      'cloudmanager_programid'
+    );
+    this._environmentId = this.readFromFlagsOrDefault(
+      flags.environmentId,
+      'cloudmanager_environmentid'
+    );
+  }
+
+  readFromFlagsOrDefault(input, configKey) {
+    const trimmedInput = input ? input.trim() : '';
+    return trimmedInput || Config.get(configKey);
   }
 
   /**
@@ -288,6 +311,21 @@ module.exports = {
       multiple: false,
       required: false,
       options: ['json'],
+    }),
+    organizationId: Flags.string({
+      description: 'The organization id to use while running this command',
+      multiple: false,
+      required: false,
+    }),
+    programId: Flags.string({
+      description: 'The program id to use while running this command',
+      multiple: false,
+      required: false,
+    }),
+    environmentId: Flags.string({
+      description: 'The environment id to use while running this command',
+      multiple: false,
+      required: false,
     }),
   },
 };

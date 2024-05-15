@@ -80,6 +80,9 @@ class EnableRequestLogsCommand extends BaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     format: Flags.string({

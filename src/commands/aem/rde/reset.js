@@ -49,6 +49,9 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
     wait: Flags.boolean({
       description:

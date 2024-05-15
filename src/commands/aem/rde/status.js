@@ -115,6 +115,9 @@ Object.assign(StatusCommand, {
   args: [],
   flags: {
     cicd: commonFlags.cicd,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     json: Flags.boolean({
       char: 'j',
       hidden: false,

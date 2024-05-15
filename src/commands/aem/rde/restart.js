@@ -37,6 +37,9 @@ Object.assign(RestartCommand, {
   args: [],
   aliases: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
   },
 });

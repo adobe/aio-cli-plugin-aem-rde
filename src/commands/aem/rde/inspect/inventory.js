@@ -96,6 +96,9 @@ Object.assign(InventoryCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     include: commonFlags.include,

@@ -46,6 +46,9 @@ class DisableRequestLogsCommand extends BaseCommand {
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
   },
