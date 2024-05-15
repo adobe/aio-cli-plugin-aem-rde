@@ -78,6 +78,13 @@ const stubbedMethods = {
     ),
 };
 
+function createCommandStub(sinon, stubMethods, args) {
+    return createCloudSdkAPIStub(
+        sinon,
+        new RequestLogsCommand(args, null),
+        stubMethods
+    );
+}
 let command, cloudSdkApiStub;
 describe('RequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
