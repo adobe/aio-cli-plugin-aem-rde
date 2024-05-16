@@ -20,4 +20,18 @@ describe('ResetCommand', function () {
       assert.ok(cloudSdkApiStub.resetEnv.calledOnce);
     });
   });
+
+  describe('#run quiet', function () {
+    it('cloudSDKAPI.resetEnv() has been called', async function () {
+      const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new ResetCommand(['--quiet'], null),
+        {
+          resetEnv: () => {},
+        }
+      );
+      await command.run();
+      assert.ok(cloudSdkApiStub.resetEnv.calledOnce);
+    });
+  });
 });

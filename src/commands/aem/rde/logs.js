@@ -61,7 +61,7 @@ class LogsCommand extends BaseCommand {
           }
         }, REQUEST_INTERVAL_MS);
       } else {
-        cli.log('No active log configuration found.');
+        this.log('No active log configuration found.');
       }
     } catch (err) {
       await this.stopAndCleanup();
@@ -169,7 +169,7 @@ class LogsCommand extends BaseCommand {
           messageValues: [response.status, response.statusText],
         });
       }
-      cli.log('\nLog configuration removed.');
+      this.log('\nLog configuration removed.');
     } catch (err) {
       throw new internalCodes.INTERNAL_DELETE_LOG_ERROR({ messageValues: err });
     }
@@ -259,7 +259,7 @@ class LogsCommand extends BaseCommand {
         await sleepMillis(perLineDelay);
       }
     } else if (response.status === 404) {
-      cli.log(
+      this.log(
         'Log configuration not found any longer. It may has been removed by introducing another new log configuration.'
       );
       await this.stopAndCleanup();

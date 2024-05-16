@@ -13,7 +13,6 @@
 
 const {
   BaseCommand,
-  cli,
   Flags,
   commonFlags,
 } = require('../../../lib/base-command');
@@ -23,16 +22,16 @@ const { throwAioError } = require('../../../lib/error-helpers');
 class ResetCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
-      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
+      this.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.resetEnv(flags.wait)
       );
       this.spinnerStop();
       if (flags.wait) {
-        cli.log(`Environment reset.`);
+        this.log(`Environment reset.`);
       } else {
-        cli.log(
+        this.log(
           `Not waiting to finish reset. Check using status command for progress. It may take a couple of seconds to indicate 'Deployment in progress'.`
         );
       }
