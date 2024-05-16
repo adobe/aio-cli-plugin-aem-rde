@@ -24,6 +24,7 @@ const {
 } = require('../../../lib/deployment-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 class DeleteCommand extends BaseCommand {
   async runCommand(args, flags) {
@@ -38,7 +39,7 @@ class DeleteCommand extends BaseCommand {
         'osgi-config': (config) => config.metadata.configPid === args.id,
       };
 
-      this.spinnerStart(`deleting ${args.id}`);
+      spinner.start(`deleting ${args.id}`);
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
@@ -56,11 +57,11 @@ class DeleteCommand extends BaseCommand {
         );
         await this.withCloudSdk((cloudSdkAPI) =>
           loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-            done ? this.spinnerStop() : this.spinnerStart(text)
+            done ? spinner.stop() : spinner.start(text)
           )
         );
       }
-      this.spinnerStop();
+      spinner.stop();
 
       if (artifacts.length === 0) {
         const typeInfo = types.length === 1 ? types[0] : 'artifact';
@@ -71,7 +72,7 @@ class DeleteCommand extends BaseCommand {
         });
       }
     } catch (err) {
-      this.spinnerStop();
+      spinner.stop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err })
@@ -94,7 +95,6 @@ Object.assign(DeleteCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

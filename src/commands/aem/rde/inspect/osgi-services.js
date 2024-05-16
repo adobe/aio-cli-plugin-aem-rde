@@ -32,7 +32,7 @@ class OsgiServicesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(json.items));
           } else {
             logInTableFormat(json?.items);
@@ -49,7 +49,7 @@ class OsgiServicesCommand extends BaseCommand {
 
         if (response.status === 200) {
           const osgiService = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(osgiService, null, 2));
           } else {
             logInTableFormat([osgiService]);
@@ -109,11 +109,10 @@ Object.assign(OsgiServicesCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
-    output: commonFlags.output,
+    json: commonFlags.json,
   },
 });
 

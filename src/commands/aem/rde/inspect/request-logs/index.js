@@ -31,7 +31,7 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             this.logInJsonArrayFormat(json?.items);
           } else {
             logInTableFormat(json?.items);
@@ -47,7 +47,7 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const requestLog = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(requestLog, null, 2));
           } else {
             logInTableFormat([requestLog]);
@@ -104,10 +104,9 @@ Object.assign(RequestLogsCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
     target: commonFlags.targetInspect,
     include: commonFlags.include,
-    output: commonFlags.output,
+    json: commonFlags.json,
   },
 });
 

@@ -16,18 +16,19 @@ const rdeUtils = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 class HistoryCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
       if (args.id === undefined) {
-        this.spinnerStart('fetching updates');
+        spinner.start('fetching updates');
         const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
           const json = await response.json();
-          this.spinnerStop();
+          spinner.stop();
           if (json.items.length === 0) {
             cli.log('There are no updates yet.');
           } else {
@@ -43,7 +44,7 @@ class HistoryCommand extends BaseCommand {
       } else {
         await this.withCloudSdk((cloudSdkAPI) =>
           rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
-            done ? this.spinnerStop() : this.spinnerStart(text)
+            done ? spinner.stop() : spinner.start(text)
           )
         );
       }
@@ -53,7 +54,7 @@ class HistoryCommand extends BaseCommand {
         new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
       );
     } finally {
-      this.spinnerStop();
+      spinner.stop();
     }
   }
 }
@@ -73,7 +74,6 @@ Object.assign(HistoryCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
   },
 });
 

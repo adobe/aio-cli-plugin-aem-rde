@@ -106,7 +106,7 @@ describe('OsgiBundlesCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd'], null),
+        new OsgiBundlesCommand([], null),
         stubbedMethods
       );
     });
@@ -136,7 +136,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd', '-o', 'json'], null),
+        new OsgiBundlesCommand(['--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -149,7 +149,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd'], null),
+        new OsgiBundlesCommand([], null),
         { ...stubbedMethods, getOsgiBundles: () => errorObj }
       );
       try {
@@ -166,7 +166,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd'], null),
+        new OsgiBundlesCommand([], null),
         {
           ...stubbedMethods,
           getOsgiBundles: stubbedThrowErrorMethods,
@@ -190,7 +190,7 @@ describe('OsgiBundlesCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd', reqId], null),
+        new OsgiBundlesCommand([reqId], null),
         stubbedMethods
       );
     });
@@ -224,7 +224,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd', '0', '-o', 'json'], null),
+        new OsgiBundlesCommand(['0', '--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -272,7 +272,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd', reqId], null),
+        new OsgiBundlesCommand([reqId], null),
         { ...stubbedMethods, getOsgiBundle: () => errorObj }
       );
       try {
@@ -289,7 +289,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['--cicd', reqId], null),
+        new OsgiBundlesCommand([reqId], null),
         {
           ...stubbedMethods,
           getOsgiBundle: stubbedThrowErrorMethods,

@@ -143,7 +143,7 @@ describe('OsgiComponentsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd'], null),
+        new OsgiComponentsCommand([], null),
         stubbedMethods
       );
     });
@@ -173,7 +173,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd', '-o', 'json'], null),
+        new OsgiComponentsCommand(['--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -186,7 +186,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd'], null),
+        new OsgiComponentsCommand([], null),
         { ...stubbedMethods, getOsgiComponents: () => errorObj }
       );
       try {
@@ -203,7 +203,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd'], null),
+        new OsgiComponentsCommand([], null),
         {
           ...stubbedMethods,
           getOsgiComponents: stubbedThrowErrorMethods,
@@ -227,7 +227,7 @@ describe('OsgiComponentsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd', reqId], null),
+        new OsgiComponentsCommand([reqId], null),
         stubbedMethods
       );
     });
@@ -261,7 +261,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd', '0', '-o', 'json'], null),
+        new OsgiComponentsCommand(['0', '--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -282,7 +282,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd', '1'], null),
+        new OsgiComponentsCommand(['1'], null),
         { ...stubbedMethods, getOsgiComponent: () => errorObj }
       );
       try {
@@ -299,7 +299,7 @@ describe('OsgiComponentsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiComponentsCommand(['--cicd', '1'], null),
+        new OsgiComponentsCommand(['1'], null),
         {
           ...stubbedMethods,
           getOsgiComponent: stubbedThrowErrorMethods,

@@ -32,6 +32,7 @@ const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -211,8 +212,8 @@ class DeployCommand extends BaseCommand {
         };
 
         const deploymentCallbacks = () => {
-          if (!this.spinnerIsSpinning) {
-            this.spinnerStart('applying update');
+          if (!spinner.isSpinning) {
+            spinner.start('applying update');
           }
         };
 
@@ -231,16 +232,16 @@ class DeployCommand extends BaseCommand {
           uploadCallbacks,
           deploymentCallbacks
         );
-      }).finally(() => this.spinnerStop());
+      }).finally(() => spinner.stop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
         loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-          done ? this.spinnerStop() : this.spinnerStart(text)
+          done ? spinner.stop() : spinner.start(text)
         )
       );
     } catch (err) {
       progressBar.stop();
-      this.spinnerStop();
+      spinner.stop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
@@ -249,7 +250,7 @@ class DeployCommand extends BaseCommand {
 
     await this.withCloudSdk((cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
-        done ? this.spinnerStop() : this.spinnerStart(text)
+        done ? spinner.stop() : spinner.start(text)
       )
     );
   }
@@ -316,7 +317,6 @@ Object.assign(DeployCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

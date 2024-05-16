@@ -19,16 +19,17 @@ const {
 } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      this.spinnerStart('resetting environment');
+      spinner.start('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.resetEnv(flags.wait)
       );
-      this.spinnerStop();
+      spinner.stop();
       if (flags.wait) {
         cli.log(`Environment reset.`);
       } else {
@@ -37,7 +38,7 @@ class ResetCommand extends BaseCommand {
         );
       }
     } catch (err) {
-      this.spinnerStop();
+      spinner.stop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_RESET_ERROR({ messageValues: err })
@@ -53,7 +54,6 @@ Object.assign(ResetCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',

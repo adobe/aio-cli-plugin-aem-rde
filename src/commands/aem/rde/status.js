@@ -11,15 +11,11 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  Flags,
-  commonFlags,
-} = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.json) {
@@ -32,11 +28,11 @@ class StatusCommand extends BaseCommand {
   async printAsText() {
     try {
       cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
-      this.spinnerStart('retrieving environment status information');
+      spinner.start('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
-      this.spinnerStop();
+      spinner.stop();
       cli.log(`Environment: ${status.status}`);
       if (status.error) {
         throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -67,7 +63,7 @@ class StatusCommand extends BaseCommand {
         cli.log(` ${config.metadata.configPid} `)
       );
     } catch (err) {
-      this.spinnerStop();
+      spinner.stop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
@@ -104,7 +100,7 @@ class StatusCommand extends BaseCommand {
 
       cli.log(JSON.stringify(result));
     } catch (err) {
-      this.spinnerStop();
+      spinner.stop();
       cli.log(err);
     }
   }
@@ -115,15 +111,10 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
-    cicd: commonFlags.cicd,
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'output as json',
-    }),
+    json: commonFlags.json,
   },
   usage: [
     'status              # output as textual content',
