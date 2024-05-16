@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const DisableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/disable');
 const { cli } = require('../../../../../../src/lib/base-command.js');
+const Config = require('@adobe/aio-lib-core-config');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -43,7 +44,24 @@ describe('DisableRequestLogsCommand', function () {
   setupLogCapturing(sinon, cli);
 
   describe('#disableRequestLogs', function () {
+    afterEach(() => {
+      Config.get.restore();
+    });
+
     beforeEach(() => {
+      sinon
+        .stub(Config, 'get')
+        .withArgs('cloudmanager_orgid')
+        .returns('1')
+        .withArgs('cloudmanager_programid')
+        .returns('1')
+        .withArgs('cloudmanager_environmentid')
+        .returns('1')
+        .withArgs('cloudmanager_programname')
+        .returns('programName')
+        .withArgs('cloudmanager_environmentname')
+        .returns('environmentName');
+
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new DisableRequestLogsCommand([], null),
@@ -60,7 +78,7 @@ describe('DisableRequestLogsCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        'Running DisableRequestLogsCommand on cm-p84002-e204256 (cod18017-rde-development - cod18017-rde)\n' +
+        'Running DisableRequestLogsCommand on cm-p1-e1 (programName - environmentName)\n' +
           'Request-logs disabled.'
       );
     });
