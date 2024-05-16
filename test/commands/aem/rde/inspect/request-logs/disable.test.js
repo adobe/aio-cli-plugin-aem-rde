@@ -46,7 +46,7 @@ describe('DisableRequestLogsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand(['--quiet'], null),
+        new DisableRequestLogsCommand([], null),
         stubbedMethods
       );
     });
@@ -58,7 +58,11 @@ describe('DisableRequestLogsCommand', function () {
 
     it('Should return a message to the console if the disable action was successful', async function () {
       await command.run();
-      assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs disabled.');
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        'Running DisableRequestLogsCommand on cm-p84002-e204256 (cod18017-rde-development - cod18017-rde)\n' +
+          'Request-logs disabled.'
+      );
     });
 
     it('Should print out a error message when status is not 200', async function () {

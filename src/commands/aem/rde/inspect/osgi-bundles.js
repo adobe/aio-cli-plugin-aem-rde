@@ -33,9 +33,9 @@ class OsgiBundlesCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(json?.items));
+            this.log(JSON.stringify(json?.items), true);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -49,9 +49,9 @@ class OsgiBundlesCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiBundle = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(osgiBundle, null, 2));
+            this.log(JSON.stringify(osgiBundle, null, 2), true);
           } else {
-            logInTableFormat([osgiBundle]);
+            this.logInTableFormat([osgiBundle]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -68,39 +68,39 @@ class OsgiBundlesCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      id: {
-        header: 'ID',
-        minWidth: 20,
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 20,
+        },
+        name: {
+          minWidth: 7,
+        },
+        version: {
+          minWidth: 7,
+        },
+        state: {
+          minWidth: 7,
+        },
+        stateString: {
+          header: 'State String',
+          minWidth: 7,
+        },
+        startLevel: {
+          header: 'Start Level',
+          minWidth: 7,
+        },
       },
-      name: {
-        minWidth: 7,
-      },
-      version: {
-        minWidth: 7,
-      },
-      state: {
-        minWidth: 7,
-      },
-      stateString: {
-        header: 'State String',
-        minWidth: 7,
-      },
-      startLevel: {
-        header: 'Start Level',
-        minWidth: 7,
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.log(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiBundlesCommand, {

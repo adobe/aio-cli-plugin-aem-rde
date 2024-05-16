@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { cli, Flags } = require('../../../lib/base-command');
+const { Flags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const { BaseCommand, commonFlags } = require('../../../lib/base-command');
@@ -255,7 +255,7 @@ class LogsCommand extends BaseCommand {
       );
       for (let i = 0; i < logLines.length && !this.stopped; i++) {
         const line = colorize ? this.colorizeLine(logLines[i]) : logLines[i];
-        cli.log(line);
+        this.log(line, true);
         await sleepMillis(perLineDelay);
       }
     } else if (response.status === 404) {

@@ -49,7 +49,6 @@ describe('EnableRequestLogsCommand', function () {
         sinon,
         new EnableRequestLogsCommand(
           [
-            '--quiet',
             '-i',
             arg,
             '-d',
@@ -110,13 +109,17 @@ describe('EnableRequestLogsCommand', function () {
 
     it('Should produce the correct textual output.', async function () {
       await command.run();
-      assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs enabled.');
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        'Running EnableRequestLogsCommand on cm-p84002-e204256 (cod18017-rde-development - cod18017-rde)\n' +
+          'Request-logs enabled.'
+      );
     });
 
     it('Should print out a error message when status is not 200.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new EnableRequestLogsCommand(['--quiet'], null),
+        new EnableRequestLogsCommand([], null),
         stubbedErrorMethods
       );
       try {
@@ -133,7 +136,7 @@ describe('EnableRequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new EnableRequestLogsCommand(['--quiet'], null),
+        new EnableRequestLogsCommand([], null),
         stubbedThrowErrorMethods
       );
       try {

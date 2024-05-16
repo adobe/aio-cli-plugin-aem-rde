@@ -162,7 +162,7 @@ class BaseCommand extends Command {
     });
     jsonArray = jsonArray.slice(0, -2);
     jsonArray += '\n]';
-    CliUx.ux.log(jsonArray);
+    this.log(jsonArray, true);
   }
 
   /**

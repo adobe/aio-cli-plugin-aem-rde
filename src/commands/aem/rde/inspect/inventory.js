@@ -34,7 +34,7 @@ class InventoryCommand extends BaseCommand {
           if (flags.json) {
             this.logInJsonArrayFormat(json.items);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -48,9 +48,9 @@ class InventoryCommand extends BaseCommand {
         if (response.status === 200) {
           const inventory = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(inventory, null, 2));
+            this.log(JSON.stringify(inventory, null, 2), true);
           } else {
-            logInTableFormat([inventory]);
+            this.logInTableFormat([inventory]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -65,25 +65,25 @@ class InventoryCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items displayed as a JSON array.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      format: {
-        minWidth: 7,
+  /**
+   * @param {object} items - The items displayed as a JSON array.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        format: {
+          minWidth: 7,
+        },
+        id: {
+          header: 'ID',
+          minWidth: 20,
+        },
       },
-      id: {
-        header: 'ID',
-        minWidth: 20,
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.log(s, true) }
+    );
+  }
 }
 
 Object.assign(InventoryCommand, {

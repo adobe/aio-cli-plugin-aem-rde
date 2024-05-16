@@ -11,11 +11,7 @@
  */
 'use strict';
 
-const {
-  cli,
-  BaseCommand,
-  commonFlags,
-} = require('../../../../../lib/base-command');
+const { BaseCommand, commonFlags } = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
@@ -26,7 +22,7 @@ class DisableRequestLogsCommand extends BaseCommand {
         cloudSdkAPI.disableRequestLogs(flags.target)
       );
       if (response.status === 200) {
-        cli.log('Request-logs disabled.');
+        this.log('Request-logs disabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],

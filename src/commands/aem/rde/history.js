@@ -29,7 +29,7 @@ class HistoryCommand extends BaseCommand {
           const json = await response.json();
           this.spinnerStop();
           if (json.items.length === 0) {
-            cli.log('There are no updates yet.');
+            this.log('There are no updates yet.');
           } else {
             json.items.forEach(rdeUtils.logChange);
           }
