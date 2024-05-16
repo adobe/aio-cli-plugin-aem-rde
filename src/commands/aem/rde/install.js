@@ -192,7 +192,7 @@ class DeployCommand extends BaseCommand {
         }
       }
     } catch (err) {
-      this.log(err);
+      this.doLog(err);
       return;
     }
 
@@ -204,7 +204,7 @@ class DeployCommand extends BaseCommand {
           abort: () => progressBar.stop(),
           start: (size, msg) => {
             if (msg) {
-              this.log(msg);
+              this.doLog(msg);
             }
             progressBar.start(size, 0);
           },

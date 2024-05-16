@@ -33,7 +33,7 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(json.items), true);
+            this.doLog(JSON.stringify(json.items), true);
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -50,7 +50,7 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiService = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(osgiService, null, 2), true);
+            this.doLog(JSON.stringify(osgiService, null, 2), true);
           } else {
             this.logInTableFormat([osgiService]);
           }
@@ -91,7 +91,7 @@ class OsgiServicesCommand extends BaseCommand {
           minWidth: 7,
         },
       },
-      { printLine: (s) => this.log(s, true) }
+      { printLine: (s) => this.doLog(s, true) }
     );
   }
 }

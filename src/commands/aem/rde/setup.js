@@ -84,7 +84,7 @@ class SetupCommand extends BaseCommand {
       return orgMap;
     } catch (err) {
       if (err.code === 'CONTEXT_NOT_CONFIGURED') {
-        this.log('No IMS context found. Please run `aio login` first.');
+        this.doLog('No IMS context found. Please run `aio login` first.');
       }
       return null;
     }
@@ -103,12 +103,12 @@ class SetupCommand extends BaseCommand {
     } else if (nrOfOrganizations === 1) {
       const orgName = Object.keys(organizations)[0];
       const orgId = organizations[orgName];
-      this.log(`Selected only organization: ${orgName} - ${orgId}`);
+      this.doLog(`Selected only organization: ${orgName} - ${orgId}`);
       return orgId;
     } else {
       selectedOrg = await this.chooseOrganizationFromList(organizations);
     }
-    this.log(`Selected organization: ${selectedOrg}`);
+    this.doLog(`Selected organization: ${selectedOrg}`);
     return selectedOrg;
   }
 
@@ -135,9 +135,9 @@ class SetupCommand extends BaseCommand {
   }
 
   async fallbackToManualOrganizationId() {
-    this.log(chalk.yellow('Could not find an organization ID automatically.'));
-    this.log(chalk.yellow('Please enter your organization ID manually.'));
-    this.log(chalk.gray(`See ${LINK_ORGID}`));
+    this.doLog(chalk.yellow('Could not find an organization ID automatically.'));
+    this.doLog(chalk.yellow('Please enter your organization ID manually.'));
+    this.doLog(chalk.gray(`See ${LINK_ORGID}`));
     const openLink = await inquirer.prompt([
       {
         type: 'confirm',
@@ -168,13 +168,13 @@ class SetupCommand extends BaseCommand {
       this.spinnerStop();
 
       if (!programsCached || programsCached.length === 0) {
-        this.log(chalk.red('No programs found for the selected organization.'));
+        this.doLog(chalk.red('No programs found for the selected organization.'));
         return null;
       }
     }
 
     if (programsCached.length === 1) {
-      this.log(`Selected only program: ${programsCached[0].id}`);
+      this.doLog(`Selected only program: ${programsCached[0].id}`);
       return programsCached[0].id;
     }
 
@@ -214,15 +214,15 @@ class SetupCommand extends BaseCommand {
     environmentsCached = environmentsCached.filter((env) => env.type === 'rde');
 
     if (environmentsCached.length === 0) {
-      this.log(
+      this.doLog(
         chalk.red(`No environments found for program ${selectedProgram}`)
       );
-      this.log('==> Please choose a different program');
+      this.doLog('==> Please choose a different program');
       return null;
     }
 
     if (environmentsCached.length === 1) {
-      this.log(`Selected only environment: ${environmentsCached[0].id}`);
+      this.doLog(`Selected only environment: ${environmentsCached[0].id}`);
       return environmentsCached[0].id;
     }
 
@@ -258,7 +258,7 @@ class SetupCommand extends BaseCommand {
         require('inquirer-autocomplete-prompt')
       );
 
-      this.log(`Setup the CLI configuration necessary to use the RDE commands.`);
+      this.doLog(`Setup the CLI configuration necessary to use the RDE commands.`);
 
       const storeLocal = await inquirer.prompt([
         {
@@ -284,7 +284,7 @@ class SetupCommand extends BaseCommand {
 
         selectedEnvironmentId = await this.getEnvironmentId(selectedProgramId);
         if (selectedEnvironmentId === null && programsCached?.length === 1) {
-          this.log(
+          this.doLog(
             chalk.red(
               'No program or environment found for the selected organization.'
             )
@@ -300,7 +300,7 @@ class SetupCommand extends BaseCommand {
         (e) => e.id === selectedProgramId
       ).name;
 
-      this.log(
+      this.doLog(
         chalk.green(
           `Selected ${concatEnvironemntId(selectedProgramId, selectedEnvironmentId)}: ${selectedProgramName} - ${selectedEnvironmentName}`
         )
@@ -337,7 +337,7 @@ class SetupCommand extends BaseCommand {
         selectedEnvironmentId
       );
 
-      this.log(
+      this.doLog(
         `Setup complete. Use 'aio help aem rde' to see the available commands.`
       );
     } catch (err) {
@@ -372,17 +372,17 @@ class SetupCommand extends BaseCommand {
     selectedEnvironment
   ) {
     if (prevOrg && prevOrg !== orgId) {
-      this.log(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
+      this.doLog(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
     }
     if (prevProgram && prevProgram !== selectedProgram) {
-      this.log(
+      this.doLog(
         chalk.gray(
           `Your previous program ID was: ${prevProgram} (name: ${prevProgramName})`
         )
       );
     }
     if (prevEnv && prevEnv !== selectedEnvironment) {
-      this.log(
+      this.doLog(
         chalk.gray(
           `Your previous environment ID was: ${prevEnv} (name: ${prevEnvName})`
         )

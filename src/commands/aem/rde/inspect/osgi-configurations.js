@@ -33,7 +33,7 @@ class OsgiConfigurationsCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(json?.items), true);
+            this.doLog(JSON.stringify(json?.items), true);
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -49,7 +49,7 @@ class OsgiConfigurationsCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiConfiguration = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(osgiConfiguration, null, 2), true);
+            this.doLog(JSON.stringify(osgiConfiguration, null, 2), true);
           } else {
             this.logInTableFormat([osgiConfiguration]);
           }
@@ -80,7 +80,7 @@ class OsgiConfigurationsCommand extends BaseCommand {
           header: 'PID',
         },
       },
-      { printLine: (s) => this.log(s, true) }
+      { printLine: (s) => this.doLog(s, true) }
     );
   }
 }

@@ -48,7 +48,7 @@ class RequestLogsCommand extends BaseCommand {
         if (response?.status === 200) {
           const requestLog = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(requestLog, null, 2), true);
+            this.doLog(JSON.stringify(requestLog, null, 2), true);
           } else {
             this.logInTableFormat([requestLog]);
           }
@@ -86,7 +86,7 @@ class RequestLogsCommand extends BaseCommand {
           minWidth: 7,
         },
       },
-      { printLine: (s) => this.log(s, true) }
+      { printLine: (s) => this.doLog(s, true) }
     );
   }
 }

@@ -49,7 +49,7 @@ class BaseCommand extends Command {
     this.setupParams(flags);
 
     if (!flags.quiet && this.constructor.name !== 'SetupCommand') {
-      CliUx.ux.log(this.getLogHeader());
+      this.doLog(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
         const executeCommand = await inquirer.prompt([
@@ -61,7 +61,7 @@ class BaseCommand extends Command {
           },
         ]);
         if (!executeCommand.executeCommand) {
-          CliUx.ux.log('Command execution aborted.');
+          this.doLog('Command execution aborted.');
           return;
         }
       }
@@ -117,7 +117,7 @@ class BaseCommand extends Command {
     return '';
   }
 
-  log(message, always = false) {
+  doLog(message, always = false) {
     if (always || !this.flags.quiet) {
       CliUx.ux.log(message);
     }
@@ -162,7 +162,7 @@ class BaseCommand extends Command {
     });
     jsonArray = jsonArray.slice(0, -2);
     jsonArray += '\n]';
-    this.log(jsonArray, true);
+    this.doLog(jsonArray, true);
   }
 
   /**

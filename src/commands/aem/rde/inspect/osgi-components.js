@@ -33,7 +33,7 @@ class OsgiComponentsCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(json?.items), true);
+            this.doLog(JSON.stringify(json?.items), true);
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -49,7 +49,7 @@ class OsgiComponentsCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiComponent = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(osgiComponent, null, 2), true);
+            this.doLog(JSON.stringify(osgiComponent, null, 2), true);
           } else {
             this.logInTableFormat([osgiComponent]);
           }
@@ -93,7 +93,7 @@ class OsgiComponentsCommand extends BaseCommand {
           header: 'Implementation Class',
         },
       },
-      { printLine: (s) => this.log(s, true) }
+      { printLine: (s) => this.doLog(s, true) }
     );
   }
 }

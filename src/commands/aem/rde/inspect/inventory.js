@@ -48,7 +48,7 @@ class InventoryCommand extends BaseCommand {
         if (response.status === 200) {
           const inventory = await response.json();
           if (flags.json) {
-            this.log(JSON.stringify(inventory, null, 2), true);
+            this.doLog(JSON.stringify(inventory, null, 2), true);
           } else {
             this.logInTableFormat([inventory]);
           }
@@ -81,7 +81,7 @@ class InventoryCommand extends BaseCommand {
           minWidth: 20,
         },
       },
-      { printLine: (s) => this.log(s, true) }
+      { printLine: (s) => this.doLog(s, true) }
     );
   }
 }

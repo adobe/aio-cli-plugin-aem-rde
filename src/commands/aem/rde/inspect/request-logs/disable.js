@@ -22,7 +22,7 @@ class DisableRequestLogsCommand extends BaseCommand {
         cloudSdkAPI.disableRequestLogs(flags.target)
       );
       if (response.status === 200) {
-        this.log('Request-logs disabled.');
+        this.doLog('Request-logs disabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],

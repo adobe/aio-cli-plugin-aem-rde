@@ -26,13 +26,13 @@ class StatusCommand extends BaseCommand {
 
   async printAsText() {
     try {
-      this.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
+      this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
       this.spinnerStop();
-      this.log(`Environment: ${status.status}`, true);
+      this.doLog(`Environment: ${status.status}`, true);
       if (status.error) {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [status.status, status.error],
@@ -41,27 +41,27 @@ class StatusCommand extends BaseCommand {
 
       const grouped = groupArtifacts(status.items);
 
-      this.log('- Bundles Author:', true);
+      this.doLog('- Bundles Author:', true);
       grouped.author['osgi-bundle'].forEach((bundle) =>
-        this.log(
+        this.doLog(
           ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
           true
         )
       );
-      this.log('- Bundles Publish:', true);
+      this.doLog('- Bundles Publish:', true);
       grouped.publish['osgi-bundle'].forEach((bundle) =>
-        this.log(
+        this.doLog(
           ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
           true
         )
       );
-      this.log('- Configurations Author:', true);
+      this.doLog('- Configurations Author:', true);
       grouped.author['osgi-config'].forEach((config) =>
-        this.log(` ${config.metadata.configPid} `, true)
+        this.doLog(` ${config.metadata.configPid} `, true)
       );
-      this.log('- Configurations Publish:', true);
+      this.doLog('- Configurations Publish:', true);
       grouped.publish['osgi-config'].forEach((config) =>
-        this.log(` ${config.metadata.configPid} `, true)
+        this.doLog(` ${config.metadata.configPid} `, true)
       );
     } catch (err) {
       this.spinnerStop();
@@ -99,10 +99,10 @@ class StatusCommand extends BaseCommand {
         };
       }
 
-      this.log(JSON.stringify(result), true);
+      this.doLog(JSON.stringify(result), true);
     } catch (err) {
       this.spinnerStop();
-      this.log(err);
+      this.doLog(err);
     }
   }
 }

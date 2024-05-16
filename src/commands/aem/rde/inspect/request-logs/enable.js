@@ -59,7 +59,7 @@ class EnableRequestLogsCommand extends BaseCommand {
       );
 
       if (response.status === 201) {
-        this.log('Request-logs enabled.');
+        this.doLog('Request-logs enabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
