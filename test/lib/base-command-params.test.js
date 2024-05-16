@@ -40,8 +40,19 @@ const stubbedMethods = {
     }),
 };
 
+/**
+ *
+ * @param sinon
+ * @param CommandClass
+ * @param args
+ * @param stubMethods
+ */
 function createCommandStub(sinon, CommandClass, args, stubMethods) {
-  return createCloudSdkAPIStub(sinon, new CommandClass(args, null), stubMethods);
+  return createCloudSdkAPIStub(
+    sinon,
+    new CommandClass(args, null),
+    stubMethods
+  );
 }
 
 let command, cloudSdkApiStub;
@@ -51,14 +62,14 @@ describe('ParamTestCommand take params', function () {
     [command, cloudSdkApiStub] = createCommandStub(
       sinon,
       StatusCommand,
-        [
-          '--organizationId',
-          'testOrg',
-          '--programId',
-          'testProg',
-          '--environmentId',
-          'testEnv',
-        ],
+      [
+        '--organizationId',
+        'testOrg',
+        '--programId',
+        'testProg',
+        '--environmentId',
+        'testEnv',
+      ],
       stubbedMethods
     );
   });
@@ -74,13 +85,13 @@ describe('ParamTestCommand take params', function () {
 describe('ParamTestCommand use config values when flags are not provided, empty, or whitespace', function () {
   beforeEach(() => {
     sinon
-        .stub(Config, 'get')
-        .withArgs('cloudmanager_orgid')
-        .returns('customOrg123')
-        .withArgs('cloudmanager_programid')
-        .returns('customProg123')
-        .withArgs('cloudmanager_environmentid')
-        .returns('customEnv123');
+      .stub(Config, 'get')
+      .withArgs('cloudmanager_orgid')
+      .returns('customOrg123')
+      .withArgs('cloudmanager_programid')
+      .returns('customProg123')
+      .withArgs('cloudmanager_environmentid')
+      .returns('customEnv123');
   });
 
   afterEach(() => {
@@ -89,17 +100,30 @@ describe('ParamTestCommand use config values when flags are not provided, empty,
 
   const testCases = [
     { args: [], description: 'flags are not provided' },
-    { args: ['--organizationId', '', '--programId', '', '--environmentId', ''], description: 'flags are empty' },
-    { args: ['--organizationId', ' ', '--programId', ' ', '--environmentId', ' '], description: 'flags are whitespace' }
+    {
+      args: ['--organizationId', '', '--programId', '', '--environmentId', ''],
+      description: 'flags are empty',
+    },
+    {
+      args: [
+        '--organizationId',
+        ' ',
+        '--programId',
+        ' ',
+        '--environmentId',
+        ' ',
+      ],
+      description: 'flags are whitespace',
+    },
   ];
 
   testCases.forEach(({ args, description }) => {
-    it('should use .aio configuration values when ${description}', async function () {
+    it(`should use .aio configuration values when ${description}`, async function () {
       [command, cloudSdkApiStub] = createCommandStub(
-          sinon,
-          StatusCommand,
-          args,
-          stubbedMethods
+        sinon,
+        StatusCommand,
+        args,
+        stubbedMethods
       );
       await command.run();
       assert.strictEqual(command._orgId, 'customOrg123');
