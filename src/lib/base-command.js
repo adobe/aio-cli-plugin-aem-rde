@@ -13,7 +13,6 @@
 // 3rd party dependencies
 const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
-const spinner = require('ora')();
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
