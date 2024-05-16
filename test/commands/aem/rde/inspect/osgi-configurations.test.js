@@ -111,7 +111,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiConfigurationsCommand([ '--json'], null),
+        new OsgiConfigurationsCommand(['--json'], null),
         stubbedMethods
       );
 
@@ -166,7 +166,7 @@ describe('OsgiConfigurationsCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiConfigurationsCommand([ reqId], null),
+        new OsgiConfigurationsCommand([reqId], null),
         stubbedMethods
       );
     });
@@ -196,7 +196,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiConfigurationsCommand([ '0', '--json'], null),
+        new OsgiConfigurationsCommand(['0', '--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -214,7 +214,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiConfigurationsCommand([ '1'], null),
+        new OsgiConfigurationsCommand(['1'], null),
 
         { ...stubbedMethods, getOsgiConfiguration: () => errorObj }
       );
@@ -232,7 +232,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiConfigurationsCommand([ reqId], null),
+        new OsgiConfigurationsCommand([reqId], null),
         {
           ...stubbedMethods,
           getOsgiConfiguration: stubbedThrowErrorMethod,
