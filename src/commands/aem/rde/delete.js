@@ -13,7 +13,6 @@
 
 const {
   BaseCommand,
-  cli,
   commonFlags,
   Flags,
 } = require('../../../lib/base-command');
@@ -55,7 +54,7 @@ class DeleteCommand extends BaseCommand {
           cloudSdkAPI.delete(artifact.id, flags.force)
         );
         await this.withCloudSdk((cloudSdkAPI) =>
-          loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
+          loadUpdateHistory(cloudSdkAPI, change.updateId, this, (done, text) =>
             done ? this.spinnerStop() : this.spinnerStart(text)
           )
         );

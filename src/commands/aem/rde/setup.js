@@ -372,17 +372,17 @@ class SetupCommand extends BaseCommand {
     selectedEnvironment
   ) {
     if (prevOrg && prevOrg !== orgId) {
-      cli.info(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
+      this.log(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
     }
     if (prevProgram && prevProgram !== selectedProgram) {
-      cli.info(
+      this.log(
         chalk.gray(
           `Your previous program ID was: ${prevProgram} (name: ${prevProgramName})`
         )
       );
     }
     if (prevEnv && prevEnv !== selectedEnvironment) {
-      cli.info(
+      this.log(
         chalk.gray(
           `Your previous environment ID was: ${prevEnv} (name: ${prevEnvName})`
         )

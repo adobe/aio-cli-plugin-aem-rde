@@ -135,13 +135,13 @@ async function processInputFile(isLocalFile, type, inputPath) {
       if (!file.isDirectory()) {
         break;
       }
-      return await frontendInputBuild(cli, inputPath);
+      return await frontendInputBuild(this, inputPath);
     }
     case 'dispatcher-config': {
       if (!file.isDirectory()) {
         break;
       }
-      return await dispatcherInputBuild(cli, inputPath);
+      return await dispatcherInputBuild(this, inputPath);
     }
     default: {
       if (file.isDirectory()) {
@@ -234,7 +234,7 @@ class DeployCommand extends BaseCommand {
       }).finally(() => this.spinnerStop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
+        loadUpdateHistory(cloudSdkAPI, change.updateId, this, (done, text) =>
           done ? this.spinnerStop() : this.spinnerStart(text)
         )
       );

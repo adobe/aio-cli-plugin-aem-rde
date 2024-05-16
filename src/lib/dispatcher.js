@@ -16,22 +16,14 @@ const os = require('os');
 const path = require('path');
 const archiver = require('archiver');
 
-/**
- * @param closure
- * @param successPredicate
- * @param retryIntervalSeconds
- * @param maxRetries
- * @param cli
- * @param inputPath
- */
-async function dispatcherInputBuild(cli, inputPath) {
+async function dispatcherInputBuild(basecommand, inputPath) {
   return new Promise((resolve, reject) => {
     fs.mkdtemp(path.join(os.tmpdir(), 'aio-rde-'), (err, folder) => {
       if (err) {
         return reject(err);
       }
       const targetZipPath = path.join(folder, 'dispatcher.zip');
-      return archiveDirectory(cli, inputPath, targetZipPath)
+      return archiveDirectory(basecommand, inputPath, targetZipPath)
         .then((zipSizeBytes) =>
           resolve({
             inputPath: fs.realpathSync(targetZipPath),
@@ -43,20 +35,16 @@ async function dispatcherInputBuild(cli, inputPath) {
   });
 }
 
-/**
- *
- * @param cli
- * @param sourceDir
- * @param outputFilePath
- */
-async function archiveDirectory(cli, sourceDir, outputFilePath) {
+async function archiveDirectory(basecommand, sourceDir, outputFilePath) {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputFilePath);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
     output.on('close', function () {
       const zipSizeBytes = archive.pointer();
-      cli.log(`Zipped file ${outputFilePath} of ${zipSizeBytes} total bytes`);
+      basecommand.log(
+        `Zipped file ${outputFilePath} of ${zipSizeBytes} total bytes`
+      );
       return resolve(zipSizeBytes);
     });
 
