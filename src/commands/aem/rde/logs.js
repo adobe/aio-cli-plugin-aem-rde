@@ -288,8 +288,6 @@ Object.assign(LogsCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
     target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',

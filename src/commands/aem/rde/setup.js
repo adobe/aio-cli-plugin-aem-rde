@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const { BaseCommand, cli } = require('../../../lib/base-command');
 const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -395,8 +395,7 @@ Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',
   args: [],
   aliases: [],
-  flags: {
-  },
+  flags: {},
 });
 
 module.exports = SetupCommand;

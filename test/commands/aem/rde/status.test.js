@@ -69,8 +69,7 @@ describe('StatusCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        'Running StatusCommand on cm-p12345-e54321\n' +
-          'Info for cm-p12345-e54321\n' +
+        'Info for cm-p12345-e54321\n' +
           'Environment: Ready\n' +
           '- Bundles Author:\n' +
           ' test-bundle-1.0.0\n' +
@@ -85,7 +84,7 @@ describe('StatusCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new StatusCommand(['--json', '--quiet'], null),
+        new StatusCommand(['--json'], null),
         stubbedMethods
       );
     });

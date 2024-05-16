@@ -13,7 +13,6 @@
 // 3rd party dependencies
 const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
-const inquirer = require('inquirer');
 const spinner = require('ora')();
 
 // Adobe dependencies
@@ -47,38 +46,7 @@ class BaseCommand extends Command {
     }
 
     this.setupParams(flags);
-
-    if (!flags.quiet && this.constructor.name !== 'SetupCommand') {
-      CliUx.ux.log(this.getLogHeader());
-      const lastAction = Config.get('rde_lastaction');
-      if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
-        const executeCommand = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'executeCommand',
-            message: `The last RDE command ran more than 24h ago, do you want to continue running the command on ${concatEnvironemntId(this._programId, this._environmentId)}?`,
-            default: true,
-          },
-        ]);
-        if (!executeCommand.executeCommand) {
-          CliUx.ux.log('Command execution aborted.');
-          return;
-        }
-      }
-      Config.set('rde_lastaction', Date.now());
-    }
     await this.runCommand(args, flags);
-  }
-
-  getLogHeader() {
-    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
-  }
-
-  printNamesWhenAvailable() {
-    if (this._programName && this._environmentName) {
-      return ` (${this._programName} - ${this._environmentName})`;
-    }
-    return '';
   }
 
   setupParams(flags) {
@@ -113,9 +81,7 @@ class BaseCommand extends Command {
   }
 
   spinnerStart(message) {
-    if (!this.flags.quiet) {
-      spinner.start(message);
-    }
+    spinner.start(message);
   }
 
   spinnerIsSpinning() {
@@ -268,21 +234,6 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    quiet: Flags.boolean({
-      description: 'Generates no log output and asks for no user input',
-      char: 'q',
-      multiple: false,
-      required: false,
-      default: false,
-    }),
-    json: Flags.boolean({
-      description:
-        'Returns json output to validate command execution by the caller',
-      char: 'j',
-      multiple: false,
-      required: false,
-      default: false,
-    }),
     targetInspect: Flags.string({
       char: 's',
       description: "The target instance type. Default 'author'.",
@@ -329,6 +280,11 @@ module.exports = {
       description: 'The environment id to use while running this command',
       multiple: false,
       required: false,
+    }),
+    json: Flags.boolean({
+      char: 'j',
+      hidden: false,
+      description: 'output as json',
     }),
   },
 };

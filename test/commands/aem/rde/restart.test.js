@@ -12,7 +12,7 @@ describe('RestartCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new RestartCommand(['--quiet'], null),
+        new RestartCommand([], null),
         {
           restartEnv: () => {},
         }

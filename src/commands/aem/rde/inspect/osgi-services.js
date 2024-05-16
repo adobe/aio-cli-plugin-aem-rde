@@ -109,11 +109,10 @@ Object.assign(OsgiServicesCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
+    json: commonFlags.json,
   },
 });
 

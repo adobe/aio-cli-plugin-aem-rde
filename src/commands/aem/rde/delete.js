@@ -94,8 +94,6 @@ Object.assign(DeleteCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

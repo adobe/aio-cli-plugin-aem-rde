@@ -11,7 +11,7 @@ describe('ResetCommand', function () {
     it('cloudSDKAPI.resetEnv() has been called', async function () {
       const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new ResetCommand(['--quiet'], null),
+        new ResetCommand([], null),
         {
           resetEnv: () => {},
         }

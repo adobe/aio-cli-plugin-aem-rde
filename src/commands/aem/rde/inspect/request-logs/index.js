@@ -104,10 +104,9 @@ Object.assign(RequestLogsCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
     target: commonFlags.targetInspect,
     include: commonFlags.include,
+    json: commonFlags.json,
   },
 });
 

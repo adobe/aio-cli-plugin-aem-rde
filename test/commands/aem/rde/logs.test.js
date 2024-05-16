@@ -93,7 +93,7 @@ describe('LogsCommand', function () {
   beforeEach(() => {
     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new LogsCommand(['--quiet', '-d com.adobe', '--no-color'], null),
+      new LogsCommand([ '-d com.adobe', '--no-color'], null),
       stubbedMethods
     );
   });
@@ -159,7 +159,7 @@ describe('LogsCommand', function () {
     it('Should print out the logs in color', async function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new LogsCommand(['--quiet', '-d com.adobe'], null),
+        new LogsCommand([ '-d com.adobe'], null),
         stubbedMethods
       );
 
@@ -241,7 +241,7 @@ describe('LogsCommand', function () {
         sinon,
         new LogsCommand(
           [
-            '--quiet',
+            
             '-i',
             arg,
             '-d',

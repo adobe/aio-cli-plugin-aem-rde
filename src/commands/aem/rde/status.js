@@ -110,11 +110,10 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
+    json: commonFlags.json,
   },
   usage: [
     'status              # output as textual content',

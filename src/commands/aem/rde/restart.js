@@ -41,8 +41,6 @@ Object.assign(RestartCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    quiet: commonFlags.quiet,
-    json: commonFlags.json,
   },
 });
 
