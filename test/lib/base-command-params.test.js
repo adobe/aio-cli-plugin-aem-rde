@@ -15,14 +15,6 @@ const { createCloudSdkAPIStub } = require('../util');
 const sinon = require('sinon').createSandbox();
 const Config = require('@adobe/aio-lib-core-config');
 
-/* class NoParamTestCommand extends ParamTestCommand {
-  setupParams() {
-    this._orgId = 'customOrg123';
-    this._programId = 'customProg123';
-    this._environmentId = 'customEnv123';
-  }
-}
- */
 const stubbedMethods = {
   getArtifacts: () =>
     Object.create({
@@ -48,13 +40,17 @@ const stubbedMethods = {
     }),
 };
 
+function createCommandStub(sinon, CommandClass, args, stubMethods) {
+  return createCloudSdkAPIStub(sinon, new CommandClass(args, null), stubMethods);
+}
+
 let command, cloudSdkApiStub;
 
 describe('ParamTestCommand take params', function () {
   beforeEach(() => {
-    [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+    [command, cloudSdkApiStub] = createCommandStub(
       sinon,
-      new StatusCommand(
+      StatusCommand,
         [
           '--organizationId',
           'testOrg',
@@ -63,8 +59,6 @@ describe('ParamTestCommand take params', function () {
           '--environmentId',
           'testEnv',
         ],
-        null
-      ),
       stubbedMethods
     );
   });
@@ -77,95 +71,40 @@ describe('ParamTestCommand take params', function () {
   });
 });
 
-describe('ParamTestCommand take config when unset', function () {
+describe('ParamTestCommand use config values when flags are not provided, empty, or whitespace', function () {
   beforeEach(() => {
     sinon
-      .stub(Config, 'get')
-      .withArgs('cloudmanager_orgid')
-      .returns('customOrg123')
-      .withArgs('cloudmanager_programid')
-      .returns('customProg123')
-      .withArgs('cloudmanager_environmentid')
-      .returns('customEnv123');
-    [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new StatusCommand([], null),
-      stubbedMethods
-    );
+        .stub(Config, 'get')
+        .withArgs('cloudmanager_orgid')
+        .returns('customOrg123')
+        .withArgs('cloudmanager_programid')
+        .returns('customProg123')
+        .withArgs('cloudmanager_environmentid')
+        .returns('customEnv123');
   });
 
   afterEach(() => {
     Config.get.restore();
   });
 
-  it('should use .aio configuration values when flags are not provided', async function () {
-    await command.run();
-    assert.equal(command._orgId, 'customOrg123');
-    assert.equal(command._programId, 'customProg123');
-    assert.equal(command._environmentId, 'customEnv123');
-  });
-});
+  const testCases = [
+    { args: [], description: 'flags are not provided' },
+    { args: ['--organizationId', '', '--programId', '', '--environmentId', ''], description: 'flags are empty' },
+    { args: ['--organizationId', ' ', '--programId', ' ', '--environmentId', ' '], description: 'flags are whitespace' }
+  ];
 
-describe('ParamTestCommand take config when empty', function () {
-  beforeEach(() => {
-    sinon
-      .stub(Config, 'get')
-      .withArgs('cloudmanager_orgid')
-      .returns('customOrg123')
-      .withArgs('cloudmanager_programid')
-      .returns('customProg123')
-      .withArgs('cloudmanager_environmentid')
-      .returns('customEnv123');
-    [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new StatusCommand(
-        ['--organizationId', '', '--programId', '', '--environmentId', ''],
-        null
-      ),
-      stubbedMethods
-    );
-  });
-
-  afterEach(() => {
-    Config.get.restore();
-  });
-
-  it('should use .aio configuration values when flags are not provided', async function () {
-    await command.run();
-    assert.equal(command._orgId, 'customOrg123');
-    assert.equal(command._programId, 'customProg123');
-    assert.equal(command._environmentId, 'customEnv123');
-  });
-});
-
-describe('ParamTestCommand take config when whitespace', function () {
-  beforeEach(() => {
-    sinon
-      .stub(Config, 'get')
-      .withArgs('cloudmanager_orgid')
-      .returns('customOrg123')
-      .withArgs('cloudmanager_programid')
-      .returns('customProg123')
-      .withArgs('cloudmanager_environmentid')
-      .returns('customEnv123');
-    [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-      sinon,
-      new StatusCommand(
-        ['--organizationId', ' ', '--programId', ' ', '--environmentId', ' '],
-        null
-      ),
-      stubbedMethods
-    );
-  });
-
-  afterEach(() => {
-    Config.get.restore();
-  });
-
-  it('should use .aio configuration values when flags are not provided', async function () {
-    await command.run();
-    assert.equal(command._orgId, 'customOrg123');
-    assert.equal(command._programId, 'customProg123');
-    assert.equal(command._environmentId, 'customEnv123');
+  testCases.forEach(({ args, description }) => {
+    it('should use .aio configuration values when ${description}', async function () {
+      [command, cloudSdkApiStub] = createCommandStub(
+          sinon,
+          StatusCommand,
+          args,
+          stubbedMethods
+      );
+      await command.run();
+      assert.strictEqual(command._orgId, 'customOrg123');
+      assert.strictEqual(command._programId, 'customProg123');
+      assert.strictEqual(command._environmentId, 'customEnv123');
+    });
   });
 });

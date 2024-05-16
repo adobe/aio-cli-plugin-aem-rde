@@ -117,11 +117,10 @@ describe('Inventory', function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new Inventory([], null),
-
-        {
-          ...stubbedMethods,
-          getInventories: stubbedThrowErrorMethod,
-        }
+          {
+            ...stubbedMethods,
+            getInventories: stubbedThrowErrorMethod,
+          }
       );
       try {
         await command.run();
@@ -185,8 +184,7 @@ describe('Inventory', function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
         new Inventory(['1'], null),
-
-        { ...stubbedMethods, getInventory: () => errorObj }
+          { ...stubbedMethods, getInventory: () => errorObj }
       );
       try {
         await command.run();
