@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
+const { BaseCommand, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
@@ -26,13 +26,13 @@ class StatusCommand extends BaseCommand {
 
   async printAsText() {
     try {
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
+      this.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
       this.spinnerStop();
-      cli.log(`Environment: ${status.status}`);
+      this.log(`Environment: ${status.status}`, true);
       if (status.error) {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [status.status, status.error],
@@ -41,25 +41,27 @@ class StatusCommand extends BaseCommand {
 
       const grouped = groupArtifacts(status.items);
 
-      cli.log('- Bundles Author:');
+      this.log('- Bundles Author:', true);
       grouped.author['osgi-bundle'].forEach((bundle) =>
-        cli.log(
-          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        this.log(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
+          true
         )
       );
-      cli.log('- Bundles Publish:');
+      this.log('- Bundles Publish:', true);
       grouped.publish['osgi-bundle'].forEach((bundle) =>
-        cli.log(
-          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        this.log(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
+          true
         )
       );
-      cli.log('- Configurations Author:');
+      this.log('- Configurations Author:', true);
       grouped.author['osgi-config'].forEach((config) =>
-        cli.log(` ${config.metadata.configPid} `)
+        this.log(` ${config.metadata.configPid} `, true)
       );
-      cli.log('- Configurations Publish:');
+      this.log('- Configurations Publish:', true);
       grouped.publish['osgi-config'].forEach((config) =>
-        cli.log(` ${config.metadata.configPid} `)
+        this.log(` ${config.metadata.configPid} `, true)
       );
     } catch (err) {
       this.spinnerStop();
@@ -97,10 +99,10 @@ class StatusCommand extends BaseCommand {
         };
       }
 
-      cli.log(JSON.stringify(result));
+      this.log(JSON.stringify(result), true);
     } catch (err) {
       this.spinnerStop();
-      cli.log(err);
+      this.log(err, true);
     }
   }
 }

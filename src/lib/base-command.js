@@ -117,6 +117,12 @@ class BaseCommand extends Command {
     return '';
   }
 
+  log(message, always = false) {
+    if (always || !this.flags.quiet) {
+      CliUx.ux.log(message);
+    }
+  }
+
   spinnerStart(message) {
     if (!this.flags.quiet) {
       spinner.start(message);
