@@ -102,7 +102,7 @@ class StatusCommand extends BaseCommand {
       this.log(JSON.stringify(result), true);
     } catch (err) {
       this.spinnerStop();
-      this.log(err, true);
+      this.log(err);
     }
   }
 }
