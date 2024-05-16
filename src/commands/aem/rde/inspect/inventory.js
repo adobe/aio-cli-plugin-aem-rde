@@ -31,7 +31,7 @@ class InventoryCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             this.logInJsonArrayFormat(json.items);
           } else {
             logInTableFormat(json?.items);
@@ -47,7 +47,7 @@ class InventoryCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const inventory = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(inventory, null, 2));
           } else {
             logInTableFormat([inventory]);
@@ -99,10 +99,10 @@ Object.assign(InventoryCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
+    quiet: commonFlags.quiet,
+    json: commonFlags.json,
     target: commonFlags.targetInspect,
     include: commonFlags.include,
-    output: commonFlags.output,
   },
 });
 

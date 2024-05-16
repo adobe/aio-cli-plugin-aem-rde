@@ -85,7 +85,7 @@ describe('StatusCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new StatusCommand(['--json', '--cicd'], null),
+        new StatusCommand(['--json', '--quiet'], null),
         stubbedMethods
       );
     });

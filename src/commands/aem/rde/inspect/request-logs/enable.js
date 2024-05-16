@@ -83,7 +83,8 @@ Object.assign(EnableRequestLogsCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
+    quiet: commonFlags.quiet,
+    json: commonFlags.json,
     target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',

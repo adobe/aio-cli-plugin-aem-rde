@@ -48,7 +48,7 @@ class BaseCommand extends Command {
 
     this.setupParams(flags);
 
-    if (!flags.cicd && this.constructor.name !== 'SetupCommand') {
+    if (!flags.quiet && this.constructor.name !== 'SetupCommand') {
       CliUx.ux.log(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
@@ -113,7 +113,7 @@ class BaseCommand extends Command {
   }
 
   spinnerStart(message) {
-    if (!this.flags.cicd) {
+    if (!this.flags.quiet) {
       spinner.start(message);
     }
   }
@@ -268,9 +268,17 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    cicd: Flags.boolean({
+    quiet: Flags.boolean({
+      description: 'Generates no log output and asks for no user input',
+      char: 'q',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+    json: Flags.boolean({
       description:
-        'Indicates that the command is being run in a CI/CD environment, resulting in machine readable output and avoiding user input.',
+        'Returns json output to validate command execution by the caller',
+      char: 'j',
       multiple: false,
       required: false,
       default: false,
@@ -306,13 +314,6 @@ module.exports = {
       multiple: false,
       required: false,
       common: true,
-    }),
-    output: Flags.string({
-      char: 'o',
-      description: 'Output format.',
-      multiple: false,
-      required: false,
-      options: ['json'],
     }),
     organizationId: Flags.string({
       description: 'The organization id to use while running this command',

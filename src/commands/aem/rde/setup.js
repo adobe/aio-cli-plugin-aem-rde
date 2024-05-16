@@ -396,7 +396,6 @@ Object.assign(SetupCommand, {
   args: [],
   aliases: [],
   flags: {
-    cicd: commonFlags.cicd,
   },
 });
 

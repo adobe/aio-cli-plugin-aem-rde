@@ -53,7 +53,8 @@ Object.assign(ResetCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
+    quiet: commonFlags.quiet,
+    json: commonFlags.json,
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',

@@ -316,7 +316,8 @@ Object.assign(DeployCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
+    quiet: commonFlags.quiet,
+    json: commonFlags.json,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

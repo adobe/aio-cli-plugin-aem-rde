@@ -32,7 +32,7 @@ class OsgiBundlesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(json?.items));
           } else {
             logInTableFormat(json?.items);
@@ -48,7 +48,7 @@ class OsgiBundlesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const osgiBundle = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(osgiBundle, null, 2));
           } else {
             logInTableFormat([osgiBundle]);
@@ -116,11 +116,11 @@ Object.assign(OsgiBundlesCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    cicd: commonFlags.cicd,
+    quiet: commonFlags.quiet,
+    json: commonFlags.json,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
-    output: commonFlags.output,
   },
 });
 
