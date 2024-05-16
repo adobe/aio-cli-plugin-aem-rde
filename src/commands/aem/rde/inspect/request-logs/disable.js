@@ -50,6 +50,7 @@ Object.assign(DisableRequestLogsCommand, {
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
+    quiet: commonFlags.quiet,
   },
 });
 

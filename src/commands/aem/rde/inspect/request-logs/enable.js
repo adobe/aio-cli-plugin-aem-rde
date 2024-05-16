@@ -121,6 +121,7 @@ Object.assign(EnableRequestLogsCommand, {
       multiple: true,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
 });
 

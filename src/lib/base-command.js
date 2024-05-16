@@ -13,6 +13,8 @@
 // 3rd party dependencies
 const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
+const inquirer = require('inquirer');
+const spinner = require('ora')();
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -45,6 +47,27 @@ class BaseCommand extends Command {
     }
 
     this.setupParams(flags);
+
+    if (!flags.quiet && this.constructor.name !== 'SetupCommand') {
+      CliUx.ux.log(this.getLogHeader());
+      const lastAction = Config.get('rde_lastaction');
+      if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
+        const executeCommand = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'executeCommand',
+            message: `The last RDE command ran more than 24h ago, do you want to continue running the command on ${concatEnvironemntId(this._programId, this._environmentId)}?`,
+            default: true,
+          },
+        ]);
+        if (!executeCommand.executeCommand) {
+          CliUx.ux.log('Command execution aborted.');
+          return;
+        }
+      }
+      Config.set('rde_lastaction', Date.now());
+    }
+
     await this.runCommand(args, flags);
   }
 
@@ -81,6 +104,31 @@ class BaseCommand extends Command {
 
   async catch(err) {
     handleError(err, this.error);
+  }
+
+  getLogHeader() {
+    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+  }
+
+  printNamesWhenAvailable() {
+    if (this._programName && this._environmentName) {
+      return ` (${this._programName} - ${this._environmentName})`;
+    }
+    return '';
+  }
+
+  spinnerStart(message) {
+    if (!this.flags.quiet) {
+      spinner.start(message);
+    }
+  }
+
+  spinnerIsSpinning() {
+    return spinner.isSpinning;
+  }
+
+  spinnerStop() {
+    spinner.stop();
   }
 
   /**
@@ -272,6 +320,13 @@ module.exports = {
       char: 'j',
       hidden: false,
       description: 'output as json',
+    }),
+    quiet: Flags.boolean({
+      description: 'Generates no log output and asks for no user input',
+      char: 'q',
+      multiple: false,
+      required: false,
+      default: false,
     }),
   },
 };

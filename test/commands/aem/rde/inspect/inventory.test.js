@@ -56,7 +56,7 @@ describe('Inventory', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new Inventory([], null),
+        new Inventory(['--quiet'], null),
         stubbedMethods
       );
     });
@@ -83,7 +83,7 @@ describe('Inventory', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new Inventory(['--json'], null),
+        new Inventory(['--quiet', '--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -116,7 +116,7 @@ describe('Inventory', function () {
     it('Should throw an internal error when inventory config is null.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new Inventory([], null),
+        new Inventory(['--quiet'], null),
 
         {
           ...stubbedMethods,
@@ -142,7 +142,7 @@ describe('Inventory', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new Inventory([reqId], null),
+        new Inventory(['--quiet', reqId], null),
         stubbedMethods
       );
     });
@@ -172,7 +172,7 @@ describe('Inventory', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new Inventory(['0', '--json'], null),
+        new Inventory(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -184,7 +184,7 @@ describe('Inventory', function () {
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new Inventory(['1'], null),
+        new Inventory(['--quiet', '1'], null),
 
         { ...stubbedMethods, getInventory: () => errorObj }
       );
@@ -202,7 +202,7 @@ describe('Inventory', function () {
     it('Should throw an internal error when config is null despite having non empty args.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new Inventory(['1'], null),
+        new Inventory(['--quiet', '1'], null),
         {
           ...stubbedMethods,
           getInventory: stubbedThrowErrorMethod,

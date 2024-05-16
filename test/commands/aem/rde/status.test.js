@@ -55,7 +55,7 @@ describe('StatusCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new StatusCommand([], null),
+        new StatusCommand(['--quiet'], null),
         stubbedMethods
       );
     });
@@ -84,7 +84,7 @@ describe('StatusCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new StatusCommand(['--json'], null),
+        new StatusCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
     });

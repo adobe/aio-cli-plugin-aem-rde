@@ -19,17 +19,16 @@ const {
 } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      spinner.start('resetting environment');
+      this.spinnerStart('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.resetEnv(flags.wait)
       );
-      spinner.stop();
+      this.spinnerStop();
       if (flags.wait) {
         cli.log(`Environment reset.`);
       } else {
@@ -38,7 +37,7 @@ class ResetCommand extends BaseCommand {
         );
       }
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_RESET_ERROR({ messageValues: err })
@@ -62,6 +61,7 @@ Object.assign(ResetCommand, {
       default: true,
       allowNo: true,
     }),
+    quiet: commonFlags.quiet,
   },
   aliases: [],
 });

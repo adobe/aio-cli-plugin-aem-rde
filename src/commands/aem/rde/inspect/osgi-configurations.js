@@ -102,6 +102,7 @@ Object.assign(OsgiConfigurationsCommand, {
     scope: commonFlags.scope,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

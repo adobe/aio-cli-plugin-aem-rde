@@ -102,6 +102,7 @@ Object.assign(InventoryCommand, {
     target: commonFlags.targetInspect,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

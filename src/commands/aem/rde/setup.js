@@ -22,7 +22,6 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const open = require('open');
 const { concatEnvironemntId } = require('../../../lib/utils');
-const spinner = require('ora')();
 
 /**
  * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
@@ -162,11 +161,11 @@ class SetupCommand extends BaseCommand {
 
   async getProgramId() {
     if (!programsCached) {
-      spinner.start('retrieving programs of your organization');
+      this.spinnerStart('retrieving programs of your organization');
       programsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
         cloudSdkAPI.listProgramsIdAndName()
       );
-      spinner.stop();
+      this.spinnerStop();
 
       if (!programsCached || programsCached.length === 0) {
         cli.log(chalk.red('No programs found for the selected organization.'));
@@ -205,11 +204,11 @@ class SetupCommand extends BaseCommand {
   }
 
   async getEnvironmentId(selectedProgram) {
-    spinner.start(`retrieving environments of program ${selectedProgram}`);
+    this.spinnerStart(`retrieving environments of program ${selectedProgram}`);
     environmentsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
       cloudSdkAPI.listEnvironmentsIdAndName(selectedProgram)
     );
-    spinner.stop();
+    this.spinnerStop();
 
     // FIXME this filter must be removed as soon as other types are supported
     environmentsCached = environmentsCached.filter((env) => env.type === 'rde');
@@ -342,7 +341,7 @@ class SetupCommand extends BaseCommand {
         `Setup complete. Use 'aio help aem rde' to see the available commands.`
       );
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.UNEXPECTED_API_ERROR({ messageValues: err })

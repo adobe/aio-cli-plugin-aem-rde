@@ -49,6 +49,7 @@ describe('EnableRequestLogsCommand', function () {
         sinon,
         new EnableRequestLogsCommand(
           [
+            '--quiet',
             '-i',
             arg,
             '-d',
@@ -115,7 +116,7 @@ describe('EnableRequestLogsCommand', function () {
     it('Should print out a error message when status is not 200.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new EnableRequestLogsCommand([], null),
+        new EnableRequestLogsCommand(['--quiet'], null),
         stubbedErrorMethods
       );
       try {
@@ -132,7 +133,7 @@ describe('EnableRequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new EnableRequestLogsCommand([], null),
+        new EnableRequestLogsCommand(['--quiet'], null),
         stubbedThrowErrorMethods
       );
       try {

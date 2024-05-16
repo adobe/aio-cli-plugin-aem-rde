@@ -340,6 +340,7 @@ Object.assign(LogsCommand, {
       multiple: true,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
 });
 
