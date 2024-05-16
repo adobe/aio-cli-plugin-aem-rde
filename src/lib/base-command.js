@@ -80,18 +80,6 @@ class BaseCommand extends Command {
     );
   }
 
-  spinnerStart(message) {
-    spinner.start(message);
-  }
-
-  spinnerIsSpinning() {
-    return spinner.isSpinning;
-  }
-
-  spinnerStop() {
-    spinner.stop();
-  }
-
   async catch(err) {
     handleError(err, this.error);
   }
