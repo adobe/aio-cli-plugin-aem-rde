@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand } = require('../../../lib/base-command');
 const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -135,7 +135,9 @@ class SetupCommand extends BaseCommand {
   }
 
   async fallbackToManualOrganizationId() {
-    this.doLog(chalk.yellow('Could not find an organization ID automatically.'));
+    this.doLog(
+      chalk.yellow('Could not find an organization ID automatically.')
+    );
     this.doLog(chalk.yellow('Please enter your organization ID manually.'));
     this.doLog(chalk.gray(`See ${LINK_ORGID}`));
     const openLink = await inquirer.prompt([
@@ -168,7 +170,9 @@ class SetupCommand extends BaseCommand {
       this.spinnerStop();
 
       if (!programsCached || programsCached.length === 0) {
-        this.doLog(chalk.red('No programs found for the selected organization.'));
+        this.doLog(
+          chalk.red('No programs found for the selected organization.')
+        );
         return null;
       }
     }
@@ -258,7 +262,9 @@ class SetupCommand extends BaseCommand {
         require('inquirer-autocomplete-prompt')
       );
 
-      this.doLog(`Setup the CLI configuration necessary to use the RDE commands.`);
+      this.doLog(
+        `Setup the CLI configuration necessary to use the RDE commands.`
+      );
 
       const storeLocal = await inquirer.prompt([
         {
