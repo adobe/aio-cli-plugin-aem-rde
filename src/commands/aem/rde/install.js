@@ -199,16 +199,19 @@ class DeployCommand extends BaseCommand {
     let change;
     try {
       change = await this.withCloudSdk((cloudSdkAPI) => {
-        const uploadCallbacks = {
-          progress: (copiedBytes) => progressBar.update(copiedBytes),
-          abort: () => progressBar.stop(),
-          start: (size, msg) => {
-            if (msg) {
-              this.doLog(msg);
-            }
-            progressBar.start(size, 0);
-          },
-        };
+        let uploadCallbacks = null;
+        if (!flags.json && !flags.quiet) {
+          uploadCallbacks = {
+            progress: (copiedBytes) => progressBar.update(copiedBytes),
+            abort: () => progressBar.stop(),
+            start: (size, msg) => {
+              if (msg) {
+                this.doLog(msg);
+              }
+              progressBar.start(size, 0);
+            },
+          };
+        }
 
         const deploymentCallbacks = () => {
           if (!this.spinnerIsSpinning()) {

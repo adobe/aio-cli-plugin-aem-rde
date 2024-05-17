@@ -228,14 +228,22 @@ class CloudSdkAPI {
       const url = result.headers.get('Location');
       const changeId = (await result.json()).updateId;
       const client = new ShareFileClient(url);
-      uploadCallbacks.start(fileSize);
+      if (uploadCallbacks) {
+        uploadCallbacks.start(fileSize);
+      }
       await client.uploadFile(path, {
         onProgress: (progress) =>
-          uploadCallbacks.progress(progress.loadedBytes),
+          function () {
+            if (uploadCallbacks) {
+              uploadCallbacks.progress(progress.loadedBytes);
+            }
+          },
       });
       return await this._putUpdate(changeId, deploymentCallback);
     } else {
-      uploadCallbacks.abort();
+      if (uploadCallbacks) {
+        uploadCallbacks.abort();
+      }
       throw await this._createError(result);
     }
   }
