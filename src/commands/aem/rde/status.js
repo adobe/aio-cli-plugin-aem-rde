@@ -80,11 +80,7 @@ class StatusCommand extends BaseCommand {
 
       const grouped = groupArtifacts(status.items);
 
-      const result = {
-        programId: this._programId,
-        environmentId: this._environmentId,
-        status: status.status,
-      };
+      const result = this.jsonResult(status.status);
 
       if (status.error) {
         result.statusText = status.BaseCommand;

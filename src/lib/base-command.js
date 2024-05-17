@@ -119,12 +119,12 @@ class BaseCommand extends Command {
 
   doLog(message, always = false) {
     if (always || !this.flags.quiet) {
-      CliUx.ux.log(message);
+      this.log(message);
     }
   }
 
   spinnerStart(message) {
-    if (!this.flags.quiet) {
+    if (!this.flags.quiet && !this.flags.json) {
       spinner.start(message);
     }
   }
@@ -266,6 +266,15 @@ class BaseCommand extends Command {
       );
     }
     return fn(this._cloudSdkAPI);
+  }
+
+  jsonResult(serverStatus) {
+    const result = {
+      programId: this._programId,
+      environmentId: this._environmentId,
+      status: serverStatus,
+    };
+    return result;
   }
 }
 
