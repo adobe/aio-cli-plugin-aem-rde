@@ -31,6 +31,14 @@ const { handleError } = require('./error-helpers');
 class BaseCommand extends Command {
   constructor(argv, config, error) {
     super(argv, config);
+    this.constructor.flags= {
+      ...this.constructor.flags,
+      json: Flags.boolean({
+        char: 'j',
+        hidden: false,
+        description: 'output as json'
+      })
+    }
     this.error = error || this.error;
   }
 
@@ -44,6 +52,12 @@ class BaseCommand extends Command {
     }
     if (!flags.environmentId) {
       this._environmentName = Config.get('cloudmanager_environmentname');
+    }
+
+    if(flags.json){
+      await this.printAsJson();
+    }else{
+      await this.printAsText();
     }
 
     this.setupParams(flags);
@@ -102,6 +116,17 @@ class BaseCommand extends Command {
     );
   }
 
+  printAsJson() {
+    throw new Error(
+        'You have to implement the printAsJson method in the subclass!'
+    );
+  }
+
+  printAsText(){
+    throw new Error(
+        'You have to implement the printAsText method in the subclass!'
+    )
+  }
   async catch(err) {
     handleError(err, this.error);
   }
