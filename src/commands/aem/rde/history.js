@@ -11,16 +11,15 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
-const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 class HistoryCommand extends BaseCommand {
-  async run() {
-    const { args } = await this.parse(HistoryCommand);
+  async runCommand(args, flags) {
     try {
       if (args.id === undefined) {
         spinner.start('fetching updates');
@@ -71,6 +70,11 @@ Object.assign(HistoryCommand, {
     },
   ],
   aliases: [],
+  flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+  },
 });
 
 module.exports = HistoryCommand;

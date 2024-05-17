@@ -14,15 +14,13 @@
 const {
   cli,
   BaseCommand,
-  logInJsonArrayFormat,
   commonFlags,
 } = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class RequestLogsCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(RequestLogsCommand);
+  async runCommand(args, flags) {
     try {
       if (!args.id) {
         const params = {};
@@ -33,8 +31,8 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
-            logInJsonArrayFormat(json?.items);
+          if (flags.json) {
+            this.logInJsonArrayFormat(json?.items);
           } else {
             logInTableFormat(json?.items);
           }
@@ -49,7 +47,7 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const requestLog = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(requestLog, null, 2));
           } else {
             logInTableFormat([requestLog]);
@@ -103,9 +101,12 @@ Object.assign(RequestLogsCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     include: commonFlags.include,
-    output: commonFlags.output,
+    json: commonFlags.json,
   },
 });
 

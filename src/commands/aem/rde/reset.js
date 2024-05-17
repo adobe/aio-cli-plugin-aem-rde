@@ -11,15 +11,19 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  cli,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
-  async run() {
+  async runCommand(args, flags) {
     try {
-      const { flags } = await this.parse(ResetCommand);
       cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
       spinner.start('resetting environment');
       await this.withCloudSdk((cloudSdkAPI) =>
@@ -47,6 +51,9 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',

@@ -47,6 +47,7 @@
     "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
   },
   "scripts": {
+    "testpattern": "nyc --reporter=text --reporter=html mocha ",
     "test": "nyc --reporter=text --reporter=html mocha 'test/**/*.test.js'",
     "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",

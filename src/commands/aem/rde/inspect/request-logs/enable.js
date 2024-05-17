@@ -21,8 +21,7 @@ const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class EnableRequestLogsCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(EnableRequestLogsCommand);
+  async runCommand(args, flags) {
     try {
       // build a request body out of the received flags
       const body = {};
@@ -81,6 +80,9 @@ class EnableRequestLogsCommand extends BaseCommand {
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',

@@ -20,8 +20,7 @@ const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
 class OsgiServicesCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(OsgiServicesCommand);
+  async runCommand(args, flags) {
     try {
       if (!args.id) {
         const params = {};
@@ -33,7 +32,7 @@ class OsgiServicesCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(json.items));
           } else {
             logInTableFormat(json?.items);
@@ -50,7 +49,7 @@ class OsgiServicesCommand extends BaseCommand {
 
         if (response.status === 200) {
           const osgiService = await response.json();
-          if (flags.output === 'json') {
+          if (flags.json) {
             cli.log(JSON.stringify(osgiService, null, 2));
           } else {
             logInTableFormat([osgiService]);
@@ -107,10 +106,13 @@ Object.assign(OsgiServicesCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
-    output: commonFlags.output,
+    json: commonFlags.json,
   },
 });
 

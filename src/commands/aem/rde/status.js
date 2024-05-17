@@ -11,15 +11,13 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
+const { BaseCommand, cli, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const spinner = require('ora')();
-
 class StatusCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(StatusCommand);
+  async runCommand(args, flags) {
     if (flags.json) {
       await this.printAsJson();
     } else {
@@ -113,11 +111,10 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'output as json',
-    }),
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    json: commonFlags.json,
   },
   usage: [
     'status              # output as textual content',

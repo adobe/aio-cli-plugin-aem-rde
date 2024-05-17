@@ -1,12 +1,12 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const chalk = require('chalk');
-const LogsCommand = require('../../../../../src/commands/aem/rde/logs');
-const { cli } = require('../../../../../src/lib/base-command.js');
+const LogsCommand = require('../../../../src/commands/aem/rde/logs.js');
+const { cli } = require('../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
-} = require('../../../../util.js');
+} = require('../../../util.js');
 
 const errorResponse404 = {
   status: 404,
@@ -17,7 +17,6 @@ const errorResponse403 = {
   status: 403,
   statusText: 'Test error message 403.',
 };
-
 
 const errorObj = new Error(errorResponse404.statusText);
 

@@ -19,16 +19,15 @@ const {
 } = require('../../../lib/base-command');
 const { loadUpdateHistory } = require('../../../lib/rde-utils');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
-const spinner = require('ora')();
 const {
   codes: deploymentErrorCodes,
 } = require('../../../lib/deployment-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 class DeleteCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeleteCommand);
+  async runCommand(args, flags) {
     try {
       const services = !flags.target ? ['author', 'publish'] : [flags.target];
       const types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type];
@@ -93,6 +92,9 @@ Object.assign(DeleteCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

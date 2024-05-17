@@ -27,11 +27,12 @@ const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
-const spinner = require('ora')();
+
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const spinner = require('ora')();
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -154,8 +155,7 @@ async function processInputFile(isLocalFile, type, inputPath) {
 }
 
 class DeployCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeployCommand);
+  async runCommand(args, flags) {
     const progressBar = createProgressBar();
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =
@@ -314,6 +314,9 @@ Object.assign(DeployCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',

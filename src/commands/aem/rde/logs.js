@@ -36,8 +36,7 @@ class LogsCommand extends BaseCommand {
     this.stopAndCleanupCallback = this.stopAndCleanup.bind(this);
   }
 
-  async run() {
-    const { flags } = await this.parse(LogsCommand);
+  async runCommand(args, flags) {
     this.flags = flags || {};
     try {
       let log;
@@ -286,6 +285,9 @@ Object.assign(LogsCommand, {
   description:
     'Get the list of logs for the target of a rapid development environment.',
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',

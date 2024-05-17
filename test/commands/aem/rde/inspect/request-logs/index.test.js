@@ -114,7 +114,7 @@ describe('RequestLogsCommand', function () {
     it('Should have the expected json array result.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['-o', 'json'], null),
+        new RequestLogsCommand(['--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -203,7 +203,7 @@ describe('RequestLogsCommand', function () {
     it('Should produce the correct json output.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new RequestLogsCommand(['0', '-o', 'json'], null),
+        new RequestLogsCommand(['0', '--json'], null),
         stubbedMethods
       );
 

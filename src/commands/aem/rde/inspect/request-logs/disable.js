@@ -20,8 +20,7 @@ const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
 class DisableRequestLogsCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(DisableRequestLogsCommand);
+  async runCommand(args, flags) {
     try {
       const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.disableRequestLogs(flags.target)
@@ -47,6 +46,9 @@ class DisableRequestLogsCommand extends BaseCommand {
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
   },
 });

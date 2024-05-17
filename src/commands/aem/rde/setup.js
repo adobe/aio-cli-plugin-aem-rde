@@ -11,18 +11,18 @@
  */
 'use strict';
 
-const {
-  BaseCommand,
-  cli,
-  getOrganizationsFromToken,
-} = require('../../../lib/base-command');
+const { BaseCommand, cli } = require('../../../lib/base-command');
+const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
+const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const Config = require('@adobe/aio-lib-core-config');
+const { Ims } = require('@adobe/aio-lib-ims');
 const inquirer = require('inquirer');
-const spinner = require('ora')();
 const chalk = require('chalk');
 const open = require('open');
+const { concatEnvironemntId } = require('../../../lib/utils');
+const spinner = require('ora')();
 
 /**
  * The `SetupCommand` class extends the `BaseCommand` class and is used to handle setup related commands.
@@ -41,16 +41,59 @@ const open = require('open');
  * The `SetupCommand` class is part of a command-line interface and is used to set up the environment for the CLI.
  */
 
-let cachedPrograms = null;
-const CONFIG_ENVIRONMENT = 'cloudmanager_environmentid';
-const CONFIG_PROGRAM = 'cloudmanager_programid';
 const CONFIG_ORG = 'cloudmanager_orgid';
+const CONFIG_PROGRAM = 'cloudmanager_programid';
+const CONFIG_ENVIRONMENT = 'cloudmanager_environmentid';
+const CONFIG_PROGRAM_NAME = 'cloudmanager_programname';
+const CONFIG_ENVIRONMENT_NAME = 'cloudmanager_environmentname';
 const LINK_ORGID =
   'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
+
+let programsCached = null;
+let environmentsCached = null;
 class SetupCommand extends BaseCommand {
+  async withCloudSdkBase(fn) {
+    if (!this._cloudSdkAPIBase) {
+      const { accessToken, apiKey } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl();
+      const orgId = this.getCliOrgId();
+      if (!orgId) {
+        throw new validationCodes.MISSING_ORG_ID();
+      }
+      this._cloudSdkAPIBase = new CloudSdkAPIBase(
+        `${cloudManagerUrl}/api`,
+        apiKey,
+        orgId,
+        accessToken
+      );
+    }
+    return fn(this._cloudSdkAPIBase);
+  }
+
+  /**
+   *
+   */
+  async getOrganizationsFromToken() {
+    try {
+      const { accessToken } = await this.getTokenAndKey();
+      const ims = new Ims();
+      const organizations = await ims.getOrganizations(accessToken);
+      const orgMap = organizations.reduce((map, org) => {
+        map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
+        return map;
+      }, {});
+      return orgMap;
+    } catch (err) {
+      if (err.code === 'CONTEXT_NOT_CONFIGURED') {
+        cli.log('No IMS context found. Please run `aio login` first.');
+      }
+      return null;
+    }
+  }
+
   async getOrgId() {
     let selectedOrg = null;
-    const organizations = await getOrganizationsFromToken();
+    const organizations = await this.getOrganizationsFromToken();
     if (!organizations) {
       return null;
     }
@@ -118,42 +161,41 @@ class SetupCommand extends BaseCommand {
   }
 
   async getProgramId() {
-    if (!cachedPrograms) {
+    if (!programsCached) {
       spinner.start('retrieving programs of your organization');
-      const programs = await this.withCloudSdkBase((cloudSdkAPI) =>
+      programsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
         cloudSdkAPI.listProgramsIdAndName()
       );
       spinner.stop();
 
-      if (!programs || programs.length === 0) {
+      if (!programsCached || programsCached.length === 0) {
         cli.log(chalk.red('No programs found for the selected organization.'));
         return null;
       }
-
-      const choices = programs.map((program) => ({
-        name: `(${program.id}) ${program.name}`,
-        value: program.id,
-      }));
-      cachedPrograms = choices;
     }
 
-    if (cachedPrograms.length === 1) {
-      cli.log(`Selected only program: ${cachedPrograms[0].value}`);
-      return cachedPrograms[0].value;
+    if (programsCached.length === 1) {
+      cli.log(`Selected only program: ${programsCached[0].id}`);
+      return programsCached[0].id;
     }
 
-    const prevProgram = this.getProgramFromConf();
+    const choices = programsCached.map((program) => ({
+      name: `(${program.id}) ${program.name}`,
+      value: program.id,
+    }));
+
+    const { prevProgramId } = this.getProgramFromConf();
 
     const { selectedProgram } = await inquirer.prompt([
       {
         type: 'autocomplete',
         name: 'selectedProgram',
         message: 'Please choose a program (type to filter):',
-        default: prevProgram,
+        default: prevProgramId,
         pageSize: 30,
         source: async (answersSoFar, input) => {
           input = input || '';
-          return cachedPrograms.filter((choice) =>
+          return choices.filter((choice) =>
             choice.name.toLowerCase().includes(input.toLowerCase())
           );
         },
@@ -164,15 +206,15 @@ class SetupCommand extends BaseCommand {
 
   async getEnvironmentId(selectedProgram) {
     spinner.start(`retrieving environments of program ${selectedProgram}`);
-    let environments = await this.withCloudSdkBase((cloudSdkAPI) =>
+    environmentsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
       cloudSdkAPI.listEnvironmentsIdAndName(selectedProgram)
     );
     spinner.stop();
 
     // FIXME this filter must be removed as soon as other types are supported
-    environments = environments.filter((env) => env.type === 'rde');
+    environmentsCached = environmentsCached.filter((env) => env.type === 'rde');
 
-    if (environments.length === 0) {
+    if (environmentsCached.length === 0) {
       cli.log(
         chalk.red(`No environments found for program ${selectedProgram}`)
       );
@@ -180,24 +222,24 @@ class SetupCommand extends BaseCommand {
       return null;
     }
 
-    if (environments.length === 1) {
-      cli.log(`Selected only environment: ${environments[0].id}`);
-      return environments[0].id;
+    if (environmentsCached.length === 1) {
+      cli.log(`Selected only environment: ${environmentsCached[0].id}`);
+      return environmentsCached[0].id;
     }
 
-    const choicesEnv = environments.map((env) => ({
+    const choicesEnv = environmentsCached.map((env) => ({
       name: `(${env.id}) ${env.type}(${env.status}) - ${env.name}`,
       value: env.id,
     }));
 
-    const prevEnv = this.getEnvironmentFromConf();
+    const { prevEnvId } = this.getEnvironmentFromConf();
 
     const { selectedEnvironment } = await inquirer.prompt([
       {
         type: 'autocomplete',
         name: 'selectedEnvironment',
         message: 'Please choose an environment (type to filter):',
-        default: prevEnv,
+        default: prevEnvId,
         pageSize: 30,
         source: async (answersSoFar, input) => {
           input = input || '';
@@ -210,7 +252,7 @@ class SetupCommand extends BaseCommand {
     return selectedEnvironment;
   }
 
-  async run() {
+  async runCommand(args, flags) {
     try {
       inquirer.registerPrompt(
         'autocomplete',
@@ -230,19 +272,19 @@ class SetupCommand extends BaseCommand {
       ]);
 
       const orgId = await this.getOrgId();
-      const prevOrg = Config.get(CONFIG_ORG);
-      Config.set(CONFIG_ORG, orgId, storeLocal);
+      const prevOrgId = Config.get(CONFIG_ORG);
+      Config.set(CONFIG_ORG, orgId, storeLocal.storeLocal);
 
-      let selectedEnvironment = null;
-      let selectedProgram = null;
-      while (selectedEnvironment === null) {
-        selectedProgram = await this.getProgramId();
-        if (!selectedProgram) {
+      let selectedEnvironmentId = null;
+      let selectedProgramId = null;
+      while (selectedEnvironmentId === null) {
+        selectedProgramId = await this.getProgramId();
+        if (!selectedProgramId) {
           return;
         }
 
-        selectedEnvironment = await this.getEnvironmentId(selectedProgram);
-        if (selectedEnvironment === null && cachedPrograms?.length === 1) {
+        selectedEnvironmentId = await this.getEnvironmentId(selectedProgramId);
+        if (selectedEnvironmentId === null && programsCached?.length === 1) {
           cli.log(
             chalk.red(
               'No program or environment found for the selected organization.'
@@ -252,22 +294,48 @@ class SetupCommand extends BaseCommand {
         }
       }
 
+      const selectedEnvironmentName = environmentsCached.find(
+        (e) => e.id === selectedEnvironmentId
+      ).name;
+      const selectedProgramName = programsCached.find(
+        (e) => e.id === selectedProgramId
+      ).name;
+
       cli.log(
-        chalk.green(`Selected p${selectedProgram}-e${selectedEnvironment}`)
+        chalk.green(
+          `Selected ${concatEnvironemntId(selectedProgramId, selectedEnvironmentId)}: ${selectedProgramName} - ${selectedEnvironmentName}`
+        )
       );
 
-      const prevProgram = this.getProgramFromConf();
-      const prevEnv = this.getEnvironmentFromConf();
-      Config.set(CONFIG_PROGRAM, selectedProgram, storeLocal);
-      Config.set(CONFIG_ENVIRONMENT, selectedEnvironment, storeLocal);
+      const { prevProgramId, prevProgramName } = this.getProgramFromConf();
+      const { prevEnvId, prevEnvName } = this.getEnvironmentFromConf();
+      Config.set(CONFIG_PROGRAM, selectedProgramId, storeLocal.storeLocal);
+      Config.set(
+        CONFIG_ENVIRONMENT,
+        selectedEnvironmentId,
+        storeLocal.storeLocal
+      );
+
+      Config.set(
+        CONFIG_PROGRAM_NAME,
+        selectedProgramName,
+        storeLocal.storeLocal
+      );
+      Config.set(
+        CONFIG_ENVIRONMENT_NAME,
+        selectedEnvironmentName,
+        storeLocal.storeLocal
+      );
 
       this.logPreviousConfig(
-        prevOrg,
-        prevProgram,
-        prevEnv,
+        prevOrgId,
+        prevProgramId,
+        prevProgramName,
+        prevEnvId,
+        prevEnvName,
         orgId,
-        selectedProgram,
-        selectedEnvironment
+        selectedProgramId,
+        selectedEnvironmentId
       );
 
       cli.log(
@@ -283,17 +351,23 @@ class SetupCommand extends BaseCommand {
   }
 
   getEnvironmentFromConf() {
-    return Config.get(CONFIG_ENVIRONMENT);
+    const id = Config.get(CONFIG_ENVIRONMENT);
+    const name = Config.get(CONFIG_ENVIRONMENT_NAME);
+    return { prevEnvId: id, prevEnvName: name };
   }
 
   getProgramFromConf() {
-    return Config.get(CONFIG_PROGRAM);
+    const id = Config.get(CONFIG_PROGRAM);
+    const name = Config.get(CONFIG_PROGRAM_NAME);
+    return { prevProgramId: id, prevProgramName: name };
   }
 
   logPreviousConfig(
     prevOrg,
     prevProgram,
+    prevProgramName,
     prevEnv,
+    prevEnvName,
     orgId,
     selectedProgram,
     selectedEnvironment
@@ -302,10 +376,18 @@ class SetupCommand extends BaseCommand {
       cli.info(chalk.gray(`Your previous organization ID was: ${prevOrg}`));
     }
     if (prevProgram && prevProgram !== selectedProgram) {
-      cli.info(chalk.gray(`Your previous program ID was: ${prevProgram}`));
+      cli.info(
+        chalk.gray(
+          `Your previous program ID was: ${prevProgram} (name: ${prevProgramName})`
+        )
+      );
     }
     if (prevEnv && prevEnv !== selectedEnvironment) {
-      cli.info(chalk.gray(`Your previous environment ID was: ${prevEnv}`));
+      cli.info(
+        chalk.gray(
+          `Your previous environment ID was: ${prevEnv} (name: ${prevEnvName})`
+        )
+      );
     }
   }
 }
@@ -314,6 +396,7 @@ Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',
   args: [],
   aliases: [],
+  flags: {},
 });
 
 module.exports = SetupCommand;

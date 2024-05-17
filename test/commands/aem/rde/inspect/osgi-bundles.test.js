@@ -136,7 +136,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['-o', 'json'], null),
+        new OsgiBundlesCommand(['--json'], null),
         stubbedMethods
       );
       await command.run();
@@ -224,7 +224,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['0', '-o', 'json'], null),
+        new OsgiBundlesCommand(['0', '--json'], null),
         stubbedMethods
       );
       await command.run();
