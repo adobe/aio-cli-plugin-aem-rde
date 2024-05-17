@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { cli, Flags } = require('../../../lib/base-command');
+const { Flags } = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const { BaseCommand, commonFlags } = require('../../../lib/base-command');
@@ -61,7 +61,7 @@ class LogsCommand extends BaseCommand {
           }
         }, REQUEST_INTERVAL_MS);
       } else {
-        cli.log('No active log configuration found.');
+        this.doLog('No active log configuration found.');
       }
     } catch (err) {
       await this.stopAndCleanup();
@@ -169,7 +169,7 @@ class LogsCommand extends BaseCommand {
           messageValues: [response.status, response.statusText],
         });
       }
-      cli.log('\nLog configuration removed.');
+      this.doLog('\nLog configuration removed.');
     } catch (err) {
       throw new internalCodes.INTERNAL_DELETE_LOG_ERROR({ messageValues: err });
     }
@@ -255,11 +255,11 @@ class LogsCommand extends BaseCommand {
       );
       for (let i = 0; i < logLines.length && !this.stopped; i++) {
         const line = colorize ? this.colorizeLine(logLines[i]) : logLines[i];
-        cli.log(line);
+        this.doLog(line, true);
         await sleepMillis(perLineDelay);
       }
     } else if (response.status === 404) {
-      cli.log(
+      this.doLog(
         'Log configuration not found any longer. It may has been removed by introducing another new log configuration.'
       );
       await this.stopAndCleanup();
@@ -340,6 +340,7 @@ Object.assign(LogsCommand, {
       multiple: true,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
 });
 

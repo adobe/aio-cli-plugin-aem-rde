@@ -33,9 +33,9 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(json.items));
+            this.doLog(JSON.stringify(json.items), true);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -50,9 +50,9 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiService = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(osgiService, null, 2));
+            this.doLog(JSON.stringify(osgiService, null, 2), true);
           } else {
-            logInTableFormat([osgiService]);
+            this.logInTableFormat([osgiService]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -69,31 +69,31 @@ class OsgiServicesCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      id: {
-        header: 'ID',
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        id: {
+          header: 'ID',
+        },
+        scope: {
+          minWidth: 7,
+        },
+        bundleId: {
+          header: 'Bundle ID',
+          minWidth: 7,
+        },
+        types: {
+          minWidth: 7,
+        },
       },
-      scope: {
-        minWidth: 7,
-      },
-      bundleId: {
-        header: 'Bundle ID',
-        minWidth: 7,
-      },
-      types: {
-        minWidth: 7,
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiServicesCommand, {
@@ -113,6 +113,7 @@ Object.assign(OsgiServicesCommand, {
     scope: commonFlags.scope,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

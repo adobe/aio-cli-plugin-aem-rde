@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const EnableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/enable');
 const { cli } = require('../../../../../../src/lib/base-command.js');
+const Config = require('@adobe/aio-lib-core-config');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -44,7 +45,25 @@ describe('EnableRequestLogsCommand', function () {
     const format =
       '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n';
     const includePathPatterns = '*test';
+
+    afterEach(() => {
+      Config.get.restore();
+    });
+
     beforeEach(() => {
+      sinon
+        .stub(Config, 'get')
+        .withArgs('cloudmanager_orgid')
+        .returns('1')
+        .withArgs('cloudmanager_programid')
+        .returns('1')
+        .withArgs('cloudmanager_environmentid')
+        .returns('1')
+        .withArgs('cloudmanager_programname')
+        .returns('programName')
+        .withArgs('cloudmanager_environmentname')
+        .returns('environmentName');
+
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new EnableRequestLogsCommand(
@@ -109,7 +128,11 @@ describe('EnableRequestLogsCommand', function () {
 
     it('Should produce the correct textual output.', async function () {
       await command.run();
-      assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs enabled.');
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        'Running EnableRequestLogsCommand on cm-p1-e1 (programName - environmentName)\n' +
+          'Request-logs enabled.'
+      );
     });
 
     it('Should print out a error message when status is not 200.', async function () {

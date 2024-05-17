@@ -32,7 +32,6 @@ const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -136,13 +135,13 @@ async function processInputFile(isLocalFile, type, inputPath) {
       if (!file.isDirectory()) {
         break;
       }
-      return await frontendInputBuild(cli, inputPath);
+      return await frontendInputBuild(this, inputPath);
     }
     case 'dispatcher-config': {
       if (!file.isDirectory()) {
         break;
       }
-      return await dispatcherInputBuild(cli, inputPath);
+      return await dispatcherInputBuild(this, inputPath);
     }
     default: {
       if (file.isDirectory()) {
@@ -193,7 +192,7 @@ class DeployCommand extends BaseCommand {
         }
       }
     } catch (err) {
-      cli.log(err);
+      this.doLog(err);
       return;
     }
 
@@ -205,15 +204,15 @@ class DeployCommand extends BaseCommand {
           abort: () => progressBar.stop(),
           start: (size, msg) => {
             if (msg) {
-              cli.log(msg);
+              this.doLog(msg);
             }
             progressBar.start(size, 0);
           },
         };
 
         const deploymentCallbacks = () => {
-          if (!spinner.isSpinning) {
-            spinner.start('applying update');
+          if (!this.spinnerIsSpinning()) {
+            this.spinnerStart('applying update');
           }
         };
 
@@ -232,16 +231,16 @@ class DeployCommand extends BaseCommand {
           uploadCallbacks,
           deploymentCallbacks
         );
-      }).finally(() => spinner.stop());
+      }).finally(() => this.spinnerStop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-          done ? spinner.stop() : spinner.start(text)
+        loadUpdateHistory(cloudSdkAPI, change.updateId, this, (done, text) =>
+          done ? this.spinnerStop() : this.spinnerStart(text)
         )
       );
     } catch (err) {
       progressBar.stop();
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
@@ -250,7 +249,7 @@ class DeployCommand extends BaseCommand {
 
     await this.withCloudSdk((cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
-        done ? spinner.stop() : spinner.start(text)
+        done ? this.spinnerStop() : this.spinnerStart(text)
       )
     );
   }
@@ -336,6 +335,7 @@ Object.assign(DeployCommand, {
       multiple: false,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
   aliases: [],
 });

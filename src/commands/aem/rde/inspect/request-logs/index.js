@@ -34,7 +34,7 @@ class RequestLogsCommand extends BaseCommand {
           if (flags.json) {
             this.logInJsonArrayFormat(json?.items);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -48,9 +48,9 @@ class RequestLogsCommand extends BaseCommand {
         if (response?.status === 200) {
           const requestLog = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(requestLog, null, 2));
+            this.doLog(JSON.stringify(requestLog, null, 2), true);
           } else {
-            logInTableFormat([requestLog]);
+            this.logInTableFormat([requestLog]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -67,28 +67,28 @@ class RequestLogsCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      id: {
-        header: 'ID',
-        minWidth: 20,
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 20,
+        },
+        method: {
+          minWidth: 7,
+        },
+        path: {
+          minWidth: 7,
+        },
       },
-      method: {
-        minWidth: 7,
-      },
-      path: {
-        minWidth: 7,
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(RequestLogsCommand, {
@@ -107,6 +107,7 @@ Object.assign(RequestLogsCommand, {
     target: commonFlags.targetInspect,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

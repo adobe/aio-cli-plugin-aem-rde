@@ -33,9 +33,9 @@ class OsgiConfigurationsCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(json?.items));
+            this.doLog(JSON.stringify(json?.items), true);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -49,9 +49,9 @@ class OsgiConfigurationsCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiConfiguration = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(osgiConfiguration, null, 2));
+            this.doLog(JSON.stringify(osgiConfiguration, null, 2), true);
           } else {
-            logInTableFormat([osgiConfiguration]);
+            this.logInTableFormat([osgiConfiguration]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -68,21 +68,21 @@ class OsgiConfigurationsCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      pid: {
-        header: 'PID',
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        pid: {
+          header: 'PID',
+        },
       },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiConfigurationsCommand, {
@@ -102,6 +102,7 @@ Object.assign(OsgiConfigurationsCommand, {
     scope: commonFlags.scope,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

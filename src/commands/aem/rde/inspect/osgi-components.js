@@ -33,9 +33,9 @@ class OsgiComponentsCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(json?.items));
+            this.doLog(JSON.stringify(json?.items), true);
           } else {
-            logInTableFormat(json?.items);
+            this.logInTableFormat(json?.items);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -49,9 +49,9 @@ class OsgiComponentsCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiComponent = await response.json();
           if (flags.json) {
-            cli.log(JSON.stringify(osgiComponent, null, 2));
+            this.doLog(JSON.stringify(osgiComponent, null, 2), true);
           } else {
-            logInTableFormat([osgiComponent]);
+            this.logInTableFormat([osgiComponent]);
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -68,34 +68,34 @@ class OsgiComponentsCommand extends BaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      name: {
-        header: 'NAME',
-        minWidth: 25,
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        name: {
+          header: 'NAME',
+          minWidth: 25,
+        },
+        bundleId: {
+          header: 'Bundle ID',
+        },
+        scope: {
+          minWidth: 7,
+        },
+        immediate: {
+          minWidth: 7,
+        },
+        implementationClass: {
+          header: 'Implementation Class',
+        },
       },
-      bundleId: {
-        header: 'Bundle ID',
-      },
-      scope: {
-        minWidth: 7,
-      },
-      immediate: {
-        minWidth: 7,
-      },
-      implementationClass: {
-        header: 'Implementation Class',
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiComponentsCommand, {
@@ -115,6 +115,7 @@ Object.assign(OsgiComponentsCommand, {
     scope: commonFlags.scope,
     include: commonFlags.include,
     json: commonFlags.json,
+    quiet: commonFlags.quiet,
   },
 });
 

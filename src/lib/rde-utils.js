@@ -116,9 +116,15 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
  * @param cloudSdkAPI
  * @param updateId
  * @param cli
+ * @param basecommand
  * @param progressCallback
  */
-async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
+async function loadUpdateHistory(
+  cloudSdkAPI,
+  updateId,
+  basecommand,
+  progressCallback
+) {
   progressCallback(false, 'retrieving update status');
   let response = await handleRetryAfter(
     null,
@@ -141,10 +147,10 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
     const retrySeconds = retryConfig.waitSeconds * retryConfig.retries;
     progressCallback(true);
     if (!response) {
-      cli.log(
+      basecommand.log(
         `No logs have become available within the retry period of ${retrySeconds} seconds.`
       );
-      cli.log(
+      basecommand.log(
         `Please run "aio aem:rde:history ${updateId}" to check for progress manually.`
       );
     } else if (response.status === 200) {
@@ -166,12 +172,12 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
       }
 
       if (lines.length > 0) {
-        cli.log(`Logs:`);
+        basecommand.log(`Logs:`);
         lines.forEach((line) => {
-          cli.log(`> ${line}`);
+          basecommand.log(`> ${line}`);
         });
       } else {
-        cli.log('No logs available for this update.');
+        basecommand.log('No logs available for this update.');
       }
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -179,7 +185,7 @@ async function loadUpdateHistory(cloudSdkAPI, updateId, cli, progressCallback) {
       });
     }
   } else if (response.status === 404) {
-    cli.log(`An update with ID ${updateId} does not exist.`);
+    basecommand.log(`An update with ID ${updateId} does not exist.`);
   } else {
     throw new internalCodes.UNEXPECTED_API_ERROR({
       messageValues: [response.status, response.statusText],

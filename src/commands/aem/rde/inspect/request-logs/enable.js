@@ -12,7 +12,6 @@
 'use strict';
 
 const {
-  cli,
   Flags,
   BaseCommand,
   commonFlags,
@@ -60,7 +59,7 @@ class EnableRequestLogsCommand extends BaseCommand {
       );
 
       if (response.status === 201) {
-        cli.log('Request-logs enabled.');
+        this.doLog('Request-logs enabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
@@ -121,6 +120,7 @@ Object.assign(EnableRequestLogsCommand, {
       multiple: true,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
 });
 

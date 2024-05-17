@@ -69,8 +69,32 @@ describe('StatusCommand', function () {
       await command.run();
       assert.equal(
         cli.log.getCapturedLogOutput(),
-        'Info for cm-p12345-e54321\n' +
+        'Running StatusCommand on cm-p12345-e54321\n' +
+          'Info for cm-p12345-e54321\n' +
           'Environment: Ready\n' +
+          '- Bundles Author:\n' +
+          ' test-bundle-1.0.0\n' +
+          '- Bundles Publish:\n' +
+          '- Configurations Author:\n' +
+          '- Configurations Publish:'
+      );
+    });
+  });
+
+  describe('#run as textual result quiet', function () {
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new StatusCommand(['--quiet'], null),
+        stubbedMethods
+      );
+    });
+
+    it('should produce the correct textual output', async function () {
+      await command.run();
+      assert.equal(
+        cli.log.getCapturedLogOutput(),
+        'Environment: Ready\n' +
           '- Bundles Author:\n' +
           ' test-bundle-1.0.0\n' +
           '- Bundles Publish:\n' +
@@ -84,7 +108,7 @@ describe('StatusCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new StatusCommand(['--json'], null),
+        new StatusCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
     });

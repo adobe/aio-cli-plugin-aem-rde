@@ -24,4 +24,21 @@ describe('RestartCommand', function () {
       assert.ok(cloudSdkApiStub.restartEnv.calledOnce);
     });
   });
+
+  describe('#run quiet', function () {
+    beforeEach(() => {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new RestartCommand(['--quiet'], null),
+        {
+          restartEnv: () => {},
+        }
+      );
+    });
+
+    it('cloudSDKAPI.restartEnv() has been called', async function () {
+      await command.run();
+      assert.ok(cloudSdkApiStub.restartEnv.calledOnce);
+    });
+  });
 });
