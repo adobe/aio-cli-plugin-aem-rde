@@ -419,6 +419,8 @@ class SetupCommand extends BaseCommand {
   }
 }
 
+SetupCommand.enableJsonFlag = false;
+
 Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',
   args: [],
