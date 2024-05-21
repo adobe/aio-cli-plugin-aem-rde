@@ -33,12 +33,10 @@ class BaseCommand extends Command {
     super(argv, config);
     this.error = error || this.error;
   }
-
   async run() {
     const { args, flags } = await this.parse(this.typeof);
     this.flags = flags;
     this.args = args;
-
     if (!flags.programId) {
       this._programName = Config.get('cloudmanager_programname');
     }
@@ -101,7 +99,6 @@ class BaseCommand extends Command {
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
   }
-
   async catch(err) {
     handleError(err, this.error);
   }
@@ -277,6 +274,8 @@ class BaseCommand extends Command {
     return result;
   }
 }
+
+BaseCommand.enableJsonFlag = true;
 
 module.exports = {
   BaseCommand,

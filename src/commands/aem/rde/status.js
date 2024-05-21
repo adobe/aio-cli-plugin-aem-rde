@@ -111,7 +111,6 @@ Object.assign(StatusCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    json: commonFlags.json,
     quiet: commonFlags.quiet,
   },
   usage: [
