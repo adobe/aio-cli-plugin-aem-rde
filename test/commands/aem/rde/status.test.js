@@ -121,7 +121,7 @@ describe('StatusCommand', function () {
     });
 
     it('should have the expected json result', async function () {
-      await command.run();
+      const json = await command.run();
       assert.deepEqual(
         {
           status: 'Ready',
@@ -162,7 +162,7 @@ describe('StatusCommand', function () {
             osgiConfigs: [],
           },
         },
-        JSON.parse(command.log.getCapturedLogOutput())
+        json
       );
     });
   });
