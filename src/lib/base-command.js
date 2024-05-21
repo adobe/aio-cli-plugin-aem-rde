@@ -118,7 +118,7 @@ class BaseCommand extends Command {
 
   doLog(message, always = false) {
     if (always || !this.flags?.quiet) {
-      CliUx.ux.log(message);
+      this.log(message);
     }
   }
 

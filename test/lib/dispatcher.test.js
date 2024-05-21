@@ -50,8 +50,10 @@ describe('Archive Utility', function () {
         .returns('new-zip-path');
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        new BaseCommand(undefined, undefined, undefined),
+        command,
         tmpDir
       );
 
@@ -68,12 +70,13 @@ describe('Archive Utility', function () {
     });
 
     it('should create output zip file', async function () {
-      sinon.stub(new BaseCommand([], [], undefined), 'doLog');
-
       await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
+
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        new BaseCommand(undefined, undefined, undefined),
+        command,
         tmpDir
       );
 

@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const DisableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/disable');
-const { cli } = require('../../../../../../src/lib/base-command.js');
 const Config = require('@adobe/aio-lib-core-config');
 const {
   setupLogCapturing,
@@ -41,8 +40,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('DisableRequestLogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#disableRequestLogs', function () {
     afterEach(() => {
       Config.get.restore();
@@ -67,6 +64,7 @@ describe('DisableRequestLogsCommand', function () {
         new DisableRequestLogsCommand([], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -77,7 +75,7 @@ describe('DisableRequestLogsCommand', function () {
     it('Should return a message to the console if the disable action was successful', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         'Running DisableRequestLogsCommand on cm-p1-e1 (programName - environmentName)\n' +
           'Request-logs disabled.'
       );

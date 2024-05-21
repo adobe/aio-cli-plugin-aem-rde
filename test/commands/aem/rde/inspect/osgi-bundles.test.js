@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiBundlesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-bundles');
-const { cli } = require('../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -100,8 +99,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('OsgiBundlesCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getOsgiBundles', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -109,6 +106,7 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -119,7 +117,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID                  Name          Version State  State String Start Level '
@@ -139,9 +137,10 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '[{"id":0,"name":"System Bundle","symbolicName":"org.apache.test","version":"7.0.1","state":3,"stateString":"active","startLevel":0,"manifestHeaders":{"Bundle-ManifestVersion":"2","Export-Package":[]}},{"id":1,"name":"test","symbolicName":"test","version":"0.0.1","state":1,"stateString":"active","startLevel":1,"exportedPackages":[],"importedPackages":[{"name":"org.osgi.test","version":"1","bundleId":1},{"name":"org.test","version":"1","bundleId":2}],"fragmentsAttached":[],"registeredServices":[9,8,3],"servicesInUse":[6,5,9,1,8,36]}]'
       );
     });
@@ -193,6 +192,7 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -208,7 +208,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID                  Name   Version State  State String Start Level '
@@ -227,9 +227,10 @@ describe('OsgiBundlesCommand', function () {
         new OsgiBundlesCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '{\n' +
           '  "id": 1,\n' +
           '  "name": "test",\n' +

@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const Inventory = require('../../../../../src/commands/aem/rde/inspect/inventory');
-const { cli } = require('../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -50,8 +49,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('Inventory', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getInventories', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -59,6 +56,7 @@ describe('Inventory', function () {
         new Inventory(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -69,7 +67,7 @@ describe('Inventory', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' Format ID                  '),
           chalk.bold(' ────── ─────────────────── '),
@@ -86,9 +84,10 @@ describe('Inventory', function () {
         new Inventory(['--quiet', '--json'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '[\n' +
           '  {"id":"test1","format":"TEXT"},\n' +
           '  {"id":"test2","format":"TEXT"},\n' +
@@ -145,6 +144,7 @@ describe('Inventory', function () {
         new Inventory(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -160,7 +160,7 @@ describe('Inventory', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' Format ID                  '),
           chalk.bold(' ────── ─────────────────── '),
@@ -175,9 +175,10 @@ describe('Inventory', function () {
         new Inventory(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '{\n  "id": "test",\n  "format": "TEXT",\n  "contents": "test"\n}'
       );
     });

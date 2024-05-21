@@ -1,13 +1,10 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const RestartCommand = require('../../../../src/commands/aem/rde/restart.js');
-const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
-const { cli } = require('../../../../src/lib/base-command');
+const { createCloudSdkAPIStub } = require('../../../util');
 
 let command, cloudSdkApiStub;
 describe('RestartCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#run', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(

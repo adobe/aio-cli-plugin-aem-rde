@@ -33,7 +33,6 @@ describe('BaseCommand catch errors', function () {
 
   setupLogCapturing(sinon, cli);
 
-  before(() => sinon.useFakeTimers());
   after(() => sinon.restore());
 
   beforeEach(() => {

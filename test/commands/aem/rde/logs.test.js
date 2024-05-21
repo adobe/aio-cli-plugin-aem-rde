@@ -2,7 +2,6 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const chalk = require('chalk');
 const LogsCommand = require('../../../../src/commands/aem/rde/logs.js');
-const { cli } = require('../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -85,8 +84,6 @@ const stubbedMethods = {
 let command, cloudSdkApiStub;
 
 describe('LogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   before(() => sinon.useFakeTimers());
   after(() => sinon.restore());
 
@@ -96,6 +93,7 @@ describe('LogsCommand', function () {
       new LogsCommand(['--quiet', '-d com.adobe', '--no-color'], null),
       stubbedMethods
     );
+    setupLogCapturing(sinon, command);
   });
 
   afterEach(async () => {
@@ -151,7 +149,7 @@ describe('LogsCommand', function () {
       await command.run();
       await sinon.clock.runToLastAsync();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '11.08.2023 07:55:24.278 *INFO* [898-59] log.request 11/Aug/2023:07:55:24 +0000 [919] TEST'
       );
     });
@@ -162,6 +160,7 @@ describe('LogsCommand', function () {
         new LogsCommand(['--quiet', '-d com.adobe'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
 
       cloudSdkApiStub.getAemLogTail.onCall(0).returns({
         status: 200,
@@ -181,7 +180,7 @@ describe('LogsCommand', function () {
       await sinon.clock.runToLastAsync();
       await sinon.clock.runToLastAsync();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.blackBright('11.08.2023 07:55:24.278 *TRACE* [898-55] TEST'),
           chalk.cyan('11.08.2023 07:55:24.278 *DEBUG* [898-56] TEST'),
