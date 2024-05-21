@@ -205,7 +205,7 @@ class DeployCommand extends BaseCommand {
     let change;
     try {
       change = await this.withCloudSdk((cloudSdkAPI) => {
-        let uploadCallbacks = {};
+        let uploadCallbacks;
         if (!flags.json && !flags.quiet) {
           uploadCallbacks = {
             progress: (copiedBytes) => progressBar.update(copiedBytes),
@@ -248,7 +248,7 @@ class DeployCommand extends BaseCommand {
           change.updateId,
           this,
           (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
-          result.items[0]
+          result.items
         )
       );
       progressBar?.stop();
@@ -256,7 +256,7 @@ class DeployCommand extends BaseCommand {
         return result;
       }
     } catch (err) {
-      progressBar.stop();
+      progressBar?.stop();
       this.spinnerStop();
       throwAioError(
         err,
