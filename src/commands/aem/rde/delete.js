@@ -119,7 +119,6 @@ Object.assign(DeleteCommand, {
       required: false,
     }),
     quiet: commonFlags.quiet,
-    json: commonFlags.json,
   },
   aliases: [],
 });

@@ -33,6 +33,7 @@ class BaseCommand extends Command {
     super(argv, config);
     this.error = error || this.error;
   }
+
   async run() {
     const { args, flags } = await this.parse(this.typeof);
     this.flags = flags;
@@ -99,6 +100,7 @@ class BaseCommand extends Command {
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
   }
+
   async catch(err) {
     handleError(err, this.error);
   }
@@ -115,8 +117,8 @@ class BaseCommand extends Command {
   }
 
   doLog(message, always = false) {
-    if (always || !this.flags.quiet) {
-      this.log(message);
+    if (always || !this.flags?.quiet) {
+      CliUx.ux.log(message);
     }
   }
 
@@ -329,11 +331,6 @@ module.exports = {
       description: 'The environment id to use while running this command',
       multiple: false,
       required: false,
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'output as json',
     }),
     quiet: Flags.boolean({
       description: 'Generates no log output and asks for no user input',

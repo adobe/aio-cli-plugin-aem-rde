@@ -14,7 +14,7 @@ const sinon = require('sinon').createSandbox();
 const archiver = require('archiver');
 const Zip = require('adm-zip');
 const { dispatcherInputBuild } = require('../../src/lib/dispatcher.js');
-const { cli } = require('../../src/lib/base-command');
+const { BaseCommand } = require('../../src/lib/base-command');
 const fs = require('fs');
 const os = require('os');
 const EventEmitter = require('node:events');
@@ -51,7 +51,7 @@ describe('Archive Utility', function () {
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
 
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        new BaseCommand(undefined, undefined, undefined),
         tmpDir
       );
 
@@ -68,12 +68,12 @@ describe('Archive Utility', function () {
     });
 
     it('should create output zip file', async function () {
-      sinon.stub(cli, 'log');
+      sinon.stub(new BaseCommand([], [], undefined), 'doLog');
 
       await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
 
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        new BaseCommand(undefined, undefined, undefined),
         tmpDir
       );
 

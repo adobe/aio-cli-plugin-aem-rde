@@ -27,6 +27,7 @@ const STATUS = {
 
 /**
  * @param change
+ * @param basecommand
  */
 function logChange(change, basecommand) {
   basecommand.doLog(
@@ -47,7 +48,8 @@ function logChange(change, basecommand) {
         : change.services
           ? ` on ${change.services}`
           : '') +
-      ` - done by ${change.user} at ${change.timestamps.received}`
+      ` - done by ${change.user} at ${change.timestamps.received}`,
+    true
   );
 }
 
@@ -117,6 +119,7 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
  * @param cli
  * @param basecommand
  * @param progressCallback
+ * @param jsonResultItem
  */
 async function loadUpdateHistory(
   cloudSdkAPI,
@@ -182,15 +185,15 @@ async function loadUpdateHistory(
         jsonResultItem.logs = [];
       }
       if (lines.length > 0) {
-        basecommand.doLog(`Logs:`);
+        basecommand.doLog(`Logs:`, true);
         lines.forEach((line) => {
-          basecommand.doLog(`> ${line}`);
+          basecommand.doLog(`> ${line}`, true);
           if (jsonResultItem) {
             jsonResultItem.logs.push(line);
           }
         });
       } else {
-        basecommand.doLog('No logs available for this update.');
+        basecommand.doLog('No logs available for this update.', true);
         if (jsonResultItem) {
           jsonResultItem.logs.push('No logs available for this update.');
         }

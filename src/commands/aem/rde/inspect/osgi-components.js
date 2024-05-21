@@ -114,7 +114,6 @@ Object.assign(OsgiComponentsCommand, {
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
-    json: commonFlags.json,
     quiet: commonFlags.quiet,
   },
 });

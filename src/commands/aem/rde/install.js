@@ -118,42 +118,42 @@ async function computeStats(url) {
   }
 }
 
-/**
- * @param isLocalFile
- * @param type
- * @param path
- * @param inputPath
- */
-async function processInputFile(isLocalFile, type, inputPath) {
-  if (!isLocalFile) {
-    // don't do anything if we're processing a remote file
-    return;
-  }
-  const file = fs.lstatSync(inputPath);
-  switch (type) {
-    case 'frontend': {
-      if (!file.isDirectory()) {
-        break;
-      }
-      return await frontendInputBuild(this, inputPath);
-    }
-    case 'dispatcher-config': {
-      if (!file.isDirectory()) {
-        break;
-      }
-      return await dispatcherInputBuild(this, inputPath);
-    }
-    default: {
-      if (file.isDirectory()) {
-        throw new Error(
-          `A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend, dispatcher-config], current input type is "${type}"`
-        );
-      }
-    }
-  }
-}
-
 class DeployCommand extends BaseCommand {
+  /**
+   * @param isLocalFile
+   * @param type
+   * @param path
+   * @param inputPath
+   */
+  async processInputFile(isLocalFile, type, inputPath) {
+    if (!isLocalFile) {
+      // don't do anything if we're processing a remote file
+      return;
+    }
+    const file = fs.lstatSync(inputPath);
+    switch (type) {
+      case 'frontend': {
+        if (!file.isDirectory()) {
+          break;
+        }
+        return await frontendInputBuild(this, inputPath);
+      }
+      case 'dispatcher-config': {
+        if (!file.isDirectory()) {
+          break;
+        }
+        return await dispatcherInputBuild(this, inputPath);
+      }
+      default: {
+        if (file.isDirectory()) {
+          throw new Error(
+            `A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend, dispatcher-config], current input type is "${type}"`
+          );
+        }
+      }
+    }
+  }
+
   async runCommand(args, flags) {
     const progressBar = createProgressBar();
     const originalUrl = args.location;
@@ -161,7 +161,7 @@ class DeployCommand extends BaseCommand {
       await computeStats(originalUrl);
     let type = flags.type;
 
-    const { inputPath, inputPathSize } = (await processInputFile(
+    const { inputPath, inputPathSize } = (await this.processInputFile(
       isLocalFile,
       type,
       path
