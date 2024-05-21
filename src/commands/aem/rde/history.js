@@ -57,7 +57,7 @@ class HistoryCommand extends BaseCommand {
         );
       }
       if (flags.json) {
-        this.doLog(JSON.stringify(result), true);
+        return result;
       }
     } catch (err) {
       throwAioError(

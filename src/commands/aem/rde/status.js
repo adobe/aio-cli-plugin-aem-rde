@@ -18,7 +18,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.json) {
-      await this.printAsJson();
+      return await this.printAsJson();
     } else {
       await this.printAsText();
     }
@@ -95,7 +95,7 @@ class StatusCommand extends BaseCommand {
         };
       }
 
-      this.doLog(JSON.stringify(result), true);
+      return result;
     } catch (err) {
       this.spinnerStop();
       this.doLog(err);

@@ -67,7 +67,7 @@ class BaseCommand extends Command {
       Config.set('rde_lastaction', Date.now());
     }
 
-    await this.runCommand(args, flags);
+    return await this.runCommand(args, flags);
   }
 
   setupParams(flags) {

@@ -79,7 +79,7 @@ class DeleteCommand extends BaseCommand {
         });
       }
       if (flags.json) {
-        this.doLog(JSON.stringify(result), true);
+        return result;
       }
     } catch (err) {
       this.spinnerStop();
