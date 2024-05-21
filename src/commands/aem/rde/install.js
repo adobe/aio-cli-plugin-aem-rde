@@ -155,7 +155,10 @@ class DeployCommand extends BaseCommand {
   }
 
   async runCommand(args, flags) {
-    const progressBar = createProgressBar();
+    let progressBar;
+    if (!flags.quiet && !flags.json) {
+      progressBar = createProgressBar();
+    }
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =
       await computeStats(originalUrl);
@@ -196,10 +199,13 @@ class DeployCommand extends BaseCommand {
       return;
     }
 
+    const result = this.jsonResult();
+    result.items = [];
+
     let change;
     try {
       change = await this.withCloudSdk((cloudSdkAPI) => {
-        let uploadCallbacks = null;
+        let uploadCallbacks = {};
         if (!flags.json && !flags.quiet) {
           uploadCallbacks = {
             progress: (copiedBytes) => progressBar.update(copiedBytes),
@@ -237,10 +243,18 @@ class DeployCommand extends BaseCommand {
       }).finally(() => this.spinnerStop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(cloudSdkAPI, change.updateId, this, (done, text) =>
-          done ? this.spinnerStop() : this.spinnerStart(text)
+        loadUpdateHistory(
+          cloudSdkAPI,
+          change.updateId,
+          this,
+          (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
+          result.items[0]
         )
       );
+      progressBar?.stop();
+      if (flags.json) {
+        return result;
+      }
     } catch (err) {
       progressBar.stop();
       this.spinnerStop();
