@@ -48,6 +48,8 @@ describe('StatusCommand', function () {
     Config.get.restore();
   });
 
+  after(() => sinon.restore());
+
   describe('#run as textual result', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
