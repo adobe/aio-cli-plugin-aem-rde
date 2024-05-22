@@ -39,6 +39,12 @@ class LogsCommand extends BaseCommand {
   async runCommand(args, flags) {
     this.flags = flags || {};
     try {
+      const result = this.jsonResult();
+      result.logs = [];
+      if (flags.json && !flags.lines) {
+        flags.lines = 100; // default to 100 lines when using json output
+      }
+
       let log;
       if (flags.choose) {
         log = await this.chooseLogConfiguration(flags, false);
@@ -55,11 +61,19 @@ class LogsCommand extends BaseCommand {
           LOG_COLORS[h] = HIGHLIGHT_COLOR;
         });
 
-        this.intervalId = setInterval(() => {
-          if (!this.stopped) {
-            this.printLogTail(log.id, flags.target, flags.color);
+        while (!this.stopped) {
+          await this.printLogTail(log.id, flags.target, flags.color, result);
+          if (result.logs.length >= flags.lines) {
+            this.stopAndCleanup();
           }
-        }, REQUEST_INTERVAL_MS);
+          await new Promise((_resolve) =>
+            setTimeout(_resolve, REQUEST_INTERVAL_MS)
+          );
+        }
+
+        if (flags.json) {
+          return result;
+        }
       } else {
         this.doLog('No active log configuration found.');
       }
@@ -105,13 +119,12 @@ class LogsCommand extends BaseCommand {
         name: `${names.map((n) => `${n.logger}:${n.level}`).join(' ')}`,
         value: id,
       }));
-      logChoices.push({ name: 'cancel', value: 'cancel' });
 
       const nrOfLogs = Object.keys(logChoices).length;
-
       if (nrOfLogs === 0) {
         return null;
       }
+      logChoices.push({ name: 'cancel', value: 'cancel' });
 
       const msg = tooManyLogs
         ? 'Too many log configurations. Choose one to replace (type to filter):'
@@ -145,10 +158,6 @@ class LogsCommand extends BaseCommand {
   async stopAndCleanup() {
     if (!this.stopped) {
       this.stopped = true;
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-      }
-
       process.removeListener('SIGINT', this.stopAndCleanupCallback);
       process.removeListener('SIGTERM', this.stopAndCleanupCallback);
       if (this.lastItemId !== undefined) {
@@ -230,7 +239,7 @@ class LogsCommand extends BaseCommand {
     }
   }
 
-  async printLogTail(id, target, colorize) {
+  async printLogTail(id, target, colorize, result) {
     const response = await this.withCloudSdk((cloudSdkAPI) =>
       cloudSdkAPI.getAemLogTail(target, id)
     );
@@ -256,7 +265,13 @@ class LogsCommand extends BaseCommand {
       for (let i = 0; i < logLines.length && !this.stopped; i++) {
         const line = colorize ? this.colorizeLine(logLines[i]) : logLines[i];
         this.doLog(line, true);
-        await sleepMillis(perLineDelay);
+        result.logs.push(logLines[i]);
+        if (result.logs.length >= this.flags.lines) {
+          return result;
+        }
+        if (!this.flags.json) {
+          await sleepMillis(perLineDelay);
+        }
       }
     } else if (response.status === 404) {
       this.doLog(
@@ -338,6 +353,12 @@ Object.assign(LogsCommand, {
       char: 'H',
       description: `Highlight log lines containing the specified string.`,
       multiple: true,
+      required: false,
+    }),
+    lines: Flags.integer({
+      char: 'l',
+      description: `Number of lines to tail. Default is 100. This flag is enforced when using json output.`,
+      multiple: false,
       required: false,
     }),
     quiet: commonFlags.quiet,
