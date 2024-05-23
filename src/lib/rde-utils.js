@@ -89,7 +89,6 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
     () => progressCallback(false, 'checking status')
   );
   progressCallback(true);
-
   if (response.status === 200) {
     const change = await response.json();
     if (change) {

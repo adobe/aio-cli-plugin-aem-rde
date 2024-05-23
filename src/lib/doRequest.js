@@ -88,9 +88,7 @@ class DoRequest {
       options.body = JSON.stringify(body);
       options.headers['content-type'] = 'application/json';
     }
-
-    const ret = fetch(url, options);
-    return ret;
+    return fetch(url, options);
   }
 }
 
