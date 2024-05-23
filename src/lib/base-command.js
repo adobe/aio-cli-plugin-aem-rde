@@ -149,7 +149,6 @@ class BaseCommand extends Command {
    */
   getBaseUrl() {
     const configStr = Config.get('cloudmanager.base_url');
-    console.log(configStr)
     return configStr || 'https://cloudmanager.adobe.io';
   }
 
