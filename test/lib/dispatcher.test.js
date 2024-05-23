@@ -148,10 +148,11 @@ describe('Archive Utility', function () {
       assert.equal(err?.message, 'failed');
     });
     it('should add directory to archive', async function () {
-      //
       let err;
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
       try {
-        await archDispatcher.dispatcherInputBuild({ log: () => {} }, '');
+        await archDispatcher.dispatcherInputBuild(command, '');
       } catch (e) {
         err = e;
       }
