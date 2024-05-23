@@ -312,17 +312,4 @@ describe('LogsCommand', function () {
       }
     });
   });
-  // describe('#chooseLogConfiguration', function() {
-  //   beforeEach(() => {
-  //     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
-  //       sinon,
-  //       new LogsCommand(['--choose'], null),
-  //       stubbedMethods
-  //     );
-  //   });
-  //   it('Should be called exactly once', async function () {
-  //     await command.run();
-  //     assert.equal(true, true);
-  //   })
-  // });
 });
