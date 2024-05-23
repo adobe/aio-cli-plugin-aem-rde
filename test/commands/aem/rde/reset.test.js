@@ -5,16 +5,40 @@ const { createCloudSdkAPIStub } = require('../../../util');
 
 describe('ResetCommand', function () {
   describe('#run', function () {
-    it('cloudSDKAPI.resetEnv() has been called', async function () {
-      const [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+    let command;
+    let cloudSdkApiStub;
+    beforeEach(function () {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new ResetCommand([], null),
         {
           resetEnv: () => {},
         }
       );
+      Object.assign(command, {
+        spinnerStart: spinnerStartStub,
+        spinnerStop: spinnerStopStub,
+      });
+    });
+    afterEach(function () {
+      spinnerStartStub.reset();
+      spinnerStopStub.reset();
+    });
+    it('cloudSDKAPI.resetEnv() has been called', async function () {
       await command.run();
       assert.ok(cloudSdkApiStub.resetEnv.calledOnce);
+      assert.ok(spinnerStartStub.calledOnce);
+    });
+    it('stop the spinner and throw error', async function () {
+      let err;
+      try {
+        spinnerStartStub.throws(new Error('Failed to start a spinner'));
+        await command.run();
+      } catch (e) {
+        err = e;
+      }
+      assert.ok(spinnerStopStub.calledOnce);
+      assert.equal(err.code, 'INTERNAL_RESET_ERROR');
     });
   });
 

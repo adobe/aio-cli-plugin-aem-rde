@@ -3,6 +3,10 @@ const sinon = require('sinon').createSandbox();
 const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 const Config = require('@adobe/aio-lib-core-config');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
+const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
+
+const spinnerStartStub = sinon.stub();
+const spinnerStopStub = sinon.stub();
 
 const stubbedMethods = {
   getArtifacts: () =>
@@ -27,6 +31,12 @@ const stubbedMethods = {
           ],
         }),
     }),
+};
+
+const stubbeErrorMethods = {
+  getArtifacts: () => {
+    throw new Error('failed to get artifacts');
+  },
 };
 
 let command, cloudSdkApiStub;
@@ -164,6 +174,42 @@ describe('StatusCommand', function () {
         },
         json
       );
+    });
+  });
+  describe('#run exceptions', function () {
+    it('should stop spinner when error occurs for text mode', async function () {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new StatusCommand([], null),
+        stubbeErrorMethods
+      );
+      Object.assign(command, {
+        spinnerStart: spinnerStartStub,
+        spinnerStop: spinnerStopStub,
+      });
+      let err;
+      try {
+        await command.run();
+      } catch (e) {
+        err = e;
+      }
+      assert.ok(spinnerStopStub.calledOnce);
+      assert.equal(err.code, 'INTERNAL_STATUS_ERROR');
+    });
+    it('should stop spinner when error occurs for json mode', async function () {
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        new StatusCommand(['--json'], null),
+        stubbeErrorMethods
+      );
+      Object.assign(command, {
+        spinnerStart: spinnerStartStub,
+        spinnerStop: spinnerStopStub,
+      });
+      try {
+        await command.run();
+      } catch (e) {}
+      assert.ok(spinnerStopStub.calledOnce);
     });
   });
 });

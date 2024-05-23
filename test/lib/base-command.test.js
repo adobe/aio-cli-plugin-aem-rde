@@ -26,6 +26,8 @@ const { codes: validationCodes } = require('../../src/lib/validation-errors');
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const { setupLogCapturing } = require('../util.js');
+const proxyquire = require('proxyquire').noCallThru();
+const jwt = require('jsonwebtoken');
 
 describe('BaseCommand catch errors', function () {
   let errorSpy;
@@ -184,5 +186,136 @@ describe('BaseCommand catch errors', function () {
         -1
       )} but it was expected ${JSON.stringify(errorFnExpectedArgs)}`
     );
+  });
+});
+
+describe('Authentication tests', function () {
+  const accessToken = jwt.sign(
+    {
+      client_id: 'jwt_client_id',
+    },
+    'pKey',
+    {}
+  );
+  const getOrganizationsStub = sinon.stub();
+  const contextGetStub = sinon.stub();
+  const getTokenStub = sinon.stub();
+  const getConfigStub = sinon.stub();
+  const BaseCommandAuthMock = proxyquire('../../src/lib/base-command', {
+    '@adobe/aio-lib-ims': {
+      Ims: class Ims {
+        getOrganizations() {
+          return getOrganizationsStub();
+        }
+      },
+      context: {
+        get: contextGetStub,
+      },
+      getToken: getTokenStub,
+    },
+    '@adobe/aio-lib-core-config': {
+      get: getConfigStub,
+      set: sinon.stub(),
+    },
+    '@adobe/aio-lib-cloudmanager': {
+      init: () => ({
+        getDeveloperConsoleUrl: () => 'http://example.com',
+      }),
+    },
+  });
+  beforeEach(function () {
+    getOrganizationsStub.returns(
+      Promise.resolve([
+        {
+          orgName: 'org1',
+          orgRef: { ident: 'org1_id', authSrc: 'org1_auth_src' },
+        },
+        {
+          orgName: 'org2',
+          orgRef: { ident: 'org2_id', authSrc: 'org2_auth_src' },
+        },
+      ])
+    );
+    contextGetStub.returns({
+      data: {
+        client_id: 'client_id',
+      },
+    });
+    getTokenStub.returns(accessToken);
+  });
+  afterEach(function () {
+    getOrganizationsStub.reset();
+    contextGetStub.reset();
+    getTokenStub.reset();
+    getConfigStub.reset();
+  });
+  it('should be able to fetch token and api key', async function () {
+    const command = new BaseCommandAuthMock.BaseCommand();
+    const result = await command.getTokenAndKey();
+    assert.deepEqual(result, {
+      accessToken,
+      apiKey: 'client_id',
+    });
+  });
+  it('should be able to fetch cli token and api key in case of api error', async function () {
+    contextGetStub.returns({});
+    const command = new BaseCommandAuthMock.BaseCommand();
+    const result = await command.getTokenAndKey();
+    assert.deepEqual(result, { accessToken, apiKey: 'jwt_client_id' });
+  });
+  it('should throw cannot decode error', async function () {
+    contextGetStub.returns({});
+    getTokenStub.returns(undefined);
+    let err;
+    try {
+      const command = new BaseCommandAuthMock.BaseCommand();
+      await command.getTokenAndKey();
+    } catch (e) {
+      err = e;
+    }
+    assert.equal(err.code, 'CLI_AUTH_CONTEXT_CANNOT_DECODE');
+  });
+  it('should throw no client id error', async function () {
+    contextGetStub.returns({});
+    getTokenStub.returns(jwt.sign({}, 'pKey', {}));
+    let err;
+    try {
+      const command = new BaseCommandAuthMock.BaseCommand();
+      await command.getTokenAndKey();
+    } catch (e) {
+      err = e;
+    }
+    assert.equal(err.code, 'CLI_AUTH_CONTEXT_NO_CLIENT_ID');
+  });
+  it('throw error on calling runCommand method', function () {
+    let err;
+    try {
+      const command = new BaseCommandAuthMock.BaseCommand();
+      command.runCommand();
+    } catch (e) {
+      err = e;
+    }
+    assert.equal(
+      err.message,
+      'You have to implement the method runCommand(args, flags) in the subclass!'
+    );
+  });
+  it('should return default base url', function () {
+    const command = new BaseCommandAuthMock.BaseCommand();
+    getConfigStub.returns(undefined);
+    const baseUrl = command.getBaseUrl();
+    assert.equal(baseUrl, 'https://cloudmanager.adobe.io');
+  });
+  it('cloud sdk should be initialized properly', async function () {
+    const command = new BaseCommandAuthMock.BaseCommand();
+    const flags = {
+      organizationId: 'orgId',
+      programId: 'progId',
+      environmentId: 'envId',
+    };
+    command.setupParams(flags);
+    const callbackStub = sinon.stub();
+    await command.withCloudSdk(callbackStub);
+    assert.ok(callbackStub.calledOnce);
   });
 });
