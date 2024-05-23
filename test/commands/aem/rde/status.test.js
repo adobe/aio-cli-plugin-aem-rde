@@ -3,7 +3,6 @@ const sinon = require('sinon').createSandbox();
 const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 const Config = require('@adobe/aio-lib-core-config');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
-const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 
 const spinnerStartStub = sinon.stub();
 const spinnerStopStub = sinon.stub();

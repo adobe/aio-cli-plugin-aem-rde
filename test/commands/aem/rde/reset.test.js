@@ -3,6 +3,9 @@ const sinon = require('sinon').createSandbox();
 const ResetCommand = require('../../../../src/commands/aem/rde/reset.js');
 const { createCloudSdkAPIStub } = require('../../../util');
 
+const spinnerStartStub = sinon.stub();
+const spinnerStopStub = sinon.stub();
+
 describe('ResetCommand', function () {
   describe('#run', function () {
     let command;
