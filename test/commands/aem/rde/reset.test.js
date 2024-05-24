@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
-const ResetCommand = require('../../../../src/commands/aem/rde/reset.js');
 const { createCloudSdkAPIStub } = require('../../../util');
+const ResetCommand = require('../../../../src/commands/aem/rde/reset.js');
 
 const spinnerStartStub = sinon.stub();
 const spinnerStopStub = sinon.stub();

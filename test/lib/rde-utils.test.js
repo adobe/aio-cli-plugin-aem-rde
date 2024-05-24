@@ -1,9 +1,6 @@
 const assert = require('assert');
 const RdeUtils = require('../../src/lib/rde-utils.js');
 const sinon = require('sinon').createSandbox();
-const {
-  codes: deploymentErrorCodes,
-} = require('../../src/lib/deployment-errors');
 const { setupLogCapturing } = require('../util');
 const { BaseCommand } = require('../../src/lib/base-command');
 

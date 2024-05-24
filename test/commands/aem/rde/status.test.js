@@ -67,6 +67,15 @@ describe('StatusCommand', function () {
         stubbedMethods
       );
       setupLogCapturing(sinon, command);
+      Object.assign(command, {
+        spinnerStart: spinnerStartStub,
+        spinnerStop: spinnerStopStub,
+      });
+    });
+
+    afterEach(function () {
+      spinnerStartStub.reset();
+      spinnerStopStub.reset();
     });
 
     it('should call getArtifacts() exactly once', async function () {
