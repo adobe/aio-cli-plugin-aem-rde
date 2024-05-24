@@ -76,6 +76,8 @@ class EnableRequestLogsCommand extends BaseCommand {
   }
 }
 
+EnableRequestLogsCommand.enableJsonFlag = false;
+
 Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {

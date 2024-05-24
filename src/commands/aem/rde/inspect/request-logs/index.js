@@ -22,6 +22,7 @@ const { throwAioError } = require('../../../../../lib/error-helpers');
 class RequestLogsCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.id) {
         const params = {};
         params.filter = flags.include;
@@ -32,7 +33,7 @@ class RequestLogsCommand extends BaseCommand {
         if (response?.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.logInJsonArrayFormat(json?.items);
+            result.items = json?.items;
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -48,7 +49,7 @@ class RequestLogsCommand extends BaseCommand {
         if (response?.status === 200) {
           const requestLog = await response.json();
           if (flags.json) {
-            this.doLog(JSON.stringify(requestLog, null, 2), true);
+            result.items = requestLog;
           } else {
             this.logInTableFormat([requestLog]);
           }
@@ -57,6 +58,9 @@ class RequestLogsCommand extends BaseCommand {
             messageValues: [response.status, response.statusText],
           });
         }
+      }
+      if (flags.json) {
+        return result;
       }
     } catch (err) {
       throwAioError(

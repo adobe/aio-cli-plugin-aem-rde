@@ -39,6 +39,8 @@ class DisableRequestLogsCommand extends BaseCommand {
   }
 }
 
+DisableRequestLogsCommand.enableJsonFlag = false;
+
 Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {

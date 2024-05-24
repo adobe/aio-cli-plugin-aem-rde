@@ -28,13 +28,13 @@ class HistoryCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          result.status = json.status;
+          result.status = json?.status;
           this.spinnerStop();
-          if (json.items.length === 0) {
+          if (json?.items?.length === 0) {
             this.doLog('There are no updates yet.');
           } else {
-            result.items = json.items;
-            json.items.forEach((e) => rdeUtils.logChange(e, this));
+            result.items = json?.items;
+            json?.items.forEach((e) => rdeUtils.logChange(e, this));
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({

@@ -22,6 +22,7 @@ const { throwAioError } = require('../../../../lib/error-helpers');
 class InventoryCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.id) {
         const params = {};
         params.filter = flags.include;
@@ -32,7 +33,7 @@ class InventoryCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.logInJsonArrayFormat(json.items);
+            result.items = json?.items;
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -48,7 +49,7 @@ class InventoryCommand extends BaseCommand {
         if (response.status === 200) {
           const inventory = await response.json();
           if (flags.json) {
-            this.doLog(JSON.stringify(inventory, null, 2), true);
+            result.items = inventory;
           } else {
             this.logInTableFormat([inventory]);
           }
@@ -57,6 +58,9 @@ class InventoryCommand extends BaseCommand {
             messageValues: [response.status, response.statusText],
           });
         }
+      }
+      if (flags.json) {
+        return result;
       }
     } catch (err) {
       throwAioError(
@@ -67,7 +71,7 @@ class InventoryCommand extends BaseCommand {
   }
 
   /**
-   * @param {object} items - The items displayed as a JSON array.
+   * @param {object} items - The items displayed as a table.
    */
   logInTableFormat(items) {
     cli.table(

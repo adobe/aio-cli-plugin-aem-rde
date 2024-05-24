@@ -152,19 +152,6 @@ class BaseCommand extends Command {
   }
 
   /**
-   * @param {object} items - The items displayed in the table.
-   */
-  logInJsonArrayFormat(items) {
-    let jsonArray = '[\n';
-    items.forEach((item) => {
-      jsonArray += '  ' + JSON.stringify(item) + ',\n';
-    });
-    jsonArray = jsonArray.slice(0, -2);
-    jsonArray += '\n]';
-    this.doLog(jsonArray, true);
-  }
-
-  /**
    *
    */
   async getTokenAndKey() {

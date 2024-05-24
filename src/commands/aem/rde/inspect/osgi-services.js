@@ -22,6 +22,7 @@ const { throwAioError } = require('../../../../lib/error-helpers');
 class OsgiServicesCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.id) {
         const params = {};
         params.scope = flags.scope;
@@ -33,7 +34,7 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const json = await response.json();
           if (flags.json) {
-            this.doLog(JSON.stringify(json.items), true);
+            result.items = json?.items;
           } else {
             this.logInTableFormat(json?.items);
           }
@@ -50,7 +51,7 @@ class OsgiServicesCommand extends BaseCommand {
         if (response.status === 200) {
           const osgiService = await response.json();
           if (flags.json) {
-            this.doLog(JSON.stringify(osgiService, null, 2), true);
+            result.items = osgiService;
           } else {
             this.logInTableFormat([osgiService]);
           }
@@ -59,6 +60,9 @@ class OsgiServicesCommand extends BaseCommand {
             messageValues: [response.status, response.statusText],
           });
         }
+      }
+      if (flags.json) {
+        return result;
       }
     } catch (err) {
       throwAioError(
