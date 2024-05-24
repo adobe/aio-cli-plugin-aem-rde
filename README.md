@@ -69,6 +69,8 @@ $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 
 This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
 
+To reset and deploy to RDE, the user must have one of the following permissions:
+`Business Owner`, `Deployment Manager`, `Developer` or `Program Manager`.
 ## Verifying configuration
 
 1. Run `aio aem:rde` for general help.
