@@ -112,13 +112,26 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '[{"pid":"com.adobe.aem.test","properties":{"addressbookProdHost":"https://test.com","addressBookStageHost":"https://test.com","ethosEnvClusterType":"$[env:ETHOS_ENV_CLUSTER_TYPE;default= ]","imsOrganization":"$[env:imsOrganization;default= ]"}},{"pid":"com.adobe.aem.collaborationapi.test","properties":{"assetsPipelineTopic":"$[env:test;default= ]"}},{"pid":"com.adobe.aem.core.test","properties":{"test.enabled":true}}]'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        {
+          pid: 'com.adobe.aem.test',
+          properties: {
+            addressbookProdHost: 'https://test.com',
+            addressBookStageHost: 'https://test.com',
+            ethosEnvClusterType: '$[env:ETHOS_ENV_CLUSTER_TYPE;default= ]',
+            imsOrganization: '$[env:imsOrganization;default= ]',
+          },
+        },
+        {
+          pid: 'com.adobe.aem.collaborationapi.test',
+          properties: { assetsPipelineTopic: '$[env:test;default= ]' },
+        },
+        {
+          pid: 'com.adobe.aem.core.test',
+          properties: { 'test.enabled': true },
+        },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -199,17 +212,13 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "pid": "com.adobe.aem.test",\n' +
-          '  "properties": {\n' +
-          '    "addressbookProdHost": "https://test.com"\n' +
-          '  }\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        pid: 'com.adobe.aem.test',
+        properties: {
+          addressbookProdHost: 'https://test.com',
+        },
+      });
     });
 
     it('Should print out a error message when status is not 200', async function () {

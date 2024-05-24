@@ -84,16 +84,21 @@ describe('Inventory', function () {
         new Inventory(['--quiet', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '[\n' +
-          '  {"id":"test1","format":"TEXT"},\n' +
-          '  {"id":"test2","format":"TEXT"},\n' +
-          '  {"id":"test3","format":"TEXT"}\n' +
-          ']'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        {
+          format: 'TEXT',
+          id: 'test1',
+        },
+        {
+          format: 'TEXT',
+          id: 'test2',
+        },
+        {
+          format: 'TEXT',
+          id: 'test3',
+        },
+      ]);
     });
 
     it('Should trigger an error', async function () {
@@ -175,12 +180,12 @@ describe('Inventory', function () {
         new Inventory(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '{\n  "id": "test",\n  "format": "TEXT",\n  "contents": "test"\n}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        contents: 'test',
+        format: 'TEXT',
+        id: 'test',
+      });
     });
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(

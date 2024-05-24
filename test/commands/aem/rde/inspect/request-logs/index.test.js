@@ -115,17 +115,13 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '[\n' +
-          '  {"id":"0","method":"GET","path":"/metrics"},\n' +
-          '  {"id":"1","method":"HEAD","path":"/libs/login.html"},\n' +
-          '  {"id":"2","method":"GET","path":"/metrics"},\n' +
-          '  {"id":"3","method":"HEAD","path":"/libs/login.html"}\n' +
-          ']'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        { id: '0', method: 'GET', path: '/metrics' },
+        { id: '1', method: 'HEAD', path: '/libs/login.html' },
+        { id: '2', method: 'GET', path: '/metrics' },
+        { id: '3', method: 'HEAD', path: '/libs/login.html' },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -206,25 +202,18 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      setupLogCapturing(sinon, command);
-
-      await command.run();
-      assert.equal(
-        command.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "id": "0",\n' +
-          '  "method": "HEAD",\n' +
-          '  "path": "/libs/test.html",\n' +
-          '  "log": [\n' +
-          '    "log bla bli blu"\n' +
-          '  ],\n' +
-          '  "sling-request-log": [\n' +
-          '    "      0 TIMER_START{Request Processing}",\n' +
-          '    "      0 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>",\n' +
-          '    "      3 LOG Method=HEAD, PathInfo=null"\n' +
-          '  ]\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        id: '0',
+        method: 'HEAD',
+        path: '/libs/test.html',
+        log: ['log bla bli blu'],
+        'sling-request-log': [
+          '      0 TIMER_START{Request Processing}',
+          '      0 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>',
+          '      3 LOG Method=HEAD, PathInfo=null',
+        ],
+      });
     });
 
     it('Should print out a error message when status is not 200.', async function () {
