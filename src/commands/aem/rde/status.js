@@ -17,14 +17,6 @@ const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
-    if (flags.json) {
-      return await this.printAsJson();
-    } else {
-      await this.printAsText();
-    }
-  }
-
-  async printAsText() {
     try {
       this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('retrieving environment status information');
@@ -33,7 +25,9 @@ class StatusCommand extends BaseCommand {
       );
       this.spinnerStop();
       this.doLog(`Environment: ${status.status}`, true);
+      const result = this.jsonResult(status.status);
       if (status.error) {
+        result.statusText = status.BaseCommand;
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [status.status, status.error],
         });
@@ -63,42 +57,23 @@ class StatusCommand extends BaseCommand {
       grouped.publish['osgi-config'].forEach((config) =>
         this.doLog(` ${config.metadata.configPid} `, true)
       );
+
+      result.author = {
+        osgiBundles: grouped.author['osgi-bundle'],
+        osgiConfigs: grouped.publish['osgi-config'],
+      };
+      result.publish = {
+        osgiBundles: grouped.author['osgi-bundle'],
+        osgiConfigs: grouped.publish['osgi-config'],
+      };
+
+      return result;
     } catch (err) {
       this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
       );
-    }
-  }
-
-  async printAsJson() {
-    try {
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
-        loadAllArtifacts(cloudSdkAPI)
-      );
-
-      const grouped = groupArtifacts(status.items);
-
-      const result = this.jsonResult(status.status);
-
-      if (status.error) {
-        result.statusText = status.BaseCommand;
-      } else {
-        result.author = {
-          osgiBundles: grouped.author['osgi-bundle'],
-          osgiConfigs: grouped.publish['osgi-config'],
-        };
-        result.publish = {
-          osgiBundles: grouped.author['osgi-bundle'],
-          osgiConfigs: grouped.publish['osgi-config'],
-        };
-      }
-
-      return result;
-    } catch (err) {
-      this.spinnerStop();
-      this.doLog(err);
     }
   }
 }
