@@ -228,9 +228,7 @@ class CloudSdkAPI {
       const url = result.headers.get('Location');
       const changeId = (await result.json()).updateId;
       const client = new ShareFileClient(url);
-      if (uploadCallbacks) {
-        uploadCallbacks.start(fileSize);
-      }
+        uploadCallbacks?.start(fileSize);
       await client.uploadFile(path, {
         onProgress: (progress) =>
           function () {
