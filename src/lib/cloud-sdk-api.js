@@ -231,11 +231,7 @@ class CloudSdkAPI {
         uploadCallbacks?.start(fileSize);
       await client.uploadFile(path, {
         onProgress: (progress) =>
-          function () {
-            if (uploadCallbacks) {
-              uploadCallbacks.progress(progress.loadedBytes);
-            }
-          },
+          uploadCallbacks?.progress(progress.loadedBytes);
       });
       return await this._putUpdate(changeId, deploymentCallback);
     } else {
