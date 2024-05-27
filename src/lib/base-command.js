@@ -123,7 +123,7 @@ class BaseCommand extends Command {
   }
 
   spinnerStart(message) {
-    if (!this.flags.quiet && !this.flags.json) {
+    if (!(this.flags.quiet || this.flags.json)) {
       spinner.start(message);
     }
   }
