@@ -47,6 +47,8 @@ class InventoryCommand extends BaseCommand {
           const inventory = await response.json();
           result.items = inventory;
           this.logInTableFormat([inventory]);
+        } else if (response.status === 404) {
+          this.doLog(`An inventory with ID ${args.id} does not exist.`);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],

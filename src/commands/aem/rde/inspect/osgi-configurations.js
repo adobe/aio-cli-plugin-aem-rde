@@ -48,6 +48,10 @@ class OsgiConfigurationsCommand extends BaseCommand {
           const osgiConfiguration = await response.json();
           result.items = osgiConfiguration;
           this.logInTableFormat([osgiConfiguration]);
+        } else if (response.status === 404) {
+          this.doLog(
+            `An osgi-configuration with PID ${args.pId} does not exist.`
+          );
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
