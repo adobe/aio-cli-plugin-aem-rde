@@ -22,6 +22,7 @@ const { throwAioError } = require('../../../../lib/error-helpers');
 class OsgiConfigurationsCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.pId) {
         const params = {};
         params.scope = flags.scope;
@@ -32,11 +33,8 @@ class OsgiConfigurationsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.json) {
-            this.doLog(JSON.stringify(json?.items), true);
-          } else {
-            this.logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -48,17 +46,15 @@ class OsgiConfigurationsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const osgiConfiguration = await response.json();
-          if (flags.json) {
-            this.doLog(JSON.stringify(osgiConfiguration, null, 2), true);
-          } else {
-            this.logInTableFormat([osgiConfiguration]);
-          }
+          result.items = osgiConfiguration;
+          this.logInTableFormat([osgiConfiguration]);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
+      return result;
     } catch (err) {
       throwAioError(
         err,
@@ -101,7 +97,6 @@ Object.assign(OsgiConfigurationsCommand, {
     target: commonFlags.targetInspect,
     scope: commonFlags.scope,
     include: commonFlags.include,
-    json: commonFlags.json,
     quiet: commonFlags.quiet,
   },
 });

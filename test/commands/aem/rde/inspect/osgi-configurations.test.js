@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiConfigurationsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-configurations');
-const { cli } = require('../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -78,8 +77,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('OsgiConfigurationsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getOsgiConfigurations', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -87,6 +84,7 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -97,7 +95,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' PID                                 '),
           chalk.bold(' ─────────────────────────────────── '),
@@ -114,12 +112,26 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '[{"pid":"com.adobe.aem.test","properties":{"addressbookProdHost":"https://test.com","addressBookStageHost":"https://test.com","ethosEnvClusterType":"$[env:ETHOS_ENV_CLUSTER_TYPE;default= ]","imsOrganization":"$[env:imsOrganization;default= ]"}},{"pid":"com.adobe.aem.collaborationapi.test","properties":{"assetsPipelineTopic":"$[env:test;default= ]"}},{"pid":"com.adobe.aem.core.test","properties":{"test.enabled":true}}]'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        {
+          pid: 'com.adobe.aem.test',
+          properties: {
+            addressbookProdHost: 'https://test.com',
+            addressBookStageHost: 'https://test.com',
+            ethosEnvClusterType: '$[env:ETHOS_ENV_CLUSTER_TYPE;default= ]',
+            imsOrganization: '$[env:imsOrganization;default= ]',
+          },
+        },
+        {
+          pid: 'com.adobe.aem.collaborationapi.test',
+          properties: { assetsPipelineTopic: '$[env:test;default= ]' },
+        },
+        {
+          pid: 'com.adobe.aem.core.test',
+          properties: { 'test.enabled': true },
+        },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -169,6 +181,7 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -184,7 +197,7 @@ describe('OsgiConfigurationsCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' PID                '),
           chalk.bold(' ────────────────── '),
@@ -199,16 +212,13 @@ describe('OsgiConfigurationsCommand', function () {
         new OsgiConfigurationsCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "pid": "com.adobe.aem.test",\n' +
-          '  "properties": {\n' +
-          '    "addressbookProdHost": "https://test.com"\n' +
-          '  }\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        pid: 'com.adobe.aem.test',
+        properties: {
+          addressbookProdHost: 'https://test.com',
+        },
+      });
     });
 
     it('Should print out a error message when status is not 200', async function () {

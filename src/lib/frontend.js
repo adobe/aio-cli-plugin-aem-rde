@@ -24,13 +24,13 @@ async function frontendInputBuild(basecommand, inputPath) {
     let valid = true;
     if (!fs.existsSync(distInputPath)) {
       valid = false;
-      basecommand.log(
+      basecommand.doLog(
         `Error: There is no 'dist' folder in ${inputPath}. Please, run 'npm run build' in the project folder before running this command.`
       );
     }
     if (!fs.existsSync(pkgJsonInputPath)) {
       valid = false;
-      basecommand.log(
+      basecommand.doLog(
         `Error: There is no 'package.json' file in ${inputPath}. Ensure you're sending the right folder which contains your frontend-pipeline project.`
       );
     }
@@ -52,7 +52,7 @@ async function frontendInputBuild(basecommand, inputPath) {
       let zipSizeBytes;
       output.on('close', function () {
         zipSizeBytes = archive.pointer();
-        basecommand.log(
+        basecommand.doLog(
           `Zipped file ${targetZipPath} of ${zipSizeBytes} total bytes`
         );
         return resolve({

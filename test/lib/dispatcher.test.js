@@ -14,7 +14,7 @@ const sinon = require('sinon').createSandbox();
 const archiver = require('archiver');
 const Zip = require('adm-zip');
 const { dispatcherInputBuild } = require('../../src/lib/dispatcher.js');
-const { cli } = require('../../src/lib/base-command');
+const { BaseCommand } = require('../../src/lib/base-command');
 const fs = require('fs');
 const os = require('os');
 const EventEmitter = require('node:events');
@@ -99,8 +99,10 @@ describe('Archive Utility', function () {
         .returns('new-zip-path');
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        command,
         tmpDir
       );
 
@@ -117,12 +119,13 @@ describe('Archive Utility', function () {
     });
 
     it('should create output zip file', async function () {
-      sinon.stub(cli, 'log');
-
       await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
+
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        command,
         tmpDir
       );
 
@@ -145,10 +148,11 @@ describe('Archive Utility', function () {
       assert.equal(err?.message, 'failed');
     });
     it('should add directory to archive', async function () {
-      //
       let err;
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
       try {
-        await archDispatcher.dispatcherInputBuild({ log: () => {} }, '');
+        await archDispatcher.dispatcherInputBuild(command, '');
       } catch (e) {
         err = e;
       }

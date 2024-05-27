@@ -1,9 +1,8 @@
 const assert = require('assert');
 const RdeUtils = require('../../src/lib/rde-utils.js');
 const sinon = require('sinon').createSandbox();
-const {
-  codes: deploymentErrorCodes,
-} = require('../../src/lib/deployment-errors');
+const { setupLogCapturing } = require('../util');
+const { BaseCommand } = require('../../src/lib/base-command');
 
 describe('RdeUtils', function () {
   describe('#groupArtifacts', function () {
@@ -193,16 +192,17 @@ describe('RdeUtils', function () {
         getChange: getChangeFn,
         getLogs: getLogsFn,
       };
-      const cliLogFn = sinon.spy(sinon.stub());
+      const command = new BaseCommand(undefined, undefined, undefined);
+      setupLogCapturing(sinon, command);
       await RdeUtils.loadUpdateHistory(
         cloudSdk,
         'update-id',
-        { log: cliLogFn },
+        command,
         () => {}
       );
       assert.equal(
-        cliLogFn.calledWith('An update with ID update-id does not exist.'),
-        true
+        command.log.getCapturedLogOutput(),
+        'An update with ID update-id does not exist.'
       );
     });
     it('should throw UNEXPECTED_API_ERROR if response status is incorrect', async function () {

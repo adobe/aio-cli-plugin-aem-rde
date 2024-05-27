@@ -49,13 +49,22 @@ class DeleteCommand extends BaseCommand {
         }
       }
 
+      const result = this.jsonResult();
+      result.items = [];
+
       for (const artifact of artifacts) {
         const change = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.delete(artifact.id, flags.force)
         );
+        const newLength = result.items.push(change);
         await this.withCloudSdk((cloudSdkAPI) =>
-          loadUpdateHistory(cloudSdkAPI, change.updateId, this, (done, text) =>
-            done ? this.spinnerStop() : this.spinnerStart(text)
+          loadUpdateHistory(
+            cloudSdkAPI,
+            change.updateId,
+            this,
+            (done, text) =>
+              done ? this.spinnerStop() : this.spinnerStart(text),
+            result.items[newLength - 1]
           )
         );
       }
@@ -69,6 +78,7 @@ class DeleteCommand extends BaseCommand {
           messageValues: [typeInfo, args.id, serviceInfo],
         });
       }
+      return result;
     } catch (err) {
       this.spinnerStop();
       throwAioError(

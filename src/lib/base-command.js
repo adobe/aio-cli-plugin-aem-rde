@@ -38,7 +38,6 @@ class BaseCommand extends Command {
     const { args, flags } = await this.parse(this.typeof);
     this.flags = flags;
     this.args = args;
-
     if (!flags.programId) {
       this._programName = Config.get('cloudmanager_programname');
     }
@@ -68,7 +67,7 @@ class BaseCommand extends Command {
       Config.set('rde_lastaction', Date.now());
     }
 
-    await this.runCommand(args, flags);
+    return await this.runCommand(args, flags);
   }
 
   setupParams(flags) {
@@ -118,13 +117,13 @@ class BaseCommand extends Command {
   }
 
   doLog(message, always = false) {
-    if (always || !this.flags.quiet) {
-      CliUx.ux.log(message);
+    if (always || !this.flags?.quiet) {
+      this.log(message);
     }
   }
 
   spinnerStart(message) {
-    if (!this.flags.quiet) {
+    if (!(this.flags.quiet || this.flags.json)) {
       spinner.start(message);
     }
   }
@@ -150,19 +149,6 @@ class BaseCommand extends Command {
   getBaseUrl() {
     const configStr = Config.get('cloudmanager.base_url');
     return configStr || 'https://cloudmanager.adobe.io';
-  }
-
-  /**
-   * @param {object} items - The items displayed in the table.
-   */
-  logInJsonArrayFormat(items) {
-    let jsonArray = '[\n';
-    items.forEach((item) => {
-      jsonArray += '  ' + JSON.stringify(item) + ',\n';
-    });
-    jsonArray = jsonArray.slice(0, -2);
-    jsonArray += '\n]';
-    this.doLog(jsonArray, true);
   }
 
   /**
@@ -267,7 +253,21 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPI);
   }
+
+  jsonResult(serverStatus) {
+    const result = {
+      programId: this._programId,
+      environmentId: this._environmentId,
+      status: serverStatus,
+    };
+    return result;
+  }
 }
+
+Object.assign(BaseCommand, {
+  description: 'Enable json output for all commands by default.',
+  enableJsonFlag: true,
+});
 
 module.exports = {
   BaseCommand,
@@ -321,11 +321,6 @@ module.exports = {
       description: 'The environment id to use while running this command',
       multiple: false,
       required: false,
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'output as json',
     }),
     quiet: Flags.boolean({
       description: 'Generates no log output and asks for no user input',

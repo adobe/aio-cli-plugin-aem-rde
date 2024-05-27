@@ -42,7 +42,7 @@ async function archiveDirectory(basecommand, sourceDir, outputFilePath) {
 
     output.on('close', function () {
       const zipSizeBytes = archive.pointer();
-      basecommand.log(
+      basecommand.doLog(
         `Zipped file ${outputFilePath} of ${zipSizeBytes} total bytes`
       );
       return resolve(zipSizeBytes);

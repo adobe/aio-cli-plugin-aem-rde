@@ -34,8 +34,9 @@ describe('BaseCommand catch errors', function () {
   let command;
 
   setupLogCapturing(sinon, cli);
-
-  before(() => sinon.useFakeTimers());
+  before(() => {
+    sinon.useFakeTimers();
+  });
   after(() => sinon.restore());
 
   beforeEach(() => {

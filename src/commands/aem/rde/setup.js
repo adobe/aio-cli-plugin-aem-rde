@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand } = require('../../../lib/base-command');
+const { BaseCommand, Flags } = require('../../../lib/base-command');
 const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -256,6 +256,28 @@ class SetupCommand extends BaseCommand {
   }
 
   async runCommand(args, flags) {
+    if (flags.show) {
+      const orgId = Config.get(CONFIG_ORG);
+      const programId = Config.get(CONFIG_PROGRAM);
+      const programName = Config.get(CONFIG_PROGRAM_NAME);
+      const envId = Config.get(CONFIG_ENVIRONMENT);
+      const envName = Config.get(CONFIG_ENVIRONMENT_NAME);
+
+      if (!orgId || !programId || !envId) {
+        this.doLog(
+          chalk.red(
+            'No configuration found. Please run `aio aem:rde:setup` to configure the CLI.'
+          )
+        );
+        return;
+      }
+
+      this.doLog(
+        `Current configuration: ${concatEnvironemntId(programId, envId)}: ${programName} - ${envName} (organization: ${orgId})`
+      );
+      return;
+    }
+
     try {
       inquirer.registerPrompt(
         'autocomplete',
@@ -398,10 +420,23 @@ class SetupCommand extends BaseCommand {
 }
 
 Object.assign(SetupCommand, {
+  description: 'Do not support json putput for setup command.',
+  enableJsonFlag: false,
+});
+
+Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',
   args: [],
   aliases: [],
-  flags: {},
+  flags: {
+    show: Flags.boolean({
+      description: 'Shows the current configuration of the RDE connection.',
+      char: 's',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+  },
 });
 
 module.exports = SetupCommand;

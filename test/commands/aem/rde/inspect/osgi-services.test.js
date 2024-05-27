@@ -1,13 +1,11 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiServicesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-services');
-const { cli } = require('../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
 } = require('../../../../util.js');
 const chalk = require('chalk');
-const OsgiConfigurationsCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-configurations');
 
 const errorObj = Object.assign(
   {},
@@ -109,8 +107,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('OsgiServicesCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getOsgiServices', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -118,6 +114,7 @@ describe('OsgiServicesCommand', function () {
         new OsgiServicesCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -128,7 +125,7 @@ describe('OsgiServicesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID Scope  Bundle ID Types                              '
@@ -149,11 +146,48 @@ describe('OsgiServicesCommand', function () {
         new OsgiServicesCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '[{"id":0,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":0,"properties":{"component.id":0,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":0},"usingBundles":[0]},{"id":1,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":1,"properties":{"component.id":1,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":1},"usingBundles":[1]},{"id":2,"types":["com.adobe.cq.dam.bla.bli.blu"],"scope":"bundle","bundleId":2,"properties":{"component.id":2,"component.name":"com.adobe.cq.dam.blabliblu","osgi.ds.satisfying.condition.target":"(osgi.condition.id=true)","service.ranking":2},"usingBundles":[2]}]'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        {
+          id: 0,
+          types: ['com.adobe.cq.dam.bla.bli.blu'],
+          scope: 'bundle',
+          bundleId: 0,
+          properties: {
+            'component.id': 0,
+            'component.name': 'com.adobe.cq.dam.blabliblu',
+            'osgi.ds.satisfying.condition.target': '(osgi.condition.id=true)',
+            'service.ranking': 0,
+          },
+          usingBundles: [0],
+        },
+        {
+          id: 1,
+          types: ['com.adobe.cq.dam.bla.bli.blu'],
+          scope: 'bundle',
+          bundleId: 1,
+          properties: {
+            'component.id': 1,
+            'component.name': 'com.adobe.cq.dam.blabliblu',
+            'osgi.ds.satisfying.condition.target': '(osgi.condition.id=true)',
+            'service.ranking': 1,
+          },
+          usingBundles: [1],
+        },
+        {
+          id: 2,
+          types: ['com.adobe.cq.dam.bla.bli.blu'],
+          scope: 'bundle',
+          bundleId: 2,
+          properties: {
+            'component.id': 2,
+            'component.name': 'com.adobe.cq.dam.blabliblu',
+            'osgi.ds.satisfying.condition.target': '(osgi.condition.id=true)',
+            'service.ranking': 2,
+          },
+          usingBundles: [2],
+        },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -207,6 +241,7 @@ describe('OsgiServicesCommand', function () {
         new OsgiServicesCommand(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -222,7 +257,7 @@ describe('OsgiServicesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID Scope  Bundle ID Types                              '
@@ -241,27 +276,20 @@ describe('OsgiServicesCommand', function () {
         new OsgiServicesCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "id": 0,\n' +
-          '  "types": [\n' +
-          '    "com.adobe.cq.dam.bla.bli.blu"\n' +
-          '  ],\n' +
-          '  "scope": "bundle",\n' +
-          '  "bundleId": 0,\n' +
-          '  "properties": {\n' +
-          '    "component.id": 0,\n' +
-          '    "component.name": "com.adobe.cq.dam.blabliblu",\n' +
-          '    "osgi.ds.satisfying.condition.target": "(osgi.condition.id=true)",\n' +
-          '    "service.ranking": 0\n' +
-          '  },\n' +
-          '  "usingBundles": [\n' +
-          '    0\n' +
-          '  ]\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        id: 0,
+        types: ['com.adobe.cq.dam.bla.bli.blu'],
+        scope: 'bundle',
+        bundleId: 0,
+        properties: {
+          'component.id': 0,
+          'component.name': 'com.adobe.cq.dam.blabliblu',
+          'osgi.ds.satisfying.condition.target': '(osgi.condition.id=true)',
+          'service.ranking': 0,
+        },
+        usingBundles: [0],
+      });
     });
 
     it('Should print out a error message when status is not 200', async function () {

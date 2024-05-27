@@ -77,6 +77,11 @@ class EnableRequestLogsCommand extends BaseCommand {
 }
 
 Object.assign(EnableRequestLogsCommand, {
+  description: 'Do not support json putput for enable requests command.',
+  enableJsonFlag: false,
+});
+
+Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
     organizationId: commonFlags.organizationId,

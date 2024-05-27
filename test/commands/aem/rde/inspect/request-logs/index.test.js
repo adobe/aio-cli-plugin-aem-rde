@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const RequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs');
-const { cli } = require('../../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -80,8 +79,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('RequestLogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getRequestLogs', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -89,6 +86,7 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -99,7 +97,7 @@ describe('RequestLogsCommand', function () {
     it('Should produce the correct textual output.', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' ID                  Method Path             '),
           chalk.bold(' ─────────────────── ────── ──────────────── '),
@@ -117,16 +115,13 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '[\n' +
-          '  {"id":"0","method":"GET","path":"/metrics"},\n' +
-          '  {"id":"1","method":"HEAD","path":"/libs/login.html"},\n' +
-          '  {"id":"2","method":"GET","path":"/metrics"},\n' +
-          '  {"id":"3","method":"HEAD","path":"/libs/login.html"}\n' +
-          ']'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        { id: '0', method: 'GET', path: '/metrics' },
+        { id: '1', method: 'HEAD', path: '/libs/login.html' },
+        { id: '2', method: 'GET', path: '/metrics' },
+        { id: '3', method: 'HEAD', path: '/libs/login.html' },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
@@ -176,6 +171,7 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once.', async function () {
@@ -191,7 +187,7 @@ describe('RequestLogsCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(' ID                  Method Path            '),
           chalk.bold(' ─────────────────── ────── ─────────────── '),
@@ -206,24 +202,18 @@ describe('RequestLogsCommand', function () {
         new RequestLogsCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "id": "0",\n' +
-          '  "method": "HEAD",\n' +
-          '  "path": "/libs/test.html",\n' +
-          '  "log": [\n' +
-          '    "log bla bli blu"\n' +
-          '  ],\n' +
-          '  "sling-request-log": [\n' +
-          '    "      0 TIMER_START{Request Processing}",\n' +
-          '    "      0 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>",\n' +
-          '    "      3 LOG Method=HEAD, PathInfo=null"\n' +
-          '  ]\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        id: '0',
+        method: 'HEAD',
+        path: '/libs/test.html',
+        log: ['log bla bli blu'],
+        'sling-request-log': [
+          '      0 TIMER_START{Request Processing}',
+          '      0 COMMENT timer_end format is {<elapsed microseconds>,<timer name>} <optional message>',
+          '      3 LOG Method=HEAD, PathInfo=null',
+        ],
+      });
     });
 
     it('Should print out a error message when status is not 200.', async function () {

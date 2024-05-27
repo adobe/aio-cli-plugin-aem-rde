@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const EnableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/enable');
-const { cli } = require('../../../../../../src/lib/base-command.js');
 const Config = require('@adobe/aio-lib-core-config');
 const {
   setupLogCapturing,
@@ -38,8 +37,6 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('EnableRequestLogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#enableRequestLogs', function () {
     const arg = 'test';
     const format =
@@ -89,6 +86,7 @@ describe('EnableRequestLogsCommand', function () {
         ),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should pass the includePathPatterns in the right format', async function () {
@@ -129,7 +127,7 @@ describe('EnableRequestLogsCommand', function () {
     it('Should produce the correct textual output.', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         'Running EnableRequestLogsCommand on cm-p1-e1 (programName - environmentName)\n' +
           'Request-logs enabled.'
       );

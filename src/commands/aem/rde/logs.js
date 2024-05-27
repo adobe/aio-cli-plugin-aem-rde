@@ -101,7 +101,7 @@ class LogsCommand extends BaseCommand {
 
       const json = await response.json();
 
-      const logChoices = json.items.map(({ id, names }) => ({
+      const logChoices = json?.items.map(({ id, names }) => ({
         name: `${names.map((n) => `${n.logger}:${n.level}`).join(' ')}`,
         value: id,
       }));
@@ -134,7 +134,7 @@ class LogsCommand extends BaseCommand {
         // eslint-disable-next-line no-process-exit
         process.exit(0);
       }
-      return json.items.find((item) => item.id === logId);
+      return json?.items.find((item) => item.id === logId);
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
         messageValues: [response.status, response.statusText],
@@ -280,6 +280,11 @@ class LogsCommand extends BaseCommand {
     return line;
   }
 }
+
+Object.assign(LogsCommand, {
+  description: 'Do not support json putput for logs command.',
+  enableJsonFlag: false,
+});
 
 Object.assign(LogsCommand, {
   description:

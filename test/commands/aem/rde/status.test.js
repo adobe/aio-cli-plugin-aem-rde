@@ -1,9 +1,8 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
-const { cli } = require('../../../../src/lib/base-command.js');
+const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 const Config = require('@adobe/aio-lib-core-config');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
-const StatusCommand = require('../../../../src/commands/aem/rde/status.js');
 
 const spinnerStartStub = sinon.stub();
 const spinnerStopStub = sinon.stub();
@@ -41,8 +40,6 @@ const stubbeErrorMethods = {
 
 let command, cloudSdkApiStub;
 describe('StatusCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   before(() => {
     sinon.useFakeTimers();
   });
@@ -60,6 +57,8 @@ describe('StatusCommand', function () {
     Config.get.restore();
   });
 
+  after(() => sinon.restore());
+
   describe('#run as textual result', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
@@ -67,6 +66,7 @@ describe('StatusCommand', function () {
         new StatusCommand([], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
       Object.assign(command, {
         spinnerStart: spinnerStartStub,
         spinnerStop: spinnerStopStub,
@@ -86,7 +86,7 @@ describe('StatusCommand', function () {
     it('should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         'Running StatusCommand on cm-p12345-e54321\n' +
           'Info for cm-p12345-e54321\n' +
           'Environment: Ready\n' +
@@ -106,12 +106,13 @@ describe('StatusCommand', function () {
         new StatusCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         'Environment: Ready\n' +
           '- Bundles Author:\n' +
           ' test-bundle-1.0.0\n' +
@@ -129,6 +130,7 @@ describe('StatusCommand', function () {
         new StatusCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('should call getArtifacts() exactly once', async function () {
@@ -137,7 +139,7 @@ describe('StatusCommand', function () {
     });
 
     it('should have the expected json result', async function () {
-      await command.run();
+      const json = await command.run();
       assert.deepEqual(
         {
           status: 'Ready',
@@ -178,7 +180,7 @@ describe('StatusCommand', function () {
             osgiConfigs: [],
           },
         },
-        JSON.parse(cli.log.getCapturedLogOutput())
+        json
       );
     });
   });

@@ -11,7 +11,6 @@
  */
 'use strict';
 
-const { CliUx } = require('@oclif/core');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: deploymentErrorCodes } = require('./deployment-errors');
 const { codes: deploymentWarningCodes } = require('./deployment-warnings');
@@ -28,9 +27,10 @@ const STATUS = {
 
 /**
  * @param change
+ * @param basecommand
  */
-function logChange(change) {
-  CliUx.ux.log(
+function logChange(change, basecommand) {
+  basecommand.doLog(
     `#${change.updateId}: ${change.action} ${change.status}` +
       (change.deletedArtifact
         ? ` for ${change.deletedArtifact.type} ${
@@ -48,7 +48,8 @@ function logChange(change) {
         : change.services
           ? ` on ${change.services}`
           : '') +
-      ` - done by ${change.user} at ${change.timestamps.received}`
+      ` - done by ${change.user} at ${change.timestamps.received}`,
+    true
   );
 }
 
@@ -117,12 +118,14 @@ async function throwOnInstallError(cloudSdkAPI, updateId, progressCallback) {
  * @param cli
  * @param basecommand
  * @param progressCallback
+ * @param jsonResultItem
  */
 async function loadUpdateHistory(
   cloudSdkAPI,
   updateId,
   basecommand,
-  progressCallback
+  progressCallback,
+  jsonResultItem
 ) {
   progressCallback(false, 'retrieving update status');
   let response = await handleRetryAfter(
@@ -135,6 +138,13 @@ async function loadUpdateHistory(
   if (response.status === 200) {
     progressCallback(false, 'retrieving update logs');
     const change = await response.json();
+    if (jsonResultItem) {
+      if (Array.isArray(jsonResultItem)) {
+        // assume that when this is an array, there is no item for this update yet. Create it so that the logs can be added further below.
+        const newLength = jsonResultItem.push(change);
+        jsonResultItem = jsonResultItem[newLength - 1];
+      }
+    }
     const retryConfig = getRetryConfigPerType(change.type);
     // requesting logs for a dispatcher-config update may cause an intermittent 404 response
     response = await withRetries(
@@ -146,14 +156,14 @@ async function loadUpdateHistory(
     const retrySeconds = retryConfig.waitSeconds * retryConfig.retries;
     progressCallback(true);
     if (!response) {
-      basecommand.log(
+      basecommand.doLog(
         `No logs have become available within the retry period of ${retrySeconds} seconds.`
       );
-      basecommand.log(
+      basecommand.doLog(
         `Please run "aio aem:rde:history ${updateId}" to check for progress manually.`
       );
     } else if (response.status === 200) {
-      logChange(change);
+      logChange(change, basecommand);
       const log = await response.text();
       let lines = null;
 
@@ -170,13 +180,22 @@ async function loadUpdateHistory(
         lines = log.split(/\n/).filter((line) => line.trim().length > 0);
       }
 
+      if (jsonResultItem) {
+        jsonResultItem.logs = [];
+      }
       if (lines.length > 0) {
-        basecommand.log(`Logs:`);
+        basecommand.doLog(`Logs:`, true);
         lines.forEach((line) => {
-          basecommand.log(`> ${line}`);
+          basecommand.doLog(`> ${line}`, true);
+          if (jsonResultItem) {
+            jsonResultItem.logs.push(line);
+          }
         });
       } else {
-        basecommand.log('No logs available for this update.');
+        basecommand.doLog('No logs available for this update.', true);
+        if (jsonResultItem) {
+          jsonResultItem.logs.push('No logs available for this update.');
+        }
       }
     } else {
       throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -184,7 +203,7 @@ async function loadUpdateHistory(
       });
     }
   } else if (response.status === 404) {
-    basecommand.log(`An update with ID ${updateId} does not exist.`);
+    basecommand.doLog(`An update with ID ${updateId} does not exist.`);
   } else {
     throw new internalCodes.UNEXPECTED_API_ERROR({
       messageValues: [response.status, response.statusText],

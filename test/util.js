@@ -3,16 +3,15 @@ const { CloudSdkAPI } = require('../src/lib/cloud-sdk-api');
 /**
  * @param sinon
  * @param cli
+ * @param command
  */
-function setupLogCapturing(sinon, cli) {
-  before(() => {
-    sinon.replace(cli, 'log', sinon.fake());
-    cli.log.getCapturedLogOutput = () =>
-      cli.log
-        .getCalls()
-        .map((i) => i.firstArg)
-        .join('\n');
-  });
+function setupLogCapturing(sinon, command) {
+  sinon.replace(command, 'log', sinon.fake());
+  command.log.getCapturedLogOutput = () =>
+    command.log
+      .getCalls()
+      .map((i) => i.firstArg)
+      .join('\n');
 
   // Resets the internal state of all fakes created through sandbox, see https://sinonjs.org/releases/latest/sandbox/#sandboxreset
   afterEach(() => sinon.reset());

@@ -18,7 +18,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.json) {
-      await this.printAsJson();
+      return await this.printAsJson();
     } else {
       await this.printAsText();
     }
@@ -80,11 +80,7 @@ class StatusCommand extends BaseCommand {
 
       const grouped = groupArtifacts(status.items);
 
-      const result = {
-        programId: this._programId,
-        environmentId: this._environmentId,
-        status: status.status,
-      };
+      const result = this.jsonResult(status.status);
 
       if (status.error) {
         result.statusText = status.BaseCommand;
@@ -99,7 +95,7 @@ class StatusCommand extends BaseCommand {
         };
       }
 
-      this.doLog(JSON.stringify(result), true);
+      return result;
     } catch (err) {
       this.spinnerStop();
       this.doLog(err);
@@ -115,7 +111,6 @@ Object.assign(StatusCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
-    json: commonFlags.json,
     quiet: commonFlags.quiet,
   },
   usage: [
