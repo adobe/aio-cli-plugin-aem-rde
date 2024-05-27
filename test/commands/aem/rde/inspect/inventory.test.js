@@ -8,7 +8,7 @@ const {
 const chalk = require('chalk');
 
 const errorObj = Object.create({
-  status: 404,
+  status: 403,
   statusText: 'Test error message',
 });
 
