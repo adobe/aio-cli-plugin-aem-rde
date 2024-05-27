@@ -32,11 +32,8 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const json = await response.json();
-          if (flags.json) {
-            result.items = json?.items;
-          } else {
-            this.logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -48,20 +45,15 @@ class RequestLogsCommand extends BaseCommand {
         );
         if (response?.status === 200) {
           const requestLog = await response.json();
-          if (flags.json) {
-            result.items = requestLog;
-          } else {
-            this.logInTableFormat([requestLog]);
-          }
+          result.items = requestLog;
+          this.logInTableFormat([requestLog]);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
-      if (flags.json) {
-        return result;
-      }
+      return result;
     } catch (err) {
       throwAioError(
         err,

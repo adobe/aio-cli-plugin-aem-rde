@@ -281,7 +281,10 @@ class LogsCommand extends BaseCommand {
   }
 }
 
-LogsCommand.enableJsonFlag = false;
+Object.assign(LogsCommand, {
+  description: 'Do not support json putput for logs command.',
+  enableJsonFlag: false,
+});
 
 Object.assign(LogsCommand, {
   description:

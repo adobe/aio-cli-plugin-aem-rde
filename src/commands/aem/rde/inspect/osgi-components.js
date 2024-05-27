@@ -33,11 +33,8 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.json) {
-            result.items = json?.items;
-          } else {
-            this.logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -49,20 +46,15 @@ class OsgiComponentsCommand extends BaseCommand {
         );
         if (response.status === 200) {
           const osgiComponent = await response.json();
-          if (flags.json) {
-            result.items = osgiComponent;
-          } else {
-            this.logInTableFormat([osgiComponent]);
-          }
+          result.items = osgiComponent;
+          this.logInTableFormat([osgiComponent]);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
-      if (flags.json) {
-        return result;
-      }
+      return result;
     } catch (err) {
       throwAioError(
         err,

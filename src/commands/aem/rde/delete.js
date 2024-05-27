@@ -78,9 +78,7 @@ class DeleteCommand extends BaseCommand {
           messageValues: [typeInfo, args.id, serviceInfo],
         });
       }
-      if (flags.json) {
-        return result;
-      }
+      return result;
     } catch (err) {
       this.spinnerStop();
       throwAioError(

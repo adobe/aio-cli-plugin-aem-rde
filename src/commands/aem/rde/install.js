@@ -252,9 +252,7 @@ class DeployCommand extends BaseCommand {
         )
       );
       progressBar?.stop();
-      if (flags.json) {
-        return result;
-      }
+      return result;
     } catch (err) {
       progressBar?.stop();
       this.spinnerStop();

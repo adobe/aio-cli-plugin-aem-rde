@@ -419,7 +419,10 @@ class SetupCommand extends BaseCommand {
   }
 }
 
-SetupCommand.enableJsonFlag = false;
+Object.assign(SetupCommand, {
+  description: 'Do not support json putput for setup command.',
+  enableJsonFlag: false,
+});
 
 Object.assign(SetupCommand, {
   description: 'Setup the CLI configuration necessary to use the RDE commands.',

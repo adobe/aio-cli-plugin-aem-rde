@@ -264,7 +264,10 @@ class BaseCommand extends Command {
   }
 }
 
-BaseCommand.enableJsonFlag = true;
+Object.assign(BaseCommand, {
+  description: 'Enable json output for all commands by default.',
+  enableJsonFlag: true,
+});
 
 module.exports = {
   BaseCommand,
