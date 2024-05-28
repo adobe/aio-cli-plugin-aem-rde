@@ -48,6 +48,10 @@ class OsgiComponentsCommand extends BaseCommand {
           const osgiComponent = await response.json();
           result.items = osgiComponent;
           this.logInTableFormat([osgiComponent]);
+        } else if (response.status === 404) {
+          this.doLog(
+            `An osgi-component with name ${args.name} does not exist.`
+          );
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],

@@ -49,6 +49,8 @@ class OsgiServicesCommand extends BaseCommand {
           const osgiService = await response.json();
           result.items = osgiService;
           this.logInTableFormat([osgiService]);
+        } else if (response.status === 404) {
+          this.doLog(`An osgi-service with ID ${args.id} does not exist.`);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],

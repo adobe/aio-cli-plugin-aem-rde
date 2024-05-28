@@ -48,6 +48,8 @@ class OsgiBundlesCommand extends BaseCommand {
           const osgiBundle = await response.json();
           result.items = osgiBundle;
           this.logInTableFormat([osgiBundle]);
+        } else if (response.status === 404) {
+          this.doLog(`An osgi-bundle with ID ${args.id} does not exist.`);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],

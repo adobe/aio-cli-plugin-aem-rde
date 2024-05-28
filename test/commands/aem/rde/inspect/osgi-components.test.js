@@ -10,7 +10,7 @@ const chalk = require('chalk');
 const errorObj = Object.assign(
   {},
   {
-    status: 404,
+    status: 403,
     statusText: 'Test error message.',
   }
 );
