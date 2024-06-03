@@ -47,7 +47,11 @@ class BaseCommand extends Command {
 
     this.setupParams(flags);
 
-    if (!flags.quiet && this.constructor.name !== 'SetupCommand') {
+    if (
+      !flags.quiet &&
+      !flags.json &&
+      this.constructor.name !== 'SetupCommand'
+    ) {
       this.doLog(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
