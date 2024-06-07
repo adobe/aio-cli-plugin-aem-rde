@@ -55,6 +55,10 @@ E(
   'We could not infer the deployment type. Please specify the -t option with one of the following types: %s'
 );
 E(
+  'MISSING_CONTENT_PATH',
+  'When using a content-file or content-xml option, you must also specify the path flag.'
+);
+E(
   'MISSING_ORG_ID',
   'Organization ID must be specified through cloudmanager_orgid config value.'
 );
