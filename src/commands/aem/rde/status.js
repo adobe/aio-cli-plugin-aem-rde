@@ -11,32 +11,23 @@
  */
 'use strict';
 
-const { BaseCommand, cli, Flags } = require('../../../lib/base-command');
+const { BaseCommand, commonFlags } = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
-
 class StatusCommand extends BaseCommand {
-  async run() {
-    const { flags } = await this.parse(StatusCommand);
-    if (flags.json) {
-      await this.printAsJson();
-    } else {
-      await this.printAsText();
-    }
-  }
-
-  async printAsText() {
+  async runCommand(args, flags) {
     try {
-      cli.log(`Info for cm-p${this._programId}-e${this._environmentId}`);
-      spinner.start('retrieving environment status information');
+      this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
+      this.spinnerStart('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
-      spinner.stop();
-      cli.log(`Environment: ${status.status}`);
+      this.spinnerStop();
+      this.doLog(`Environment: ${status.status}`, true);
+      const result = this.jsonResult(status.status);
       if (status.error) {
+        result.statusText = status.BaseCommand;
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [status.status, status.error],
         });
@@ -44,66 +35,45 @@ class StatusCommand extends BaseCommand {
 
       const grouped = groupArtifacts(status.items);
 
-      cli.log('- Bundles Author:');
+      this.doLog('- Bundles Author:', true);
       grouped.author['osgi-bundle'].forEach((bundle) =>
-        cli.log(
-          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        this.doLog(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
+          true
         )
       );
-      cli.log('- Bundles Publish:');
+      this.doLog('- Bundles Publish:', true);
       grouped.publish['osgi-bundle'].forEach((bundle) =>
-        cli.log(
-          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`
+        this.doLog(
+          ` ${bundle.metadata.bundleSymbolicName}-${bundle.metadata.bundleVersion}`,
+          true
         )
       );
-      cli.log('- Configurations Author:');
+      this.doLog('- Configurations Author:', true);
       grouped.author['osgi-config'].forEach((config) =>
-        cli.log(` ${config.metadata.configPid} `)
+        this.doLog(` ${config.metadata.configPid} `, true)
       );
-      cli.log('- Configurations Publish:');
+      this.doLog('- Configurations Publish:', true);
       grouped.publish['osgi-config'].forEach((config) =>
-        cli.log(` ${config.metadata.configPid} `)
+        this.doLog(` ${config.metadata.configPid} `, true)
       );
+
+      result.author = {
+        osgiBundles: grouped.author['osgi-bundle'],
+        osgiConfigs: grouped.publish['osgi-config'],
+      };
+      result.publish = {
+        osgiBundles: grouped.author['osgi-bundle'],
+        osgiConfigs: grouped.publish['osgi-config'],
+      };
+
+      return result;
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_STATUS_ERROR({ messageValues: err })
       );
-    }
-  }
-
-  async printAsJson() {
-    try {
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
-        loadAllArtifacts(cloudSdkAPI)
-      );
-
-      const grouped = groupArtifacts(status.items);
-
-      const result = {
-        programId: this._programId,
-        environmentId: this._environmentId,
-        status: status.status,
-      };
-
-      if (status.error) {
-        result.statusText = status.BaseCommand;
-      } else {
-        result.author = {
-          osgiBundles: grouped.author['osgi-bundle'],
-          osgiConfigs: grouped.publish['osgi-config'],
-        };
-        result.publish = {
-          osgiBundles: grouped.author['osgi-bundle'],
-          osgiConfigs: grouped.publish['osgi-config'],
-        };
-      }
-
-      cli.log(JSON.stringify(result));
-    } catch (err) {
-      spinner.stop();
-      cli.log(err);
     }
   }
 }
@@ -113,11 +83,10 @@ Object.assign(StatusCommand, {
     'Get a list of the bundles and configs deployed to the current rde.',
   args: [],
   flags: {
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'output as json',
-    }),
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    quiet: commonFlags.quiet,
   },
   usage: [
     'status              # output as textual content',

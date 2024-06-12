@@ -26,10 +26,26 @@ $ aio plugins:update
 
 # Getting started
 
-# Configuration
+## Configuration to be used in command line
 
-The plugin needs to be configured to point to an existing RDE environment as follows:
+The plugin needs to be configured to point to an existing RDE environment. To do so, the organization, program and environment must be configured accordingly.
+As a user, use below command to do so.
+```
+$ aio login
+$ aio aem:rde:setup
+```
+The setup command offers the following functionality:
+- Change from one program/environment to another.
+- Display the previously active configuration when changed.
+- Store the configuration locally in a ```.aio``` file in the current folder. This allows to setup a config for each RDE independently.
+- Switch organization by ```aio logout``` and then use the setup command again.
 
+> **Note**:
+> Working with multiple environments: it is highly recommended to use the local storage. For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations). However, the default is to use global for users who have one environment only.
+
+
+## Configuration to be used in build environments
+For build environments, include below into the scripts.
 ```
  $ aio config:set cloudmanager_orgid <org-id>
  $ aio config:set cloudmanager_programid <program-id>
@@ -37,13 +53,13 @@ The plugin needs to be configured to point to an existing RDE environment as fol
 ```
 
 > **Note**:
-> If you are planning to work with multiple environments, we highly recommend you to use the flag `-l` or `--local` together with the `config:set` so that you will store the configuration in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
+> Working with multiple environments: it is highly recommend to use the flag `-l` or `--local` together with the `config:set` so that the configuration is stored in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
 
-## Configuration for `aio aem rde inspect` commands \*
+### Configuration for `aio aem rde inspect` commands \*
 
 ⚠️ \* **WARNING**: This is an **experimental feature**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
 
-### Enable `aio aem rde inspect` commands
+#### Enable `aio aem rde inspect` commands
 
 If you want to enable this experimental feature, run the following command:
 
@@ -53,31 +69,16 @@ $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 
 This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
 
-### Add user access token to the configuration
-
-When calling the commands under the `inspect` topic the plugin needs additional configurations.
-
-1. Go to Skyline Developer Console of your environment: `https://dev-console-ns-team-aem-cm-stg-n0000.ethos00-stage-va7.dev.adobeaemcloud.com/#release-cm-p00000-e000000` or use the `aio cloudmanager:environment:open-developer-console` command
-2. Go to _Integrations_ tab.
-3. Go to _Local token_ sub-tab and click on _Get Local Development Token_ button.
-4. Copy the _accessToken_: `eyJhbGciOiJSUzI1NiIsIng1dSI.....`
-5. Go to terminal and do the following:
-
-```
-$ aio aem rde inspect setup <paste access token here>
-```
-
 ## Verifying configuration
 
-1. Run `aio login`
-2. Run `aio aem:rde` for general help.
+1. Run `aio aem:rde` for general help.
+2. Run `aio aem:rde:status` to see if the configured environment can be accessed.
 3. Run `aio aem:rde:install --help ` for help about a specific command.
-4. Run `aio aem:rde:status` to see if the configured environment can be accessed.
+4. Run `aio aem:rde:logs --help` to see options for tailing logs.
 
-Only if `inspect` topic is [enabled](#configuration-for-aio-aem-rde-inspect-commands).
+Only if `inspect` topic is [enabled](#configuration-for-aio-aem-rde-inspect-commands):
 
 5. Run `aio aem:rde:inspect --help` to see if the inspect command can be accessed.
-6. Run `aio aem:rde:inspect:logs` to see if the authorization with the set token works.
 
 ## Running unit tests
 
@@ -102,3 +103,6 @@ Primarily for scripting application purposes, the following exit codes are used:
 - 4 - A deployment error has occurred
 - 5 - An internal error that might be fixed with a retry has occurred
 - 40 - An error emanating from the deployment not being fully performed has occurred. This error might be interpretable by some users as ok if that's a middle step they need to go through
+
+# Releasing a new version
+Please read the [RELEASE.md](https://github.com/adobe/aio-cli-plugin-aem-rde/blob/main/RELEASE.md)

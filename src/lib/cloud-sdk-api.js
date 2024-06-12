@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter } = require('./rde-utils');
-const { sleepSeconds } = require('./utils');
+const { sleepSeconds, concatEnvironemntId } = require('./utils');
 const { DoRequest } = require('./doRequest');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: validationCodes } = require('./validation-errors');
@@ -62,7 +62,7 @@ class CloudSdkAPI {
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
       authorizationHeaders
     );
-    this._cmReleaseId = `cm-p${programId}-e${environmentId}`;
+    this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
   async getAemLogs(serviceName, params) {
@@ -119,78 +119,65 @@ class CloudSdkAPI {
   async getInventories(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/inventory${queryString}`
+      `/runtime/${serviceName}/inventory${queryString}`
     );
   }
 
   async getInventory(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/inventory/${id}`
+      `/runtime/${serviceName}/inventory/${id}`
     );
   }
 
   async getOsgiBundles(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-bundles${queryString}`
+      `/runtime/${serviceName}/osgi-bundles${queryString}`
     );
   }
 
   async getOsgiBundle(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-bundles/${id}`
+      `/runtime/${serviceName}/osgi-bundles/${id}`
     );
   }
 
   async getOsgiComponents(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-components${queryString}`
+      `/runtime/${serviceName}/osgi-components${queryString}`
     );
   }
 
   async getOsgiComponent(serviceName, componentName) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-components/${componentName}`
+      `/runtime/${serviceName}/osgi-components/${componentName}`
     );
   }
 
   async getOsgiConfigurations(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations${queryString}`
+      `/runtime/${serviceName}/osgi-configurations${queryString}`
     );
   }
 
   async getOsgiConfiguration(serviceName, pId) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-configurations/${pId}`
+      `/runtime/${serviceName}/osgi-configurations/${pId}`
     );
   }
 
   async getOsgiServices(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-services${queryString}`
+      `/runtime/${serviceName}/osgi-services${queryString}`
     );
   }
 
   async getOsgiService(serviceName, id) {
     return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/osgi-services/${id}`
-    );
-  }
-
-  async getSlingRequests(serviceName, params) {
-    const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/sling-requests${queryString}`
-    );
-  }
-
-  async getSlingRequest(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/status/sling-requests/${id}`
+      `/runtime/${serviceName}/osgi-services/${id}`
     );
   }
 
@@ -241,14 +228,14 @@ class CloudSdkAPI {
       const url = result.headers.get('Location');
       const changeId = (await result.json()).updateId;
       const client = new ShareFileClient(url);
-      uploadCallbacks.start(fileSize);
+      uploadCallbacks?.start(fileSize);
       await client.uploadFile(path, {
         onProgress: (progress) =>
-          uploadCallbacks.progress(progress.loadedBytes),
+          uploadCallbacks?.progress(progress.loadedBytes),
       });
       return await this._putUpdate(changeId, deploymentCallback);
     } else {
-      uploadCallbacks.abort();
+      uploadCallbacks?.abort();
       throw await this._createError(result);
     }
   }
@@ -522,11 +509,13 @@ class CloudSdkAPI {
     await this._startEnv(namespace);
   }
 
-  async resetEnv() {
+  async resetEnv(wait) {
     await this._checkRDE();
     await this._waitForEnvReady();
     await this._resetEnv();
-    await this._waitForEnvReady();
+    if (wait) {
+      await this._waitForEnvReady();
+    }
   }
 
   async _resetEnv() {

@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const FormData = require('form-data');
 const { sleepSeconds } = require('./utils');
-
+const { codes: internalCodes } = require('./internal-errors');
 const fetch = createFetch();
 
 class DoRequest {
@@ -28,27 +28,51 @@ class DoRequest {
   }
 
   async doGet(path, body) {
-    return await withRetries(
+    const ret = await withRetries(
       async () => await this.doRequest('get', path, body),
       (response) =>
         response &&
         ((response.status >= 200 && response.status < 300) ||
           response.status === 404),
       1,
-      20
+      5
     );
+    if (ret) {
+      return ret;
+    }
+    throw new internalCodes.NETWORK_ERROR({
+      messageValues: this._baseUrl + path,
+    });
   }
 
   async doPost(path, body) {
-    return this.doRequest('post', path, body);
+    const ret = this.doRequest('post', path, body);
+    if (ret) {
+      return ret;
+    }
+    throw new internalCodes.NETWORK_ERROR({
+      messageValues: this._baseUrl + path,
+    });
   }
 
   async doPut(path, body) {
-    return this.doRequest('put', path, body);
+    const ret = this.doRequest('put', path, body);
+    if (ret) {
+      return ret;
+    }
+    throw new internalCodes.NETWORK_ERROR({
+      messageValues: this._baseUrl + path,
+    });
   }
 
   async doDelete(path) {
-    return this.doRequest('delete', path);
+    const ret = this.doRequest('delete', path);
+    if (ret) {
+      return ret;
+    }
+    throw new internalCodes.NETWORK_ERROR({
+      messageValues: this._baseUrl + path,
+    });
   }
 
   async doRequest(method, path, body) {
@@ -64,7 +88,6 @@ class DoRequest {
       options.body = JSON.stringify(body);
       options.headers['content-type'] = 'application/json';
     }
-
     return fetch(url, options);
   }
 }

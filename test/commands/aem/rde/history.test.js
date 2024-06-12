@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 
-const { cli } = require('../../../../src/lib/base-command');
 const HistoryCommand = require('../../../../src/commands/aem/rde/history.js');
 const { setupLogCapturing, createCloudSdkAPIStub } = require('../../../util');
 
@@ -52,15 +51,14 @@ const stubbedCloudSdkMethods = {
 let command, cloudSdkApiStub;
 
 describe('HistoryCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getChanges', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new HistoryCommand([], null),
+        new HistoryCommand(['--quiet'], null),
         stubbedCloudSdkMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('should be called exactly once', async function () {
@@ -71,7 +69,7 @@ describe('HistoryCommand', function () {
     it('should produce the correct log output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '#6: install OK - done by undefined at undefined\n' +
           '#8: delete OK - done by undefined at undefined'
       );
@@ -82,9 +80,10 @@ describe('HistoryCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new HistoryCommand(['123'], null),
+        new HistoryCommand(['--quiet', '123'], null),
         stubbedCloudSdkMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('called the right remote API methods', async function () {
@@ -99,7 +98,7 @@ describe('HistoryCommand', function () {
     it('should produce the correct log output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '#123: install OK - done by undefined at undefined\n' +
           'Logs:\n' +
           '> logline'

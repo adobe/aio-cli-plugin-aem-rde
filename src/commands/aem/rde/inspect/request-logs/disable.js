@@ -11,23 +11,18 @@
  */
 'use strict';
 
-const { cli } = require('../../../../../lib/base-command');
-const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../../lib/inspect-base-command');
+const { BaseCommand, commonFlags } = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
-class DisableRequestLogsCommand extends InspectBaseCommand {
-  async run() {
-    const { flags } = await this.parse(DisableRequestLogsCommand);
+class DisableRequestLogsCommand extends BaseCommand {
+  async runCommand(args, flags) {
     try {
       const response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.disableRequestLogs(flags.target)
       );
       if (response.status === 200) {
-        cli.log('Request-logs disabled.');
+        this.doLog('Request-logs disabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
@@ -45,9 +40,18 @@ class DisableRequestLogsCommand extends InspectBaseCommand {
 }
 
 Object.assign(DisableRequestLogsCommand, {
+  description: 'Do not support json putput for disable requests command.',
+  enableJsonFlag: false,
+});
+
+Object.assign(DisableRequestLogsCommand, {
   description: 'Disable request logging.',
   flags: {
-    target: inspectCommonFlags.target,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    target: commonFlags.targetInspect,
+    quiet: commonFlags.quiet,
   },
 });
 

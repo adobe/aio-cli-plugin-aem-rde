@@ -11,18 +11,18 @@
  */
 'use strict';
 
-const { cli } = require('../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../lib/inspect-base-command');
+  cli,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
-class OsgiComponentsCommand extends InspectBaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(OsgiComponentsCommand);
+class OsgiComponentsCommand extends BaseCommand {
+  async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.name) {
         const params = {};
         params.scope = flags.scope;
@@ -33,11 +33,8 @@ class OsgiComponentsCommand extends InspectBaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
-            cli.log(JSON.stringify(json?.items));
-          } else {
-            logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -49,17 +46,19 @@ class OsgiComponentsCommand extends InspectBaseCommand {
         );
         if (response.status === 200) {
           const osgiComponent = await response.json();
-          if (flags.output === 'json') {
-            cli.log(JSON.stringify(osgiComponent, null, 2));
-          } else {
-            logInTableFormat([osgiComponent]);
-          }
+          result.items = osgiComponent;
+          this.logInTableFormat([osgiComponent]);
+        } else if (response.status === 404) {
+          this.doLog(
+            `An osgi-component with name ${args.name} does not exist.`
+          );
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
+      return result;
     } catch (err) {
       throwAioError(
         err,
@@ -69,34 +68,34 @@ class OsgiComponentsCommand extends InspectBaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      name: {
-        header: 'NAME',
-        minWidth: 25,
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        name: {
+          header: 'NAME',
+          minWidth: 25,
+        },
+        bundleId: {
+          header: 'Bundle ID',
+        },
+        scope: {
+          minWidth: 7,
+        },
+        immediate: {
+          minWidth: 7,
+        },
+        implementationClass: {
+          header: 'Implementation Class',
+        },
       },
-      bundleId: {
-        header: 'Bundle ID',
-      },
-      scope: {
-        minWidth: 7,
-      },
-      immediate: {
-        minWidth: 7,
-      },
-      implementationClass: {
-        header: 'Implementation Class',
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiComponentsCommand, {
@@ -109,10 +108,13 @@ Object.assign(OsgiComponentsCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    scope: inspectCommonFlags.scope,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    target: commonFlags.targetInspect,
+    scope: commonFlags.scope,
+    include: commonFlags.include,
+    quiet: commonFlags.quiet,
   },
 });
 

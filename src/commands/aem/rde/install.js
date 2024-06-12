@@ -27,7 +27,7 @@ const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
-const spinner = require('ora')();
+
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -119,51 +119,53 @@ async function computeStats(url) {
   }
 }
 
-/**
- * @param isLocalFile
- * @param type
- * @param path
- * @param inputPath
- */
-async function processInputFile(isLocalFile, type, inputPath) {
-  if (!isLocalFile) {
-    // don't do anything if we're processing a remote file
-    return;
-  }
-  const file = fs.lstatSync(inputPath);
-  switch (type) {
-    case 'frontend': {
-      if (!file.isDirectory()) {
-        break;
-      }
-      return await frontendInputBuild(cli, inputPath);
-    }
-    case 'dispatcher-config': {
-      if (!file.isDirectory()) {
-        break;
-      }
-      return await dispatcherInputBuild(cli, inputPath);
-    }
-    default: {
-      if (file.isDirectory()) {
-        throw new Error(
-          `A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend, dispatcher-config], current input type is "${type}"`
-        );
-      }
-    }
-  }
-}
-
 class DeployCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeployCommand);
-    const progressBar = createProgressBar();
+  /**
+   * @param isLocalFile
+   * @param type
+   * @param path
+   * @param inputPath
+   */
+  async processInputFile(isLocalFile, type, inputPath) {
+    if (!isLocalFile) {
+      // don't do anything if we're processing a remote file
+      return;
+    }
+    const file = fs.lstatSync(inputPath);
+    switch (type) {
+      case 'frontend': {
+        if (!file.isDirectory()) {
+          break;
+        }
+        return await frontendInputBuild(this, inputPath);
+      }
+      case 'dispatcher-config': {
+        if (!file.isDirectory()) {
+          break;
+        }
+        return await dispatcherInputBuild(this, inputPath);
+      }
+      default: {
+        if (file.isDirectory()) {
+          throw new Error(
+            `A directory was specified for an unsupported type. Please, make sure you have specified the type and provided the correct input for the command. Supported types for directories input usage: [frontend, dispatcher-config], current input type is "${type}"`
+          );
+        }
+      }
+    }
+  }
+
+  async runCommand(args, flags) {
+    let progressBar;
+    if (!flags.quiet && !flags.json) {
+      progressBar = createProgressBar();
+    }
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =
       await computeStats(originalUrl);
     let type = flags.type;
 
-    const { inputPath, inputPathSize } = (await processInputFile(
+    const { inputPath, inputPathSize } = (await this.processInputFile(
       isLocalFile,
       type,
       path
@@ -194,27 +196,33 @@ class DeployCommand extends BaseCommand {
         }
       }
     } catch (err) {
-      cli.log(err);
+      this.doLog(err);
       return;
     }
+
+    const result = this.jsonResult();
+    result.items = [];
 
     let change;
     try {
       change = await this.withCloudSdk((cloudSdkAPI) => {
-        const uploadCallbacks = {
-          progress: (copiedBytes) => progressBar.update(copiedBytes),
-          abort: () => progressBar.stop(),
-          start: (size, msg) => {
-            if (msg) {
-              cli.log(msg);
-            }
-            progressBar.start(size, 0);
-          },
-        };
+        let uploadCallbacks;
+        if (!flags.json && !flags.quiet) {
+          uploadCallbacks = {
+            progress: (copiedBytes) => progressBar.update(copiedBytes),
+            abort: () => progressBar.stop(),
+            start: (size, msg) => {
+              if (msg) {
+                this.doLog(msg);
+              }
+              progressBar.start(size, 0);
+            },
+          };
+        }
 
         const deploymentCallbacks = () => {
-          if (!spinner.isSpinning) {
-            spinner.start('applying update');
+          if (!this.spinnerIsSpinning()) {
+            this.spinnerStart('applying update');
           }
         };
 
@@ -233,16 +241,22 @@ class DeployCommand extends BaseCommand {
           uploadCallbacks,
           deploymentCallbacks
         );
-      }).finally(() => spinner.stop());
+      }).finally(() => this.spinnerStop());
 
       await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-          done ? spinner.stop() : spinner.start(text)
+        loadUpdateHistory(
+          cloudSdkAPI,
+          change.updateId,
+          this,
+          (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
+          result.items
         )
       );
+      progressBar?.stop();
+      return result;
     } catch (err) {
-      progressBar.stop();
-      spinner.stop();
+      progressBar?.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_INSTALL_ERROR({ messageValues: err })
@@ -251,7 +265,7 @@ class DeployCommand extends BaseCommand {
 
     await this.withCloudSdk((cloudSdkAPI) =>
       throwOnInstallError(cloudSdkAPI, change.updateId, (done, text) =>
-        done ? spinner.stop() : spinner.start(text)
+        done ? this.spinnerStop() : this.spinnerStart(text)
       )
     );
   }
@@ -315,6 +329,9 @@ Object.assign(DeployCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',
@@ -334,6 +351,7 @@ Object.assign(DeployCommand, {
       multiple: false,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
   aliases: [],
 });

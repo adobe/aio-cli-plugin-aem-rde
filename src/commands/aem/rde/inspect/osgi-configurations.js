@@ -11,18 +11,18 @@
  */
 'use strict';
 
-const { cli } = require('../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../lib/inspect-base-command');
+  cli,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 
-class OsgiConfigurationsCommand extends InspectBaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(OsgiConfigurationsCommand);
+class OsgiConfigurationsCommand extends BaseCommand {
+  async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.pId) {
         const params = {};
         params.scope = flags.scope;
@@ -33,11 +33,8 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
         );
         if (response.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
-            cli.log(JSON.stringify(json?.items));
-          } else {
-            logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -49,17 +46,19 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
         );
         if (response.status === 200) {
           const osgiConfiguration = await response.json();
-          if (flags.output === 'json') {
-            cli.log(JSON.stringify(osgiConfiguration, null, 2));
-          } else {
-            logInTableFormat([osgiConfiguration]);
-          }
+          result.items = osgiConfiguration;
+          this.logInTableFormat([osgiConfiguration]);
+        } else if (response.status === 404) {
+          this.doLog(
+            `An osgi-configuration with PID ${args.pId} does not exist.`
+          );
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
+      return result;
     } catch (err) {
       throwAioError(
         err,
@@ -69,21 +68,21 @@ class OsgiConfigurationsCommand extends InspectBaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      pid: {
-        header: 'PID',
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        pid: {
+          header: 'PID',
+        },
       },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(OsgiConfigurationsCommand, {
@@ -96,10 +95,13 @@ Object.assign(OsgiConfigurationsCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    scope: inspectCommonFlags.scope,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    target: commonFlags.targetInspect,
+    scope: commonFlags.scope,
+    include: commonFlags.include,
+    quiet: commonFlags.quiet,
   },
 });
 

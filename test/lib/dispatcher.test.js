@@ -14,11 +14,60 @@ const sinon = require('sinon').createSandbox();
 const archiver = require('archiver');
 const Zip = require('adm-zip');
 const { dispatcherInputBuild } = require('../../src/lib/dispatcher.js');
-const { cli } = require('../../src/lib/base-command');
+const { BaseCommand } = require('../../src/lib/base-command');
 const fs = require('fs');
 const os = require('os');
 const EventEmitter = require('node:events');
 const path = require('path');
+const proxyquire = require('proxyquire').noCallThru();
+
+class TestEmitter extends EventEmitter {}
+
+const emmiter = new TestEmitter();
+const dispatcher = proxyquire('../../src/lib/dispatcher.js', {
+  fs: {
+    mkdtemp: function (path, callback) {
+      callback(new Error('failed to mkdtemp'));
+    },
+    lstatSync: function (path) {
+      return () => ({
+        isDirectory: () => true,
+      });
+    },
+  },
+});
+const isDirStub = sinon.stub();
+isDirStub.onFirstCall().returns(true);
+isDirStub.returns(false);
+const emptyStub = sinon.stub();
+const stringFnStub = sinon.stub();
+const wsEmiter = new TestEmitter();
+const archDispatcher = proxyquire('../../src/lib/dispatcher.js', {
+  fs: {
+    mkdtemp: (path, callback) => {
+      callback(undefined, '');
+    },
+    createWriteStream: () => wsEmiter,
+    lstatSync: function (path) {
+      return {
+        isDirectory: isDirStub,
+        isSymbolicLink: () => true,
+      };
+    },
+    readdirSync: () => ['example'],
+    readlinkSync: stringFnStub,
+    realpathSync: stringFnStub,
+  },
+  archiver: function () {
+    emmiter.file = emptyStub;
+    emmiter.pipe = emptyStub;
+    emmiter.symlink = emptyStub;
+    emmiter.finalize = () =>
+      Promise.resolve().then(() => wsEmiter.emit('close'));
+    emmiter.pointer = emptyStub;
+    return emmiter;
+  },
+});
 
 describe('Archive Utility', function () {
   let tmpDir;
@@ -50,8 +99,10 @@ describe('Archive Utility', function () {
         .returns('new-zip-path');
       sinon.stub(archiver, 'create').withArgs('zip').returns(archiverStub);
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        command,
         tmpDir
       );
 
@@ -68,12 +119,13 @@ describe('Archive Utility', function () {
     });
 
     it('should create output zip file', async function () {
-      sinon.stub(cli, 'log');
-
       await fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'This is my text');
 
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
+
       const { inputPath, inputPathSize } = await dispatcherInputBuild(
-        cli,
+        command,
         tmpDir
       );
 
@@ -85,7 +137,37 @@ describe('Archive Utility', function () {
       const zip = new Zip(inputPath, {});
       assert.ok(zip.getEntry('test.txt') !== null);
     });
+    it('should reject on emitted error', async function () {
+      let err;
+      try {
+        emmiter.emit('error', new Error('failed'));
+        await dispatcher.dispatcherInputBuild({}, '');
+      } catch (e) {
+        err = e;
+      }
+      assert.equal(err?.message, 'failed');
+    });
+    it('should add directory to archive', async function () {
+      let err;
+      const command = new BaseCommand(undefined, undefined, undefined);
+      sinon.stub(command, 'doLog');
+      try {
+        await archDispatcher.dispatcherInputBuild(command, '');
+      } catch (e) {
+        err = e;
+      }
+      assert.equal(err, undefined);
+    });
+  });
+  describe('#dispatcherInputBuild', function () {
+    it('should reject', async function () {
+      let err;
+      try {
+        await dispatcher.dispatcherInputBuild({}, '');
+      } catch (e) {
+        err = e;
+      }
+      assert.equal(err.message, 'failed to mkdtemp');
+    });
   });
 });
-
-class TestEmitter extends EventEmitter {}

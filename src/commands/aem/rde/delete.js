@@ -13,13 +13,11 @@
 
 const {
   BaseCommand,
-  cli,
   commonFlags,
   Flags,
 } = require('../../../lib/base-command');
 const { loadUpdateHistory } = require('../../../lib/rde-utils');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
-const spinner = require('ora')();
 const {
   codes: deploymentErrorCodes,
 } = require('../../../lib/deployment-errors');
@@ -27,8 +25,7 @@ const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
 class DeleteCommand extends BaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(DeleteCommand);
+  async runCommand(args, flags) {
     try {
       const services = !flags.target ? ['author', 'publish'] : [flags.target];
       const types = !flags.type ? ['osgi-bundle', 'osgi-config'] : [flags.type];
@@ -40,7 +37,7 @@ class DeleteCommand extends BaseCommand {
         'osgi-config': (config) => config.metadata.configPid === args.id,
       };
 
-      spinner.start(`deleting ${args.id}`);
+      this.spinnerStart(`deleting ${args.id}`);
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
       );
@@ -52,17 +49,26 @@ class DeleteCommand extends BaseCommand {
         }
       }
 
+      const result = this.jsonResult();
+      result.items = [];
+
       for (const artifact of artifacts) {
         const change = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.delete(artifact.id, flags.force)
         );
+        const newLength = result.items.push(change);
         await this.withCloudSdk((cloudSdkAPI) =>
-          loadUpdateHistory(cloudSdkAPI, change.updateId, cli, (done, text) =>
-            done ? spinner.stop() : spinner.start(text)
+          loadUpdateHistory(
+            cloudSdkAPI,
+            change.updateId,
+            this,
+            (done, text) =>
+              done ? this.spinnerStop() : this.spinnerStart(text),
+            result.items[newLength - 1]
           )
         );
       }
-      spinner.stop();
+      this.spinnerStop();
 
       if (artifacts.length === 0) {
         const typeInfo = types.length === 1 ? types[0] : 'artifact';
@@ -72,8 +78,9 @@ class DeleteCommand extends BaseCommand {
           messageValues: [typeInfo, args.id, serviceInfo],
         });
       }
+      return result;
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_DELETE_ERROR({ messageValues: err })
@@ -93,6 +100,9 @@ Object.assign(DeleteCommand, {
     },
   ],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     target: commonFlags.target,
     type: Flags.string({
       char: 't',
@@ -106,6 +116,7 @@ Object.assign(DeleteCommand, {
       multiple: false,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
   aliases: [],
 });

@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const DisableRequestLogsCommand = require('../../../../../../src/commands/aem/rde/inspect/request-logs/disable');
-const { cli } = require('../../../../../../src/lib/base-command.js');
+const Config = require('@adobe/aio-lib-core-config');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -40,15 +40,31 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('DisableRequestLogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#disableRequestLogs', function () {
+    afterEach(() => {
+      Config.get.restore();
+    });
+
     beforeEach(() => {
+      sinon
+        .stub(Config, 'get')
+        .withArgs('cloudmanager_orgid')
+        .returns('1')
+        .withArgs('cloudmanager_programid')
+        .returns('1')
+        .withArgs('cloudmanager_environmentid')
+        .returns('1')
+        .withArgs('cloudmanager_programname')
+        .returns('programName')
+        .withArgs('cloudmanager_environmentname')
+        .returns('environmentName');
+
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new DisableRequestLogsCommand([], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -58,13 +74,17 @@ describe('DisableRequestLogsCommand', function () {
 
     it('Should return a message to the console if the disable action was successful', async function () {
       await command.run();
-      assert.equal(cli.log.getCapturedLogOutput(), 'Request-logs disabled.');
+      assert.equal(
+        command.log.getCapturedLogOutput(),
+        'Running DisableRequestLogsCommand on cm-p1-e1 (programName - environmentName)\n' +
+          'Request-logs disabled.'
+      );
     });
 
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand([], null),
+        new DisableRequestLogsCommand(['--quiet'], null),
         stubbedErrorMethods
       );
       try {
@@ -81,7 +101,7 @@ describe('DisableRequestLogsCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new DisableRequestLogsCommand([], null),
+        new DisableRequestLogsCommand(['--quiet'], null),
         stubbedThrowErrorMethods
       );
       try {

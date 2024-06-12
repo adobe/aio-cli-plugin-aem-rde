@@ -11,29 +11,30 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const { BaseCommand, commonFlags } = require('../../../lib/base-command');
 const rdeUtils = require('../../../lib/rde-utils');
-const spinner = require('ora')();
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
 class HistoryCommand extends BaseCommand {
-  async run() {
-    const { args } = await this.parse(HistoryCommand);
+  async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (args.id === undefined) {
-        spinner.start('fetching updates');
+        this.spinnerStart('fetching updates');
         const response = await this.withCloudSdk((cloudSdkAPI) =>
           cloudSdkAPI.getChanges()
         );
         if (response.status === 200) {
           const json = await response.json();
-          spinner.stop();
-          if (json.items.length === 0) {
-            cli.log('There are no updates yet.');
+          result.status = json?.status;
+          this.spinnerStop();
+          if (json?.items?.length === 0) {
+            this.doLog('There are no updates yet.');
           } else {
-            json.items.forEach(rdeUtils.logChange);
+            result.items = json?.items;
+            json?.items.forEach((e) => rdeUtils.logChange(e, this));
           }
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -43,19 +44,26 @@ class HistoryCommand extends BaseCommand {
       } else if (isNaN(args.id) || parseInt(args.id, 10) < 0) {
         throw new validationCodes.INVALID_UPDATE_ID({ messageValues: args.id });
       } else {
+        result.items = [];
         await this.withCloudSdk((cloudSdkAPI) =>
-          rdeUtils.loadUpdateHistory(cloudSdkAPI, args.id, cli, (done, text) =>
-            done ? spinner.stop() : spinner.start(text)
+          rdeUtils.loadUpdateHistory(
+            cloudSdkAPI,
+            args.id,
+            this,
+            (done, text) =>
+              done ? this.spinnerStop() : this.spinnerStart(text),
+            result.items
           )
         );
       }
+      return result;
     } catch (err) {
       throwAioError(
         err,
         new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
       );
     } finally {
-      spinner.stop();
+      this.spinnerStop();
     }
   }
 }
@@ -71,6 +79,12 @@ Object.assign(HistoryCommand, {
     },
   ],
   aliases: [],
+  flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    quiet: commonFlags.quiet,
+  },
 });
 
 module.exports = HistoryCommand;

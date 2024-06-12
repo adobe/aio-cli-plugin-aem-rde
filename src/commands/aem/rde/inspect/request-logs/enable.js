@@ -11,17 +11,16 @@
  */
 'use strict';
 
-const { cli, Flags } = require('../../../../../lib/base-command');
 const {
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../../lib/inspect-base-command');
+  Flags,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
-class EnableRequestLogsCommand extends InspectBaseCommand {
-  async run() {
-    const { flags } = await this.parse(EnableRequestLogsCommand);
+class EnableRequestLogsCommand extends BaseCommand {
+  async runCommand(args, flags) {
     try {
       // build a request body out of the received flags
       const body = {};
@@ -60,7 +59,7 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
       );
 
       if (response.status === 201) {
-        cli.log('Request-logs enabled.');
+        this.doLog('Request-logs enabled.');
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
@@ -78,9 +77,17 @@ class EnableRequestLogsCommand extends InspectBaseCommand {
 }
 
 Object.assign(EnableRequestLogsCommand, {
+  description: 'Do not support json putput for enable requests command.',
+  enableJsonFlag: false,
+});
+
+Object.assign(EnableRequestLogsCommand, {
   description: 'Enable request logging or update the configuration.',
   flags: {
-    target: inspectCommonFlags.target,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    target: commonFlags.targetInspect,
     format: Flags.string({
       char: 'f',
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
@@ -118,6 +125,7 @@ Object.assign(EnableRequestLogsCommand, {
       multiple: true,
       required: false,
     }),
+    quiet: commonFlags.quiet,
   },
 });
 

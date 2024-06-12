@@ -11,21 +11,36 @@
  */
 'use strict';
 
-const { BaseCommand, cli } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const spinner = require('ora')();
 
 class ResetCommand extends BaseCommand {
-  async run() {
+  async runCommand(args, flags) {
     try {
-      cli.log(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      spinner.start('resetting environment');
-      await this.withCloudSdk((cloudSdkAPI) => cloudSdkAPI.resetEnv());
-      spinner.stop();
-      cli.log(`Environment reset.`);
+      const result = this.jsonResult();
+      this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
+      this.spinnerStart('resetting environment');
+      await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.resetEnv(flags.wait)
+      );
+      this.spinnerStop();
+      if (flags.wait) {
+        result.status = 'reset';
+        this.doLog(`Environment reset.`);
+      } else {
+        result.status = 'resetting';
+        this.doLog(
+          `Not waiting to finish reset. Check using status command for progress. It may take a couple of seconds to indicate 'Deployment in progress'.`
+        );
+      }
+      return result;
     } catch (err) {
-      spinner.stop();
+      this.spinnerStop();
       throwAioError(
         err,
         new internalCodes.INTERNAL_RESET_ERROR({ messageValues: err })
@@ -37,6 +52,20 @@ class ResetCommand extends BaseCommand {
 Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
+  flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    wait: Flags.boolean({
+      description:
+        'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',
+      multiple: false,
+      required: false,
+      default: true,
+      allowNo: true,
+    }),
+    quiet: commonFlags.quiet,
+  },
   aliases: [],
 });
 

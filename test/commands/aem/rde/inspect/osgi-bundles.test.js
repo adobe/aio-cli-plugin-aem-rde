@@ -1,7 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const OsgiBundlesCommand = require('../../../../../src/commands/aem/rde/inspect/osgi-bundles');
-const { cli } = require('../../../../../src/lib/base-command.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -11,7 +10,7 @@ const chalk = require('chalk');
 const errorObj = Object.assign(
   {},
   {
-    status: 404,
+    status: 403,
     statusText: 'Test error message.',
   }
 );
@@ -100,15 +99,14 @@ const stubbedMethods = {
 
 let command, cloudSdkApiStub;
 describe('OsgiBundlesCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   describe('#getOsgiBundles', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([], null),
+        new OsgiBundlesCommand(['--quiet'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -119,7 +117,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID                  Name          Version State  State String Start Level '
@@ -136,20 +134,48 @@ describe('OsgiBundlesCommand', function () {
     it('Should have the expected json array result', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['-o', 'json'], null),
+        new OsgiBundlesCommand(['--quiet', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '[{"id":0,"name":"System Bundle","symbolicName":"org.apache.test","version":"7.0.1","state":3,"stateString":"active","startLevel":0,"manifestHeaders":{"Bundle-ManifestVersion":"2","Export-Package":[]}},{"id":1,"name":"test","symbolicName":"test","version":"0.0.1","state":1,"stateString":"active","startLevel":1,"exportedPackages":[],"importedPackages":[{"name":"org.osgi.test","version":"1","bundleId":1},{"name":"org.test","version":"1","bundleId":2}],"fragmentsAttached":[],"registeredServices":[9,8,3],"servicesInUse":[6,5,9,1,8,36]}]'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, [
+        {
+          id: 0,
+          name: 'System Bundle',
+          symbolicName: 'org.apache.test',
+          version: '7.0.1',
+          state: 3,
+          stateString: 'active',
+          startLevel: 0,
+          manifestHeaders: {
+            'Bundle-ManifestVersion': '2',
+            'Export-Package': [],
+          },
+        },
+        {
+          id: 1,
+          name: 'test',
+          symbolicName: 'test',
+          version: '0.0.1',
+          state: 1,
+          stateString: 'active',
+          startLevel: 1,
+          exportedPackages: [],
+          importedPackages: [
+            { name: 'org.osgi.test', version: '1', bundleId: 1 },
+            { name: 'org.test', version: '1', bundleId: 2 },
+          ],
+          fragmentsAttached: [],
+          registeredServices: [9, 8, 3],
+          servicesInUse: [6, 5, 9, 1, 8, 36],
+        },
+      ]);
     });
 
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([], null),
+        new OsgiBundlesCommand(['--quiet'], null),
         { ...stubbedMethods, getOsgiBundles: () => errorObj }
       );
       try {
@@ -166,7 +192,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([], null),
+        new OsgiBundlesCommand(['--quiet'], null),
         {
           ...stubbedMethods,
           getOsgiBundles: stubbedThrowErrorMethods,
@@ -190,9 +216,10 @@ describe('OsgiBundlesCommand', function () {
     beforeEach(() => {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([reqId], null),
+        new OsgiBundlesCommand(['--quiet', reqId], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
     });
 
     it('Should be called exactly once', async function () {
@@ -208,7 +235,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct textual output', async function () {
       await command.run();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.bold(
             ' ID                  Name   Version State  State String Start Level '
@@ -224,55 +251,33 @@ describe('OsgiBundlesCommand', function () {
     it('Should produce the correct json output', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand(['0', '-o', 'json'], null),
+        new OsgiBundlesCommand(['--quiet', '0', '--json'], null),
         stubbedMethods
       );
-      await command.run();
-      assert.equal(
-        cli.log.getCapturedLogOutput(),
-        '{\n' +
-          '  "id": 1,\n' +
-          '  "name": "test",\n' +
-          '  "symbolicName": "test",\n' +
-          '  "version": "0.0.1",\n' +
-          '  "state": 1,\n' +
-          '  "stateString": "active",\n' +
-          '  "startLevel": 1,\n' +
-          '  "exportedPackages": [],\n' +
-          '  "importedPackages": [\n' +
-          '    {\n' +
-          '      "name": "org.osgi.test",\n' +
-          '      "version": "1",\n' +
-          '      "bundleId": 1\n' +
-          '    },\n' +
-          '    {\n' +
-          '      "name": "org.test",\n' +
-          '      "version": "1",\n' +
-          '      "bundleId": 2\n' +
-          '    }\n' +
-          '  ],\n' +
-          '  "fragmentsAttached": [],\n' +
-          '  "registeredServices": [\n' +
-          '    9,\n' +
-          '    8,\n' +
-          '    3\n' +
-          '  ],\n' +
-          '  "servicesInUse": [\n' +
-          '    6,\n' +
-          '    5,\n' +
-          '    9,\n' +
-          '    1,\n' +
-          '    8,\n' +
-          '    36\n' +
-          '  ]\n' +
-          '}'
-      );
+      const json = await command.run();
+      assert.deepEqual(json.items, {
+        id: 1,
+        name: 'test',
+        symbolicName: 'test',
+        version: '0.0.1',
+        state: 1,
+        stateString: 'active',
+        startLevel: 1,
+        exportedPackages: [],
+        importedPackages: [
+          { name: 'org.osgi.test', version: '1', bundleId: 1 },
+          { name: 'org.test', version: '1', bundleId: 2 },
+        ],
+        fragmentsAttached: [],
+        registeredServices: [9, 8, 3],
+        servicesInUse: [6, 5, 9, 1, 8, 36],
+      });
     });
 
     it('Should print out a error message when status is not 200', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([reqId], null),
+        new OsgiBundlesCommand(['--quiet', reqId], null),
         { ...stubbedMethods, getOsgiBundle: () => errorObj }
       );
       try {
@@ -289,7 +294,7 @@ describe('OsgiBundlesCommand', function () {
     it('Should catch a throw and print out a error message.', async function () {
       const [command] = createCloudSdkAPIStub(
         sinon,
-        new OsgiBundlesCommand([reqId], null),
+        new OsgiBundlesCommand(['--quiet', reqId], null),
         {
           ...stubbedMethods,
           getOsgiBundle: stubbedThrowErrorMethods,

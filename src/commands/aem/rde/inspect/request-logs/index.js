@@ -11,19 +11,18 @@
  */
 'use strict';
 
-const { cli } = require('../../../../../lib/base-command');
 const {
-  logInJsonArrayFormat,
-  InspectBaseCommand,
-  inspectCommonFlags,
-} = require('../../../../../lib/inspect-base-command');
+  cli,
+  BaseCommand,
+  commonFlags,
+} = require('../../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../../lib/error-helpers');
 
-class RequestLogsCommand extends InspectBaseCommand {
-  async run() {
-    const { args, flags } = await this.parse(RequestLogsCommand);
+class RequestLogsCommand extends BaseCommand {
+  async runCommand(args, flags) {
     try {
+      const result = this.jsonResult();
       if (!args.id) {
         const params = {};
         params.filter = flags.include;
@@ -33,11 +32,8 @@ class RequestLogsCommand extends InspectBaseCommand {
         );
         if (response?.status === 200) {
           const json = await response.json();
-          if (flags.output === 'json') {
-            logInJsonArrayFormat(json?.items);
-          } else {
-            logInTableFormat(json?.items);
-          }
+          result.items = json?.items;
+          this.logInTableFormat(json?.items);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
@@ -49,17 +45,15 @@ class RequestLogsCommand extends InspectBaseCommand {
         );
         if (response?.status === 200) {
           const requestLog = await response.json();
-          if (flags.output === 'json') {
-            cli.log(JSON.stringify(requestLog, null, 2));
-          } else {
-            logInTableFormat([requestLog]);
-          }
+          result.items = requestLog;
+          this.logInTableFormat([requestLog]);
         } else {
           throw new internalCodes.UNEXPECTED_API_ERROR({
             messageValues: [response.status, response.statusText],
           });
         }
       }
+      return result;
     } catch (err) {
       throwAioError(
         err,
@@ -69,28 +63,28 @@ class RequestLogsCommand extends InspectBaseCommand {
       );
     }
   }
-}
 
-/**
- * @param {object} items - The items selectively displayed in the table.
- */
-function logInTableFormat(items) {
-  cli.table(
-    items,
-    {
-      id: {
-        header: 'ID',
-        minWidth: 20,
+  /**
+   * @param {object} items - The items selectively displayed in the table.
+   */
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 20,
+        },
+        method: {
+          minWidth: 7,
+        },
+        path: {
+          minWidth: 7,
+        },
       },
-      method: {
-        minWidth: 7,
-      },
-      path: {
-        minWidth: 7,
-      },
-    },
-    { printLine: (s) => cli.log(s) }
-  );
+      { printLine: (s) => this.doLog(s, true) }
+    );
+  }
 }
 
 Object.assign(RequestLogsCommand, {
@@ -103,9 +97,12 @@ Object.assign(RequestLogsCommand, {
     },
   ],
   flags: {
-    target: inspectCommonFlags.target,
-    include: inspectCommonFlags.include,
-    output: inspectCommonFlags.output,
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+    target: commonFlags.targetInspect,
+    include: commonFlags.include,
+    quiet: commonFlags.quiet,
   },
 });
 

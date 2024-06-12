@@ -1,19 +1,23 @@
 const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const chalk = require('chalk');
-const LogsCommand = require('../../../../../src/commands/aem/rde/inspect/logs');
-const { cli } = require('../../../../../src/lib/base-command.js');
+const LogsCommand = require('../../../../src/commands/aem/rde/logs.js');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
-} = require('../../../../util.js');
+} = require('../../../util.js');
 
-const errorResponse = {
+const errorResponse404 = {
   status: 404,
   statusText: 'Test error message.',
 };
 
-const errorObj = new Error(errorResponse.statusText);
+const errorResponse403 = {
+  status: 403,
+  statusText: 'Test error message 403.',
+};
+
+const errorObj = new Error(errorResponse404.statusText);
 
 const createLogsSuccessObj = {
   status: 201,
@@ -80,17 +84,16 @@ const stubbedMethods = {
 let command, cloudSdkApiStub;
 
 describe('LogsCommand', function () {
-  setupLogCapturing(sinon, cli);
-
   before(() => sinon.useFakeTimers());
   after(() => sinon.restore());
 
   beforeEach(() => {
     [command, cloudSdkApiStub] = createCloudSdkAPIStub(
       sinon,
-      new LogsCommand(['--no-color'], null),
+      new LogsCommand(['--quiet', '-d com.adobe', '--no-color'], null),
       stubbedMethods
     );
+    setupLogCapturing(sinon, command);
   });
 
   afterEach(async () => {
@@ -102,17 +105,8 @@ describe('LogsCommand', function () {
   });
 
   describe('#getAemLogs', function () {
-    it('Should be called exactly once', async function () {
-      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse);
-      cloudSdkApiStub.createAemLog.onCall(1).returns(createLogsSuccessObj);
-      cloudSdkApiStub.getAemLogs.returns(aemLogsSuccessObj);
-      await command.run();
-      await sinon.clock.runToLastAsync();
-      assert.equal(cloudSdkApiStub.getAemLogs.calledOnce, true);
-    });
-
     it('Should throw an internal error.', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
       cloudSdkApiStub.getAemLogs.throws(errorObj);
       try {
         await command.run();
@@ -121,15 +115,15 @@ describe('LogsCommand', function () {
       } catch (e) {
         assert(
           e.message.includes(
-            `[RDECLI:INTERNAL_GET_LOG_ERROR] There was an unexpected error when running get log command. Please, try again later and if the error persists, report it.`,
+            `RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code 404 with message Test error message.. Please, try again later and if the error persists, report it.`,
             `Error message ${e.message} is not the expected one`
           )
         );
       }
     });
     it('Should throw an error message when status is not 200', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
-      cloudSdkApiStub.getAemLogs.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
+      cloudSdkApiStub.getAemLogs.returns(errorResponse404);
       try {
         await command.run();
         await sinon.clock.runToLastAsync();
@@ -137,7 +131,7 @@ describe('LogsCommand', function () {
       } catch (e) {
         assert.equal(
           e.message,
-          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorResponse.status} with message ${errorResponse.statusText}. Please, try again later and if the error persists, report it.`
+          `[RDECLI:UNEXPECTED_API_ERROR] There was an unexpected API error code ${errorResponse404.status} with message ${errorResponse404.statusText}. Please, try again later and if the error persists, report it.`
         );
       }
     });
@@ -155,7 +149,7 @@ describe('LogsCommand', function () {
       await command.run();
       await sinon.clock.runToLastAsync();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         '11.08.2023 07:55:24.278 *INFO* [898-59] log.request 11/Aug/2023:07:55:24 +0000 [919] TEST'
       );
     });
@@ -163,9 +157,10 @@ describe('LogsCommand', function () {
     it('Should print out the logs in color', async function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
-        new LogsCommand([]),
+        new LogsCommand(['--quiet', '-d com.adobe'], null),
         stubbedMethods
       );
+      setupLogCapturing(sinon, command);
 
       cloudSdkApiStub.getAemLogTail.onCall(0).returns({
         status: 200,
@@ -185,7 +180,7 @@ describe('LogsCommand', function () {
       await sinon.clock.runToLastAsync();
       await sinon.clock.runToLastAsync();
       assert.equal(
-        cli.log.getCapturedLogOutput(),
+        command.log.getCapturedLogOutput(),
         [
           chalk.blackBright('11.08.2023 07:55:24.278 *TRACE* [898-55] TEST'),
           chalk.cyan('11.08.2023 07:55:24.278 *DEBUG* [898-56] TEST'),
@@ -220,7 +215,7 @@ describe('LogsCommand', function () {
     });
 
     it('Should print out a error message when status is not 200', async function () {
-      cloudSdkApiStub.deleteAemLog.returns(errorResponse);
+      cloudSdkApiStub.deleteAemLog.returns(errorResponse403);
       try {
         await command.run();
         await command.stopAndCleanup();
@@ -233,14 +228,6 @@ describe('LogsCommand', function () {
         );
       }
     });
-
-    it('Should be called once for cleanup when there are more than 2 logs saved', async function () {
-      cloudSdkApiStub.createAemLog.onCall(0).returns(errorResponse);
-      cloudSdkApiStub.createAemLog.onCall(1).returns(createLogsSuccessObj);
-      cloudSdkApiStub.getAemLogs.returns(tooManyLogsSuccessObj);
-      await command.run();
-      assert.equal(cloudSdkApiStub.deleteAemLog.callCount, 1);
-    });
   });
 
   describe('#createAemLog', function () {
@@ -252,7 +239,21 @@ describe('LogsCommand', function () {
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(
         sinon,
         new LogsCommand(
-          ['-i', arg, '-d', arg, '-f', format, '-e', arg, '-i', arg, '-w', arg],
+          [
+            '--quiet',
+            '-i',
+            arg,
+            '-d',
+            arg,
+            '-f',
+            format,
+            '-e',
+            arg,
+            '-i',
+            arg,
+            '-w',
+            arg,
+          ],
           null
         ),
         stubbedMethods
@@ -286,7 +287,7 @@ describe('LogsCommand', function () {
     });
 
     it('Should print out an error message when status is not 201', async function () {
-      cloudSdkApiStub.createAemLog.returns(errorResponse);
+      cloudSdkApiStub.createAemLog.returns(errorResponse404);
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');

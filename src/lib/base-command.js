@@ -9,83 +9,190 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
+// 3rd party dependencies
 const { Command, Flags, CliUx } = require('@oclif/core');
-const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
+const jwt = require('jsonwebtoken');
+const inquirer = require('inquirer');
+const spinner = require('ora')();
+
+// Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
-const jwt = require('jsonwebtoken');
+
+// internals
+const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
+const { concatEnvironemntId } = require('../lib/utils');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
 
-/**
- *
- */
-function getCliOrgId() {
-  return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
-}
-
-/**
- *
- */
-function getBaseUrl() {
-  const configStr = Config.get('cloudmanager.base_url');
-  return configStr || 'https://cloudmanager.adobe.io';
-}
-
-/**
- *
- */
-async function getTokenAndKey() {
-  let accessToken;
-  let apiKey;
-
-  try {
-    const contextName = 'aio-cli-plugin-cloudmanager';
-    accessToken = await getToken(contextName);
-    const contextData = await context.get(contextName);
-    if (!contextData || !contextData.data) {
-      throw new configurationCodes.NO_IMS_CONTEXT({
-        messageValues: contextName,
-      });
-    }
-    apiKey = contextData.data.client_id;
-  } catch (err) {
-    accessToken = await getToken('cli');
-    const decodedToken = jwt.decode(accessToken);
-    if (!decodedToken) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-    }
-    apiKey = decodedToken.client_id;
-    if (!apiKey) {
-      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
-    }
-  }
-  return { accessToken, apiKey };
-}
-
-/**
- * @param cloudManagerUrl
- * @param orgId
- */
-async function initSdk(cloudManagerUrl, orgId) {
-  const { accessToken, apiKey } = await getTokenAndKey();
-  return await init(orgId, apiKey, accessToken, cloudManagerUrl);
-}
-
 class BaseCommand extends Command {
   constructor(argv, config, error) {
     super(argv, config);
-    const programId = Config.get('cloudmanager_programid');
-    const environmentId = Config.get('cloudmanager_environmentid');
-    this._programId = programId;
-    this._environmentId = environmentId;
     this.error = error || this.error;
+  }
+
+  async run() {
+    const { args, flags } = await this.parse(this.typeof);
+    this.flags = flags;
+    this.args = args;
+    if (!flags.programId) {
+      this._programName = Config.get('cloudmanager_programname');
+    }
+    if (!flags.environmentId) {
+      this._environmentName = Config.get('cloudmanager_environmentname');
+    }
+
+    this.setupParams(flags);
+
+    if (
+      !flags.quiet &&
+      !flags.json &&
+      this.constructor.name !== 'SetupCommand'
+    ) {
+      this.doLog(this.getLogHeader());
+      const lastAction = Config.get('rde_lastaction');
+      if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
+        const executeCommand = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'executeCommand',
+            message: `The last RDE command ran more than 24h ago, do you want to continue running the command on ${concatEnvironemntId(this._programId, this._environmentId)}?`,
+            default: true,
+          },
+        ]);
+        if (!executeCommand.executeCommand) {
+          this.doLog('Command execution aborted.');
+          return;
+        }
+      }
+      Config.set('rde_lastaction', Date.now());
+    }
+
+    return await this.runCommand(args, flags);
+  }
+
+  setupParams(flags) {
+    this._orgId = this.readFromFlagsOrDefault(
+      flags.organizationId,
+      'cloudmanager_orgid'
+    );
+    this._programId = this.readFromFlagsOrDefault(
+      flags.programId,
+      'cloudmanager_programid'
+    );
+    this._environmentId = this.readFromFlagsOrDefault(
+      flags.environmentId,
+      'cloudmanager_environmentid'
+    );
+  }
+
+  readFromFlagsOrDefault(input, configKey) {
+    const trimmedInput = input ? input.trim() : '';
+    return trimmedInput || Config.get(configKey);
+  }
+
+  /**
+   * the commands run method to be implemented by the sub class
+   * @param args the arguments passed to the command
+   * @param flags the flags passed to the command
+   */
+  runCommand(args, flags) {
+    throw new Error(
+      'You have to implement the method runCommand(args, flags) in the subclass!'
+    );
   }
 
   async catch(err) {
     handleError(err, this.error);
+  }
+
+  getLogHeader() {
+    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+  }
+
+  printNamesWhenAvailable() {
+    if (this._programName && this._environmentName) {
+      return ` (${this._programName} - ${this._environmentName})`;
+    }
+    return '';
+  }
+
+  doLog(message, always = false) {
+    if (always || !this.flags?.quiet) {
+      this.log(message);
+    }
+  }
+
+  spinnerStart(message) {
+    if (!(this.flags.quiet || this.flags.json)) {
+      spinner.start(message);
+    }
+  }
+
+  spinnerIsSpinning() {
+    return spinner.isSpinning;
+  }
+
+  spinnerStop() {
+    spinner.stop();
+  }
+
+  /**
+   *
+   */
+  getCliOrgId() {
+    return Config.get('cloudmanager_orgid') || Config.get('console.org.code');
+  }
+
+  /**
+   *
+   */
+  getBaseUrl() {
+    const configStr = Config.get('cloudmanager.base_url');
+    return configStr || 'https://cloudmanager.adobe.io';
+  }
+
+  /**
+   *
+   */
+  async getTokenAndKey() {
+    let accessToken;
+    let apiKey;
+
+    try {
+      const contextName = 'aio-cli-plugin-cloudmanager';
+      accessToken = await getToken(contextName);
+      const contextData = await context.get(contextName);
+      if (!contextData || !contextData.data) {
+        throw new configurationCodes.NO_IMS_CONTEXT({
+          messageValues: contextName,
+        });
+      }
+      apiKey = contextData.data.client_id;
+    } catch (err) {
+      accessToken = await getToken('cli');
+      const decodedToken = jwt.decode(accessToken);
+      if (!decodedToken) {
+        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      }
+      apiKey = decodedToken.client_id;
+      if (!apiKey) {
+        throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+      }
+    }
+    return { accessToken, apiKey };
+  }
+
+  /**
+   * @param cloudManagerUrl
+   * @param orgId
+   */
+  async initSdk(cloudManagerUrl, orgId) {
+    const { accessToken, apiKey } = await this.getTokenAndKey();
+    return await init(orgId, apiKey, accessToken, cloudManagerUrl);
   }
 
   async getDeveloperConsoleUrl(
@@ -94,7 +201,7 @@ class BaseCommand extends Command {
     programId,
     environmentId
   ) {
-    const sdk = await initSdk(cloudManagerUrl, orgId);
+    const sdk = await this.initSdk(cloudManagerUrl, orgId);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
@@ -106,10 +213,10 @@ class BaseCommand extends Command {
       if (!this._environmentId) {
         throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
-      const { accessToken, apiKey } = await getTokenAndKey();
-      const cloudManagerUrl = getBaseUrl();
-      const orgId = getCliOrgId();
-      const cacheKey = `aem-rde.dev-console-url-cache.cm-p${this._programId}-e${this._environmentId}`;
+      const { accessToken, apiKey } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl();
+      const orgId = this.getCliOrgId();
+      const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
       let cacheEntry = Config.get(cacheKey);
       // TODO: prune expired cache entries
       if (
@@ -150,7 +257,21 @@ class BaseCommand extends Command {
     }
     return fn(this._cloudSdkAPI);
   }
+
+  jsonResult(serverStatus) {
+    const result = {
+      programId: this._programId,
+      environmentId: this._environmentId,
+      status: serverStatus,
+    };
+    return result;
+  }
 }
+
+Object.assign(BaseCommand, {
+  description: 'Enable json output for all commands by default.',
+  enableJsonFlag: true,
+});
 
 module.exports = {
   BaseCommand,
@@ -158,16 +279,13 @@ module.exports = {
   cli: CliUx.ux,
   commonArgs: {},
   commonFlags: {
-    programId: Flags.string({
-      char: 'p',
-      description:
-        "The programId. If not specified, defaults to 'cloudmanager_programId' config value",
-      common: true,
-    }),
-    environmentId: Flags.string({
-      char: 'e',
-      description:
-        "the environmentId. If not specified, defaults to 'cloudmanager_environmentid' config value",
+    targetInspect: Flags.string({
+      char: 's',
+      description: "The target instance type. Default 'author'.",
+      multiple: false,
+      required: false,
+      options: ['author', 'publish'],
+      default: 'author',
       common: true,
     }),
     target: Flags.string({
@@ -179,8 +297,41 @@ module.exports = {
       options: ['author', 'publish'],
       common: true,
     }),
+    scope: Flags.string({
+      description: 'Optional filter for the scope.',
+      multiple: false,
+      required: false,
+      default: 'custom',
+      options: ['custom', 'product'],
+      common: true,
+    }),
+    include: Flags.string({
+      description: 'Optional filter.',
+      multiple: false,
+      required: false,
+      common: true,
+    }),
+    organizationId: Flags.string({
+      description: 'The organization id to use while running this command',
+      multiple: false,
+      required: false,
+    }),
+    programId: Flags.string({
+      description: 'The program id to use while running this command',
+      multiple: false,
+      required: false,
+    }),
+    environmentId: Flags.string({
+      description: 'The environment id to use while running this command',
+      multiple: false,
+      required: false,
+    }),
+    quiet: Flags.boolean({
+      description: 'Generates no log output and asks for no user input',
+      char: 'q',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
   },
-  getCliOrgId,
-  getBaseUrl,
-  initSdk,
 };
