@@ -287,6 +287,7 @@ module.exports = {
       options: ['author', 'publish'],
       default: 'author',
       common: true,
+      helpGroup: 'target',
     }),
     target: Flags.string({
       char: 's',
@@ -296,6 +297,7 @@ module.exports = {
       required: false,
       options: ['author', 'publish'],
       common: true,
+      helpGroup: 'target',
     }),
     scope: Flags.string({
       description: 'Optional filter for the scope.',
@@ -315,16 +317,19 @@ module.exports = {
       description: 'The organization id to use while running this command',
       multiple: false,
       required: false,
+      helpGroup: 'target',
     }),
     programId: Flags.string({
       description: 'The program id to use while running this command',
       multiple: false,
       required: false,
+      helpGroup: 'target',
     }),
     environmentId: Flags.string({
       description: 'The environment id to use while running this command',
       multiple: false,
       required: false,
+      helpGroup: 'target',
     }),
     quiet: Flags.boolean({
       description: 'Generates no log output and asks for no user input',
@@ -332,6 +337,7 @@ module.exports = {
       multiple: false,
       required: false,
       default: false,
+      helpGroup: 'output',
     }),
   },
 };
