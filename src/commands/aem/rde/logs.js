@@ -301,7 +301,7 @@ Object.assign(LogsCommand, {
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
       multiple: false,
       required: false,
-      helpValue: `<log4j format definition>`,
+      helpValue: `<logback format definition>`,
       helpGroup: 'format and color',
     }),
     // trace: Flags.string({
