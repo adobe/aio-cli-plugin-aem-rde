@@ -93,10 +93,6 @@ E(
   'There are too many log configurations. Please, delete some logs before creating new ones.'
 );
 E(
-  'INTERNAL_CREATE_LOG_NO_LOGS_ERROR',
-  'There were no valid definitions found for the log configuration. For further instructions on how to define a log configuration, use "aio aem rde logs --help".'
-);
-E(
   'INTERNAL_GET_OSGI_BUNDLES_ERROR',
   'There was an unexpected error when running get osgi bundles command. Please, try again later and if the error persists, report it. Error %s'
 );

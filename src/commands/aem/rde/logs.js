@@ -205,7 +205,9 @@ class LogsCommand extends BaseCommand {
       }
 
       if (!body.names || body.names.length === 0) {
-        throw new internalCodes.INTERNAL_CREATE_LOG_NO_LOGS_ERROR();
+        this.doLog(chalk.yellow(`No log configuration provided.`));
+        this.doLog(chalk.gray(`Default to: aio aem rde logs -i ""`));
+        flags.info = [''];
       }
 
       const response = await this.withCloudSdk((cloudSdkAPI) =>
@@ -299,6 +301,8 @@ Object.assign(LogsCommand, {
       description: `Specify the format string. eg: '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n`,
       multiple: false,
       required: false,
+      helpValue: `<logback format definition>`,
+      helpGroup: 'format and color',
     }),
     // trace: Flags.string({
     //   description: `Optional logger on TRACE level.`,
@@ -310,40 +314,52 @@ Object.assign(LogsCommand, {
       description: `Optional logger on DEBUG level.`,
       multiple: true,
       required: false,
+      helpValue: `<package or class name>`,
+      helpGroup: 'level',
     }),
     info: Flags.string({
       char: 'i',
       description: `Optional logger on INFO level.`,
       multiple: true,
       required: false,
+      helpValue: `<package or class name>`,
+      helpGroup: 'level',
     }),
     warn: Flags.string({
       char: 'w',
       description: `Optional logger on WARN level.`,
       multiple: true,
       required: false,
+      helpValue: `<package or class name>`,
+      helpGroup: 'level',
     }),
     error: Flags.string({
       char: 'e',
       description: `Optional logger on ERROR level.`,
       multiple: true,
       required: false,
+      helpValue: `<package or class name>`,
+      helpGroup: 'level',
     }),
     color: Flags.boolean({
       aliases: ['colour'],
       description: 'Colorize log output',
       default: true,
       allowNo: true,
+      helpGroup: 'format and color',
     }),
     choose: Flags.boolean({
       description: 'Choose from existing log configurations to tail',
       default: false,
+      helpGroup: 'output',
     }),
     highlight: Flags.string({
       char: 'H',
       description: `Highlight log lines containing the specified string.`,
       multiple: true,
       required: false,
+      helpValue: `<substring of a log line>`,
+      helpGroup: 'format and color',
     }),
     quiet: commonFlags.quiet,
   },

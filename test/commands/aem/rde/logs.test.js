@@ -58,22 +58,6 @@ const status200 = {
   status: 200,
 };
 
-const tooManyLogsSuccessObj = {
-  status: 200,
-  json: () =>
-    Object.create({
-      status: 'Ready',
-      items: ['0', '1', '2'].map((id) =>
-        Object.create({
-          id,
-          names: [{ logger: '', level: 'INFO' }],
-          format:
-            '%d{dd.MM.yyyy HH:mm:ss.SSS} *%level* [%thread] %logger %msg%n',
-        })
-      ),
-    }),
-};
-
 const stubbedMethods = {
   createAemLog: createLogsSuccessObj,
   getAemLogs: aemLogsSuccessObj,
