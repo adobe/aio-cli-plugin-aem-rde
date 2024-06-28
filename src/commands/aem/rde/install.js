@@ -34,7 +34,7 @@ const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 
-const JCR_ROOT_SUBPATH = '/jcr_root/';
+const JCR_ROOT = 'jcr_root';
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -201,7 +201,7 @@ class DeployCommand extends BaseCommand {
 
       // when no path was defined explicitly, we also try to guess it
       if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
-        if (isLocalFile && inputPath.includes(JCR_ROOT_SUBPATH)) {
+        if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
           const guessedPath = guessPath(inputPath);
           if (guessedPath) {
             flags.path = guessedPath;
@@ -298,23 +298,24 @@ class DeployCommand extends BaseCommand {
  * @param inputPath
  */
 function guessPath(inputPath) {
-  if (!inputPath.includes(JCR_ROOT_SUBPATH)) {
+  const JCR_ROOT_SUBPATH = '/' + JCR_ROOT + '/';
+  if (!inputPath.includes(JCR_ROOT)) {
     return;
   }
   const extension = inputPath.substring(inputPath.lastIndexOf('.'));
   if (inputPath.endsWith('.content.xml')) {
     return inputPath.substring(
-      inputPath.indexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
+      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
       inputPath.lastIndexOf('/')
     );
   } else if (extension === '.xml') {
     return inputPath.substring(
-      inputPath.indexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
+      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
       inputPath.lastIndexOf('.')
     );
   }
   return inputPath.substring(
-    inputPath.indexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length
+    inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length
   );
 }
 
@@ -334,7 +335,7 @@ function guessType(name, url, pathFlag) {
     case '.zip':
       if (url.protocol === 'file:') {
         const zip = new Zip(fs.realpathSync(url), {});
-        const isContentPackage = zip.getEntry(JCR_ROOT_SUBPATH) !== null;
+        const isContentPackage = zip.getEntry(JCR_ROOT + '/') !== null;
         if (isContentPackage) {
           return ['content-package'];
         }
