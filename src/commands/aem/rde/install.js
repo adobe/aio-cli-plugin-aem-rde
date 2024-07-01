@@ -27,11 +27,14 @@ const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
 const { URL, pathToFileURL } = require('url');
+const chalk = require('chalk');
 
 const Zip = require('adm-zip');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+
+const JCR_ROOT = 'jcr_root';
 
 const deploymentTypes = [
   'osgi-bundle',
@@ -193,6 +196,24 @@ class DeployCommand extends BaseCommand {
           });
         } else {
           type = guessedTypes[0];
+          this.doLog(chalk.yellow(`No --type provided, using ${type}`));
+        }
+      }
+
+      // when no path was defined explicitly, we also try to guess it
+      if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
+        if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
+          const guessedPath = guessPath(inputPath);
+          if (guessedPath) {
+            flags.path = guessedPath;
+            this.doLog(
+              chalk.yellow(
+                `No --path provided, repository path was set to ${flags.path}`
+              )
+            );
+          } else {
+            throw new validationCodes.MISSING_CONTENT_PATH();
+          }
         }
       }
     } catch (err) {
@@ -272,6 +293,33 @@ class DeployCommand extends BaseCommand {
 }
 
 /**
+ *
+ * @param inputPath
+ */
+function guessPath(inputPath) {
+  const JCR_ROOT_SUBPATH = '/' + JCR_ROOT + '/';
+  if (!inputPath.includes(JCR_ROOT)) {
+    return;
+  }
+  const extension = inputPath.substring(inputPath.lastIndexOf('.'));
+  if (inputPath.endsWith('.content.xml')) {
+    return inputPath.substring(
+      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
+      inputPath.lastIndexOf('/')
+    );
+  } else if (extension === '.xml') {
+    return inputPath.substring(
+      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
+      inputPath.lastIndexOf('.')
+    );
+  }
+  return inputPath.substring(
+    inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length
+  );
+}
+
+/**
+ *
  * @param name
  * @param url
  * @param pathFlag
@@ -286,7 +334,7 @@ function guessType(name, url, pathFlag) {
     case '.zip':
       if (url.protocol === 'file:') {
         const zip = new Zip(fs.realpathSync(url), {});
-        const isContentPackage = zip.getEntry('jcr_root/') !== null;
+        const isContentPackage = zip.getEntry(JCR_ROOT + '/') !== null;
         if (isContentPackage) {
           return ['content-package'];
         }
@@ -310,7 +358,8 @@ function guessType(name, url, pathFlag) {
 }
 
 Object.assign(DeployCommand, {
-  description: 'Install/update bundles, configs, and content-packages.',
+  description:
+    'Install/update bundles, configs, and content-packages. When installing content-files, the path flag must be provided.',
   args: [
     {
       name: 'location',
