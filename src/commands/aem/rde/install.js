@@ -210,16 +210,14 @@ class DeployCommand extends BaseCommand {
                 `No --path provided, repository path was set to ${flags.path}`
               )
             );
+          } else {
+            throw new validationCodes.MISSING_CONTENT_PATH();
           }
         }
       }
     } catch (err) {
       this.doLog(err);
       return;
-    }
-
-    if (!flags.path) {
-      throw new validationCodes.MISSING_CONTENT_PATH();
     }
 
     const result = this.jsonResult();
