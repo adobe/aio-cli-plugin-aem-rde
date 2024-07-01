@@ -4,15 +4,21 @@ const JSZip = require('jszip');
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
+const sinon = require('sinon');
 
 const testee = rewire('../../../../src/commands/aem/rde/install');
 
-let guessPath; // Declare variable to hold the function
-let guessType; // Declare variable to hold the function
+let guessPath;
+let guessType;
+let flags;
+let getPath;
+let getType;
 
 before(function () {
   guessPath = testee.__get__('guessPath');
   guessType = testee.__get__('guessType');
+  getPath = testee.__get__('getPath');
+  getType = testee.__get__('getType');
 });
 
 /**
@@ -140,5 +146,169 @@ describe('guessPath', function () {
       '/some/path/jcr_root/another/jcr_root/content/site/.content.xml';
     const expected = 'content/site';
     assert.equal(guessPath(inputPath), expected);
+  });
+});
+
+describe('.getPath', function () {
+  beforeEach(function () {
+    flags = {};
+  });
+
+  it('should update flags.path for content-file type with valid inputPath', function () {
+    getPath.call(
+      { doLog: () => {} },
+      'content-file',
+      flags,
+      true,
+      '/some/path/jcr_root/content/myproject'
+    );
+    assert.equal(flags.path, 'content/myproject');
+  });
+
+  it('should update flags.path for content-xml type with valid inputPath', function () {
+    getPath.call(
+      { doLog: () => {} },
+      'content-xml',
+      flags,
+      true,
+      '/some/path/jcr_root/content/myproject/content.xml'
+    );
+    assert.equal(flags.path, 'content/myproject/content');
+  });
+
+  it('should not update flags.path for non-content file types', function () {
+    getPath.call(
+      { doLog: () => {} },
+      'osgi-bundle',
+      flags,
+      true,
+      '/some/path/jcr_root/content/myproject'
+    );
+    assert.equal(flags.path, undefined);
+  });
+
+  it('should not update flags.path for content-file type without jcr_root in path', function () {
+    getPath.call(
+      { doLog: () => {} },
+      'content-file',
+      flags,
+      true,
+      '/some/path/content/myproject'
+    );
+    assert.equal(flags.path, undefined);
+  });
+
+  it('should not update flags.path if already set', function () {
+    flags.path = 'already/set/path';
+    getPath.call(
+      { doLog: () => {} },
+      'content-file',
+      flags,
+      true,
+      '/some/path/jcr_root/content/myproject'
+    );
+    assert.equal(flags.path, 'already/set/path');
+  });
+});
+
+describe('getType function tests', function () {
+  let guessTypeStub;
+  let expect;
+
+  before(async function () {
+    // Dynamically import chai and extract expect
+    const chai = await import('chai');
+    expect = chai.expect;
+  });
+
+  beforeEach(function () {
+    // Before each test, stub the guessType function
+    guessTypeStub = sinon.stub();
+    testee.__set__('guessType', guessTypeStub);
+  });
+
+  it('should return the provided type and fileName', function () {
+    const type = 'content-package';
+    const fileName = 'example.zip';
+
+    const result = getType.call(
+      { doLog: () => {} },
+      type,
+      fileName,
+      new URL('http://example.com'),
+      '/path/to/example.zip',
+      false,
+      new URL('http://example.com')
+    );
+    expect(result).to.deep.equal({ type, fileName });
+  });
+
+  it('should guess the type when not provided and return it with fileName', function () {
+    guessTypeStub.returns(['content-package']);
+    const fileName = 'example.zip';
+    const result = getType.call(
+      { doLog: () => {} },
+      undefined,
+      fileName,
+      new URL('http://example.com'),
+      '/path/to/example.zip',
+      false,
+      new URL('http://example.com')
+    );
+    expect(result.type).to.equal('content-package');
+    expect(result.fileName).to.equal(fileName);
+  });
+
+  it('should try to guess the type again with original URL on redirect', function () {
+    guessTypeStub.onFirstCall().returns(testee.__get__('deploymentTypes'));
+    guessTypeStub.onSecondCall().returns(['content-package']);
+    const fileName = 'example.zip';
+    const result = getType.call(
+      { doLog: () => {} },
+      undefined,
+      fileName,
+      new URL('http://example.com/redirected'),
+      '/path/to/example.zip',
+      false,
+      new URL('http://original.com')
+    );
+    expect(result.type).to.equal('content-package');
+  });
+
+  it('should throw validation error when guessType returns multiple types', function () {
+    guessTypeStub.returns(['content-package', 'content-file']);
+    const fileName = 'example.zip';
+    expect(() =>
+      getType.call(
+        { doLog: () => {} },
+        undefined,
+        fileName,
+        new URL('http://example.com'),
+        '/path/to/example.zip',
+        false,
+        new URL('http://example.com')
+      )
+    ).to.throw();
+  });
+
+  it('should throw validation error when guessType cannot determine the type', function () {
+    guessTypeStub.returns([]);
+    const fileName = 'example.zip';
+    expect(() =>
+      getType.call(
+        { doLog: () => {} },
+        undefined,
+        fileName,
+        new URL('http://example.com'),
+        '/path/to/example.zip',
+        false,
+        new URL('http://example.com')
+      )
+    ).to.throw();
+  });
+
+  afterEach(function () {
+    // Restore the original function after each test
+    sinon.restore();
   });
 });

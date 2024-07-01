@@ -175,46 +175,20 @@ class DeployCommand extends BaseCommand {
       inputPath: path,
       inputPathSize: fileSize,
     };
+
     let fileName = basename(inputPath);
     try {
-      if (!type) {
-        let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
-        if (
-          !isLocalFile &&
-          guessedTypes === deploymentTypes &&
-          effectiveUrl !== originalUrl
-        ) {
-          // when there was a redirect, it is possible that the original URL
-          // has a file extension, but not the effective URL, so we try again
-          fileName = basename(originalUrl.pathname);
-          guessedTypes = guessType(fileName, originalUrl, inputPath);
-        }
-        if (guessedTypes.length !== 1) {
-          throw new validationCodes.INVALID_GUESS_TYPE({
-            messageValues: guessedTypes.join(', '),
-          });
-        } else {
-          type = guessedTypes[0];
-          this.doLog(chalk.yellow(`No --type provided, using ${type}`));
-        }
-      }
+      ({ type, fileName } = getType(
+        type,
+        fileName,
+        effectiveUrl,
+        inputPath,
+        isLocalFile,
+        originalUrl
+      ));
 
       // when no path was defined explicitly, we also try to guess it
-      if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
-        if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
-          const guessedPath = guessPath(inputPath);
-          if (guessedPath) {
-            flags.path = guessedPath;
-            this.doLog(
-              chalk.yellow(
-                `No --path provided, repository path was set to ${flags.path}`
-              )
-            );
-          } else {
-            throw new validationCodes.MISSING_CONTENT_PATH();
-          }
-        }
-      }
+      getPath(type, flags, isLocalFile, inputPath);
     } catch (err) {
       this.doLog(err);
       return;
@@ -288,6 +262,72 @@ class DeployCommand extends BaseCommand {
         done ? this.spinnerStop() : this.spinnerStart(text)
       )
     );
+  }
+}
+
+/**
+ *
+ * @param type
+ * @param fileName
+ * @param effectiveUrl
+ * @param inputPath
+ * @param isLocalFile
+ * @param originalUrl
+ */
+function getType(
+  type,
+  fileName,
+  effectiveUrl,
+  inputPath,
+  isLocalFile,
+  originalUrl
+) {
+  if (!type) {
+    let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
+    if (
+      !isLocalFile &&
+      guessedTypes === deploymentTypes &&
+      effectiveUrl !== originalUrl
+    ) {
+      // when there was a redirect, it is possible that the original URL
+      // has a file extension, but not the effective URL, so we try again
+      fileName = basename(originalUrl.pathname);
+      guessedTypes = guessType(fileName, originalUrl, inputPath);
+    }
+    if (guessedTypes.length !== 1) {
+      throw new validationCodes.INVALID_GUESS_TYPE({
+        messageValues: guessedTypes.join(', '),
+      });
+    } else {
+      type = guessedTypes[0];
+      this.doLog(chalk.yellow(`No --type provided, using ${type}`));
+    }
+  }
+  return { type, fileName };
+}
+
+/**
+ *
+ * @param type
+ * @param flags
+ * @param isLocalFile
+ * @param inputPath
+ */
+function getPath(type, flags, isLocalFile, inputPath) {
+  if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
+    if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
+      const guessedPath = guessPath(inputPath);
+      if (guessedPath) {
+        flags.path = guessedPath;
+        this.doLog(
+          chalk.yellow(
+            `No --path provided, repository path was set to ${flags.path}`
+          )
+        );
+      } else {
+        throw new validationCodes.MISSING_CONTENT_PATH();
+      }
+    }
   }
 }
 
