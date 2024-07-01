@@ -199,52 +199,18 @@ class DeployCommand extends BaseCommand {
 
     let change;
     try {
-      change = await this.withCloudSdk((cloudSdkAPI) => {
-        let uploadCallbacks;
-        if (!flags.json && !flags.quiet) {
-          uploadCallbacks = {
-            progress: (copiedBytes) => progressBar.update(copiedBytes),
-            abort: () => progressBar.stop(),
-            start: (size, msg) => {
-              if (msg) {
-                this.doLog(msg);
-              }
-              progressBar.start(size, 0);
-            },
-          };
-        }
-
-        const deploymentCallbacks = () => {
-          if (!this.spinnerIsSpinning()) {
-            this.spinnerStart('applying update');
-          }
-        };
-
-        const deploy = isLocalFile
-          ? cloudSdkAPI.deployFile
-          : cloudSdkAPI.deployURL;
-        return deploy.call(
-          cloudSdkAPI,
-          inputPathSize || fileSize,
-          isLocalFile ? inputPath : effectiveUrl.toString(),
-          fileName,
-          type,
-          flags.target,
-          type === 'osgi-config' ? fileName : flags.path,
-          flags.force,
-          uploadCallbacks,
-          deploymentCallbacks
-        );
-      }).finally(() => this.spinnerStop());
-
-      await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(
-          cloudSdkAPI,
-          change.updateId,
-          this,
-          (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
-          result.items
-        )
+      change = await doDeployment(
+        change,
+        flags,
+        progressBar,
+        isLocalFile,
+        inputPathSize,
+        fileSize,
+        inputPath,
+        effectiveUrl,
+        fileName,
+        type,
+        result
       );
       progressBar?.stop();
       return result;
@@ -262,6 +228,83 @@ class DeployCommand extends BaseCommand {
         done ? this.spinnerStop() : this.spinnerStart(text)
       )
     );
+  }
+
+  /**
+   *
+   * @param change
+   * @param flags
+   * @param progressBar
+   * @param isLocalFile
+   * @param inputPathSize
+   * @param fileSize
+   * @param inputPath
+   * @param effectiveUrl
+   * @param fileName
+   * @param type
+   * @param result
+   */
+  async doDeployment(
+    change,
+    flags,
+    progressBar,
+    isLocalFile,
+    inputPathSize,
+    fileSize,
+    inputPath,
+    effectiveUrl,
+    fileName,
+    type,
+    result
+  ) {
+    change = await this.withCloudSdk((cloudSdkAPI) => {
+      let uploadCallbacks;
+      if (!flags.json && !flags.quiet) {
+        uploadCallbacks = {
+          progress: (copiedBytes) => progressBar.update(copiedBytes),
+          abort: () => progressBar.stop(),
+          start: (size, msg) => {
+            if (msg) {
+              this.doLog(msg);
+            }
+            progressBar.start(size, 0);
+          },
+        };
+      }
+
+      const deploymentCallbacks = () => {
+        if (!this.spinnerIsSpinning()) {
+          this.spinnerStart('applying update');
+        }
+      };
+
+      const deploy = isLocalFile
+        ? cloudSdkAPI.deployFile
+        : cloudSdkAPI.deployURL;
+      return deploy.call(
+        cloudSdkAPI,
+        inputPathSize || fileSize,
+        isLocalFile ? inputPath : effectiveUrl.toString(),
+        fileName,
+        type,
+        flags.target,
+        type === 'osgi-config' ? fileName : flags.path,
+        flags.force,
+        uploadCallbacks,
+        deploymentCallbacks
+      );
+    }).finally(() => this.spinnerStop());
+
+    await this.withCloudSdk((cloudSdkAPI) =>
+      loadUpdateHistory(
+        cloudSdkAPI,
+        change.updateId,
+        this,
+        (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
+        result.items
+      )
+    );
+    return change;
   }
 }
 
@@ -341,15 +384,12 @@ function guessPath(inputPath) {
     return;
   }
   const extension = inputPath.substring(inputPath.lastIndexOf('.'));
-  if (inputPath.endsWith('.content.xml')) {
+  if (extension === '.xml') {
     return inputPath.substring(
       inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
-      inputPath.lastIndexOf('/')
-    );
-  } else if (extension === '.xml') {
-    return inputPath.substring(
-      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
-      inputPath.lastIndexOf('.')
+      inputPath.lastIndexOf(
+        inputPath.endsWith('/.content.xml') ? '/.content.xml' : '.xml'
+      )
     );
   }
   return inputPath.substring(
