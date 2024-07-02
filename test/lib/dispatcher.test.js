@@ -92,6 +92,7 @@ describe('Archive Utility', function () {
           return Promise.resolve();
         }),
         pointer: sinon.stub().returns(1234),
+        glob: sinon.stub(),
         on: () => {},
       };
       const fsRealPathSyc = sinon
