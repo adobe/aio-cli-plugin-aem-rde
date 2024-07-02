@@ -1,13 +1,11 @@
 const sinon = require('sinon');
 const DeployCommand = require('../../../../src/commands/aem/rde/install.js');
 
-describe('doDeployment', function () {
+describe('uploadAndDeploy', function () {
   let deployCommandInstance;
   let mockCloudSdkAPI;
   let progressBar;
   let flags;
-  let change;
-  let result;
 
   beforeEach(function () {
     deployCommandInstance = new DeployCommand();
@@ -15,23 +13,16 @@ describe('doDeployment', function () {
       deployFile: sinon.stub(),
       deployURL: sinon.stub(),
     };
-    change = { updateId: '123' };
-    deployCommandInstance.withCloudSdk = sinon
-      .stub()
-      .callsFake(async (fn) => fn(mockCloudSdkAPI))
-      .returns(change);
     progressBar = {
       update: sinon.spy(),
       stop: sinon.spy(),
       start: sinon.spy(),
     };
     flags = { json: false, quiet: false };
-    result = { items: [] };
-
+    sinon.stub(deployCommandInstance, 'doLog');
     sinon.stub(deployCommandInstance, 'spinnerStart');
     sinon.stub(deployCommandInstance, 'spinnerStop');
     sinon.stub(deployCommandInstance, 'spinnerIsSpinning').returns(false);
-    sinon.stub(deployCommandInstance, 'doLog');
   });
 
   afterEach(function () {
@@ -46,21 +37,18 @@ describe('doDeployment', function () {
     const fileName = 'file.zip';
     const inputPathSize = 1024;
     const fileSize = null;
-
-    await deployCommandInstance.doDeployment(
-      change,
+    await deployCommandInstance.uploadAndDeploy(
       flags,
       progressBar,
       isLocalFile,
+      mockCloudSdkAPI,
       inputPathSize,
       fileSize,
       inputPath,
       effectiveUrl,
       fileName,
-      type,
-      result
+      type
     );
-
     sinon.assert.calledWith(
       mockCloudSdkAPI.deployFile,
       1024,
@@ -83,21 +71,18 @@ describe('doDeployment', function () {
     const fileName = 'file.zip';
     const inputPathSize = null;
     const fileSize = 2048;
-
-    await deployCommandInstance.doDeployment(
-      change,
+    await deployCommandInstance.uploadAndDeploy(
       flags,
       progressBar,
       isLocalFile,
+      mockCloudSdkAPI,
       inputPathSize,
       fileSize,
       inputPath,
       effectiveUrl,
       fileName,
-      type,
-      result
+      type
     );
-
     sinon.assert.calledWith(
       mockCloudSdkAPI.deployURL,
       2048,
@@ -111,6 +96,4 @@ describe('doDeployment', function () {
       sinon.match.func
     );
   });
-
-  // Additional tests can be added here to cover more scenarios
 });
