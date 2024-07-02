@@ -47,82 +47,83 @@ const deploymentTypes = [
   'config',
 ];
 
-/**
- *
- */
-function createProgressBar() {
-  return cli.progress({
-    format: 'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
-    barCompleteChar: '\u2588',
-    barIncompleteChar: '\u2591',
-    stopOnComplete: true,
-    formatValue: function (v, options, type) {
-      // padding
-      /**
-       * @param value
-       * @param length
-       */
-      function autopadding(value, length) {
-        return (options.autopaddingChar + value).slice(-length);
-      }
-
-      /**
-       * @param value
-       */
-      function toKiloBytes(value) {
-        return Math.round(value / 1024);
-      }
-
-      switch (type) {
-        case 'percentage':
-          // no autopadding ? passthrough
-          if (options.autopadding !== true) {
-            return v;
-          }
-          return autopadding(v, 3);
-        case 'value':
-        case 'total':
-          return toKiloBytes(v);
-        default:
-          return v;
-      }
-    },
-  });
-}
-
-/**
- * @param url
- */
-async function computeStats(url) {
-  switch (url.protocol) {
-    case 'http:':
-    case 'https:': {
-      const con = await fetch(url, { method: 'HEAD' });
-      const effectiveUrl = con.url ? new URL(con.url) : url;
-      return {
-        fileSize: parseInt(con.headers.get('content-length')),
-        effectiveUrl,
-        path: effectiveUrl.pathname,
-        isLocalFile: false,
-      };
-    }
-    case 'file:': {
-      const path = fs.realpathSync(url);
-      return {
-        fileSize: fs.statSync(path).size,
-        effectiveUrl: url,
-        path,
-        isLocalFile: true,
-      };
-    }
-    default:
-      throw new validationCodes.UNSUPPORTED_PROTOCOL({
-        messageValues: url.protocol,
-      });
-  }
-}
-
 class DeployCommand extends BaseCommand {
+  /**
+   *
+   */
+  createProgressBar() {
+    return cli.progress({
+      format:
+        'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+      stopOnComplete: true,
+      formatValue: function (v, options, type) {
+        // padding
+        /**
+         * @param value
+         * @param length
+         */
+        function autopadding(value, length) {
+          return (options.autopaddingChar + value).slice(-length);
+        }
+
+        /**
+         * @param value
+         */
+        function toKiloBytes(value) {
+          return Math.round(value / 1024);
+        }
+
+        switch (type) {
+          case 'percentage':
+            // no autopadding ? passthrough
+            if (options.autopadding !== true) {
+              return v;
+            }
+            return autopadding(v, 3);
+          case 'value':
+          case 'total':
+            return toKiloBytes(v);
+          default:
+            return v;
+        }
+      },
+    });
+  }
+
+  /**
+   * @param url
+   */
+  async computeStats(url) {
+    switch (url.protocol) {
+      case 'http:':
+      case 'https:': {
+        const con = await fetch(url, { method: 'HEAD' });
+        const effectiveUrl = con.url ? new URL(con.url) : url;
+        return {
+          fileSize: parseInt(con.headers.get('content-length')),
+          effectiveUrl,
+          path: effectiveUrl.pathname,
+          isLocalFile: false,
+        };
+      }
+      case 'file:': {
+        const path = fs.realpathSync(url);
+        return {
+          fileSize: fs.statSync(path).size,
+          effectiveUrl: url,
+          path,
+          isLocalFile: true,
+        };
+      }
+      default:
+        throw new validationCodes.UNSUPPORTED_PROTOCOL({
+          messageValues: url.protocol,
+        });
+    }
+  }
+
   /**
    * @param isLocalFile
    * @param type
@@ -161,11 +162,11 @@ class DeployCommand extends BaseCommand {
   async runCommand(args, flags) {
     let progressBar;
     if (!flags.quiet && !flags.json) {
-      progressBar = createProgressBar();
+      progressBar = this.createProgressBar();
     }
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =
-      await computeStats(originalUrl);
+      await this.computeStats(originalUrl);
     let type = flags.type;
 
     const { inputPath, inputPathSize } = (await this.processInputFile(
