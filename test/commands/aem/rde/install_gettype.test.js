@@ -51,10 +51,10 @@ describe('DeployCommand', function () {
       const { type: resultType } = deployCommand.getType(
         null,
         'fileName',
-        'http://effective.url',
+        new URL('http://effective.url'),
         'inputPath',
         false,
-        'http://original.url'
+        new URL('http://original.url')
       );
       assert.equal(resultType, 'redirectType');
     });
