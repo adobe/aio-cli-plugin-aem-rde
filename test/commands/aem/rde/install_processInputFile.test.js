@@ -1,9 +1,20 @@
 const sinon = require('sinon');
 const assert = require('assert');
 const fs = require('fs');
-const DeployCommand = require('../../../../src/commands/aem/rde/install.js');
-const { frontendInputBuild } = require('../../../../src/lib/frontend');
-const { dispatcherInputBuild } = require('../../../../src/lib/dispatcher');
+const proxyquire = require('proxyquire');
+const frontendInputBuildStub = sinon.stub();
+const dispatcherInputBuildStub = sinon.stub();
+const DeployCommand = proxyquire(
+  '../../../../src/commands/aem/rde/install.js',
+  {
+    '../../../lib/frontend': {
+      frontendInputBuild: frontendInputBuildStub,
+    },
+    '../../../lib/dispatcher': {
+      dispatcherInputBuild: dispatcherInputBuildStub,
+    },
+  }
+);
 
 describe('DeployCommand', function () {
   let deployCommand;
@@ -32,20 +43,12 @@ describe('DeployCommand', function () {
 
   it('should call frontendInputBuild for directory with "frontend" type', async function () {
     fsStub.returns({ isDirectory: () => true });
-    const frontendInputBuildStub = sinon.stub(
-      frontendInputBuild,
-      'frontendInputBuild'
-    );
     await deployCommand.processInputFile(true, 'frontend', '/path/to/frontend');
     assert(frontendInputBuildStub.calledOnce);
   });
 
   it('should call dispatcherInputBuild for directory with "dispatcher-config" type', async function () {
     fsStub.returns({ isDirectory: () => true });
-    const dispatcherInputBuildStub = sinon.stub(
-      dispatcherInputBuild,
-      'dispatcherInputBuild'
-    );
     await deployCommand.processInputFile(
       true,
       'dispatcher-config',

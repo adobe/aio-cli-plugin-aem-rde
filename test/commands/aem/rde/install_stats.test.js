@@ -1,17 +1,21 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const fs = require('fs');
-const DeployCommand = require('../../../../src/commands/aem/rde/install.js');
+const proxyquire = require('proxyquire');
+const fetchMock = sinon.stub();
+const DeployCommand = proxyquire('../../../../src/commands/aem/rde/install.js', {
+  '@adobe/aio-lib-core-networking': {
+    createFetch: () => fetchMock
+  }
+});
 
 describe('DeployCommand.computeStats', function () {
   let deployCommand;
-  let fetchStub;
   let fsRealpathSyncStub;
   let fsStatSyncStub;
 
   beforeEach(function () {
     deployCommand = new DeployCommand();
-    fetchStub = sinon.stub(global, 'fetch');
     fsRealpathSyncStub = sinon.stub(fs, 'realpathSync');
     fsStatSyncStub = sinon.stub(fs, 'statSync');
   });
@@ -30,7 +34,7 @@ describe('DeployCommand.computeStats', function () {
         },
       },
     };
-    fetchStub.resolves(mockResponse);
+    fetchMock.returns(Promise.resolve(mockResponse));
     const url = new URL('http://example.com/test');
 
     const stats = await deployCommand.computeStats(url);

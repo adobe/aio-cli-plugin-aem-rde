@@ -339,7 +339,7 @@ class DeployCommand extends BaseCommand {
       let guessedTypes = this.guessType(fileName, effectiveUrl, inputPath);
       if (
         !isLocalFile &&
-        guessedTypes === deploymentTypes &&
+        JSON.stringify(guessedTypes) === JSON.stringify(deploymentTypes) &&
         effectiveUrl !== originalUrl
       ) {
         // when there was a redirect, it is possible that the original URL
