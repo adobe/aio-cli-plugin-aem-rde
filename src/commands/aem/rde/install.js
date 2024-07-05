@@ -47,82 +47,83 @@ const deploymentTypes = [
   'config',
 ];
 
-/**
- *
- */
-function createProgressBar() {
-  return cli.progress({
-    format: 'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
-    barCompleteChar: '\u2588',
-    barIncompleteChar: '\u2591',
-    stopOnComplete: true,
-    formatValue: function (v, options, type) {
-      // padding
-      /**
-       * @param value
-       * @param length
-       */
-      function autopadding(value, length) {
-        return (options.autopaddingChar + value).slice(-length);
-      }
-
-      /**
-       * @param value
-       */
-      function toKiloBytes(value) {
-        return Math.round(value / 1024);
-      }
-
-      switch (type) {
-        case 'percentage':
-          // no autopadding ? passthrough
-          if (options.autopadding !== true) {
-            return v;
-          }
-          return autopadding(v, 3);
-        case 'value':
-        case 'total':
-          return toKiloBytes(v);
-        default:
-          return v;
-      }
-    },
-  });
-}
-
-/**
- * @param url
- */
-async function computeStats(url) {
-  switch (url.protocol) {
-    case 'http:':
-    case 'https:': {
-      const con = await fetch(url, { method: 'HEAD' });
-      const effectiveUrl = con.url ? new URL(con.url) : url;
-      return {
-        fileSize: parseInt(con.headers.get('content-length')),
-        effectiveUrl,
-        path: effectiveUrl.pathname,
-        isLocalFile: false,
-      };
-    }
-    case 'file:': {
-      const path = fs.realpathSync(url);
-      return {
-        fileSize: fs.statSync(path).size,
-        effectiveUrl: url,
-        path,
-        isLocalFile: true,
-      };
-    }
-    default:
-      throw new validationCodes.UNSUPPORTED_PROTOCOL({
-        messageValues: url.protocol,
-      });
-  }
-}
-
 class DeployCommand extends BaseCommand {
+  /**
+   *
+   */
+  createProgressBar() {
+    return cli.progress({
+      format:
+        'Uploading {bar} {percentage}% | ETA: {eta}s | {value}/{total} KB',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+      stopOnComplete: true,
+      formatValue: function (v, options, type) {
+        // padding
+        /**
+         * @param value
+         * @param length
+         */
+        function autopadding(value, length) {
+          return (options.autopaddingChar + value).slice(-length);
+        }
+
+        /**
+         * @param value
+         */
+        function toKiloBytes(value) {
+          return Math.round(value / 1024);
+        }
+
+        switch (type) {
+          case 'percentage':
+            // no autopadding ? passthrough
+            if (options.autopadding !== true) {
+              return v;
+            }
+            return autopadding(v, 3);
+          case 'value':
+          case 'total':
+            return toKiloBytes(v);
+          default:
+            return v;
+        }
+      },
+    });
+  }
+
+  /**
+   * @param url
+   */
+  async computeStats(url) {
+    switch (url.protocol) {
+      case 'http:':
+      case 'https:': {
+        const con = await fetch(url, { method: 'HEAD' });
+        const effectiveUrl = con.url ? new URL(con.url) : url;
+        return {
+          fileSize: parseInt(con.headers.get('content-length')),
+          effectiveUrl,
+          path: effectiveUrl.pathname,
+          isLocalFile: false,
+        };
+      }
+      case 'file:': {
+        const path = fs.realpathSync(url);
+        return {
+          fileSize: fs.statSync(path).size,
+          effectiveUrl: url,
+          path,
+          isLocalFile: true,
+        };
+      }
+      default:
+        throw new validationCodes.UNSUPPORTED_PROTOCOL({
+          messageValues: url.protocol,
+        });
+    }
+  }
+
   /**
    * @param isLocalFile
    * @param type
@@ -161,11 +162,11 @@ class DeployCommand extends BaseCommand {
   async runCommand(args, flags) {
     let progressBar;
     if (!flags.quiet && !flags.json) {
-      progressBar = createProgressBar();
+      progressBar = this.createProgressBar();
     }
     const originalUrl = args.location;
     const { fileSize, effectiveUrl, path, isLocalFile } =
-      await computeStats(originalUrl);
+      await this.computeStats(originalUrl);
     let type = flags.type;
 
     const { inputPath, inputPathSize } = (await this.processInputFile(
@@ -176,46 +177,21 @@ class DeployCommand extends BaseCommand {
       inputPath: path,
       inputPathSize: fileSize,
     };
+
     let fileName = basename(inputPath);
     try {
-      if (!type) {
-        let guessedTypes = guessType(fileName, effectiveUrl, inputPath);
-        if (
-          !isLocalFile &&
-          guessedTypes === deploymentTypes &&
-          effectiveUrl !== originalUrl
-        ) {
-          // when there was a redirect, it is possible that the original URL
-          // has a file extension, but not the effective URL, so we try again
-          fileName = basename(originalUrl.pathname);
-          guessedTypes = guessType(fileName, originalUrl, inputPath);
-        }
-        if (guessedTypes.length !== 1) {
-          throw new validationCodes.INVALID_GUESS_TYPE({
-            messageValues: guessedTypes.join(', '),
-          });
-        } else {
-          type = guessedTypes[0];
-          this.doLog(chalk.yellow(`No --type provided, using ${type}`));
-        }
-      }
+      ({ type, fileName } = this.getType(
+        this,
+        type,
+        fileName,
+        effectiveUrl,
+        inputPath,
+        isLocalFile,
+        originalUrl
+      ));
 
       // when no path was defined explicitly, we also try to guess it
-      if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
-        if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
-          const guessedPath = guessPath(inputPath);
-          if (guessedPath) {
-            flags.path = guessedPath;
-            this.doLog(
-              chalk.yellow(
-                `No --path provided, repository path was set to ${flags.path}`
-              )
-            );
-          } else {
-            throw new validationCodes.MISSING_CONTENT_PATH();
-          }
-        }
-      }
+      this.getPath(type, flags, isLocalFile, inputPath);
     } catch (err) {
       this.doLog(err);
       return;
@@ -226,52 +202,18 @@ class DeployCommand extends BaseCommand {
 
     let change;
     try {
-      change = await this.withCloudSdk((cloudSdkAPI) => {
-        let uploadCallbacks;
-        if (!flags.json && !flags.quiet) {
-          uploadCallbacks = {
-            progress: (copiedBytes) => progressBar.update(copiedBytes),
-            abort: () => progressBar.stop(),
-            start: (size, msg) => {
-              if (msg) {
-                this.doLog(msg);
-              }
-              progressBar.start(size, 0);
-            },
-          };
-        }
-
-        const deploymentCallbacks = () => {
-          if (!this.spinnerIsSpinning()) {
-            this.spinnerStart('applying update');
-          }
-        };
-
-        const deploy = isLocalFile
-          ? cloudSdkAPI.deployFile
-          : cloudSdkAPI.deployURL;
-        return deploy.call(
-          cloudSdkAPI,
-          inputPathSize || fileSize,
-          isLocalFile ? inputPath : effectiveUrl.toString(),
-          fileName,
-          type,
-          flags.target,
-          type === 'osgi-config' ? fileName : flags.path,
-          flags.force,
-          uploadCallbacks,
-          deploymentCallbacks
-        );
-      }).finally(() => this.spinnerStop());
-
-      await this.withCloudSdk((cloudSdkAPI) =>
-        loadUpdateHistory(
-          cloudSdkAPI,
-          change.updateId,
-          this,
-          (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
-          result.items
-        )
+      change = await this.doDeployment(
+        change,
+        flags,
+        progressBar,
+        isLocalFile,
+        inputPathSize,
+        fileSize,
+        inputPath,
+        effectiveUrl,
+        fileName,
+        type,
+        result
       );
       progressBar?.stop();
       return result;
@@ -290,70 +232,219 @@ class DeployCommand extends BaseCommand {
       )
     );
   }
-}
 
-/**
- *
- * @param inputPath
- */
-function guessPath(inputPath) {
-  const JCR_ROOT_SUBPATH = '/' + JCR_ROOT + '/';
-  if (!inputPath.includes(JCR_ROOT)) {
-    return;
-  }
-  const extension = inputPath.substring(inputPath.lastIndexOf('.'));
-  if (inputPath.endsWith('.content.xml')) {
-    return inputPath.substring(
-      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
-      inputPath.lastIndexOf('/')
-    );
-  } else if (extension === '.xml') {
-    return inputPath.substring(
-      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
-      inputPath.lastIndexOf('.')
-    );
-  }
-  return inputPath.substring(
-    inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length
-  );
-}
+  /**
+   *
+   * @param change
+   * @param flags
+   * @param progressBar
+   * @param isLocalFile
+   * @param inputPathSize
+   * @param fileSize
+   * @param inputPath
+   * @param effectiveUrl
+   * @param fileName
+   * @param type
+   * @param result
+   */
+  async doDeployment(
+    change,
+    flags,
+    progressBar,
+    isLocalFile,
+    inputPathSize,
+    fileSize,
+    inputPath,
+    effectiveUrl,
+    fileName,
+    type,
+    result
+  ) {
+    change = await this.withCloudSdk((cloudSdkAPI) => {
+      return this.uploadAndDeploy(
+        flags,
+        progressBar,
+        isLocalFile,
+        cloudSdkAPI,
+        inputPathSize,
+        fileSize,
+        inputPath,
+        effectiveUrl,
+        fileName,
+        type
+      );
+    }).finally(() => this.spinnerStop());
 
-/**
- *
- * @param name
- * @param url
- * @param pathFlag
- */
-function guessType(name, url, pathFlag) {
-  const extension = name.substring(name.lastIndexOf('.'));
-  switch (extension) {
-    case '.jar':
-      return ['osgi-bundle'];
-    case '.json':
-      return ['osgi-config'];
-    case '.zip':
-      if (url.protocol === 'file:') {
-        const zip = new Zip(fs.realpathSync(url), {});
-        const isContentPackage = zip.getEntry(JCR_ROOT + '/') !== null;
-        if (isContentPackage) {
-          return ['content-package'];
-        }
-        const isDispatcherConfig = zip.getEntry('conf.dispatcher.d/') !== null;
-        if (isDispatcherConfig) {
-          return ['dispatcher-config'];
-        }
-        const isFrontend =
-          zip.getEntry('dist/') !== null &&
-          zip.getEntry('package.json') !== null;
-        if (isFrontend) {
-          return ['frontend'];
+    await this.withCloudSdk((cloudSdkAPI) =>
+      loadUpdateHistory(
+        cloudSdkAPI,
+        change.updateId,
+        this,
+        (done, text) => (done ? this.spinnerStop() : this.spinnerStart(text)),
+        result.items
+      )
+    );
+    return change;
+  }
+
+  uploadAndDeploy(
+    flags,
+    progressBar,
+    isLocalFile,
+    cloudSdkAPI,
+    inputPathSize,
+    fileSize,
+    inputPath,
+    effectiveUrl,
+    fileName,
+    type
+  ) {
+    let uploadCallbacks;
+    if (!flags.json && !flags.quiet) {
+      uploadCallbacks = {
+        progress: (copiedBytes) => progressBar.update(copiedBytes),
+        abort: () => progressBar.stop(),
+        start: (size, msg) => {
+          if (msg) {
+            this.doLog(msg);
+          }
+          progressBar.start(size, 0);
+        },
+      };
+    }
+
+    const deploymentCallbacks = () => {
+      if (!this.spinnerIsSpinning()) {
+        this.spinnerStart('applying update');
+      }
+    };
+
+    const deploy = isLocalFile ? cloudSdkAPI.deployFile : cloudSdkAPI.deployURL;
+    return deploy.call(
+      cloudSdkAPI,
+      inputPathSize || fileSize,
+      isLocalFile ? inputPath : effectiveUrl.toString(),
+      fileName,
+      type,
+      flags.target,
+      type === 'osgi-config' ? fileName : flags.path,
+      flags.force,
+      uploadCallbacks,
+      deploymentCallbacks
+    );
+  }
+
+  getType(type, fileName, effectiveUrl, inputPath, isLocalFile, originalUrl) {
+    if (!type) {
+      let guessedTypes = this.guessType(fileName, effectiveUrl, inputPath);
+      if (
+        !isLocalFile &&
+        JSON.stringify(guessedTypes) === JSON.stringify(deploymentTypes) &&
+        effectiveUrl !== originalUrl
+      ) {
+        // when there was a redirect, it is possible that the original URL
+        // has a file extension, but not the effective URL, so we try again
+        fileName = basename(originalUrl.pathname);
+        guessedTypes = this.guessType(fileName, originalUrl, inputPath);
+      }
+      if (guessedTypes.length !== 1) {
+        throw new validationCodes.INVALID_GUESS_TYPE({
+          messageValues: guessedTypes.join(', '),
+        });
+      } else {
+        type = guessedTypes[0];
+        this.doLog(chalk.yellow(`No --type provided, using ${type}`));
+      }
+    }
+    return { type, fileName };
+  }
+
+  /**
+   *
+   * @param type
+   * @param flags
+   * @param isLocalFile
+   * @param inputPath
+   */
+  getPath(type, flags, isLocalFile, inputPath) {
+    if ((type === 'content-file' || type === 'content-xml') && !flags.path) {
+      if (isLocalFile && inputPath.includes('/' + JCR_ROOT + '/')) {
+        const guessedPath = this.guessPath(inputPath);
+        if (guessedPath) {
+          flags.path = guessedPath;
+          this.doLog(
+            chalk.yellow(
+              `No --path provided, repository path was set to ${flags.path}`
+            )
+          );
+        } else {
+          throw new validationCodes.MISSING_CONTENT_PATH();
         }
       }
-      return ['content-package', 'dispatcher-config', 'frontend'];
-    case '.xml':
-      return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
-    default:
-      return pathFlag !== undefined ? ['content-file'] : deploymentTypes;
+    }
+  }
+
+  /**
+   *
+   * @param inputPath
+   */
+  guessPath(inputPath) {
+    const JCR_ROOT_SUBPATH = '/' + JCR_ROOT + '/';
+    if (!inputPath.includes(JCR_ROOT)) {
+      return;
+    }
+    const extension = inputPath.substring(inputPath.lastIndexOf('.'));
+    if (extension === '.xml') {
+      return inputPath.substring(
+        inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length,
+        inputPath.lastIndexOf(
+          inputPath.endsWith('/.content.xml') ? '/.content.xml' : '.xml'
+        )
+      );
+    }
+    return inputPath.substring(
+      inputPath.lastIndexOf(JCR_ROOT_SUBPATH) + JCR_ROOT_SUBPATH.length
+    );
+  }
+
+  /**
+   *
+   * @param name
+   * @param url
+   * @param pathFlag
+   */
+  guessType(name, url, pathFlag) {
+    const extension = name.substring(name.lastIndexOf('.'));
+    switch (extension) {
+      case '.jar':
+        return ['osgi-bundle'];
+      case '.json':
+        return ['osgi-config'];
+      case '.zip':
+        if (url.protocol === 'file:') {
+          const zip = new Zip(fs.realpathSync(url), {});
+          const isContentPackage = zip.getEntry(JCR_ROOT + '/') !== null;
+          if (isContentPackage) {
+            return ['content-package'];
+          }
+          const isDispatcherConfig =
+            zip.getEntry('conf.dispatcher.d/') !== null;
+          if (isDispatcherConfig) {
+            return ['dispatcher-config'];
+          }
+          const isFrontend =
+            zip.getEntry('dist/') !== null &&
+            zip.getEntry('package.json') !== null;
+          if (isFrontend) {
+            return ['frontend'];
+          }
+        }
+        return ['content-package', 'dispatcher-config', 'frontend'];
+      case '.xml':
+        return pathFlag !== undefined ? ['content-xml'] : deploymentTypes;
+      default:
+        return pathFlag !== undefined ? ['content-file'] : deploymentTypes;
+    }
   }
 }
 
