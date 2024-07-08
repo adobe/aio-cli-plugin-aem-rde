@@ -181,7 +181,6 @@ class DeployCommand extends BaseCommand {
     let fileName = basename(inputPath);
     try {
       ({ type, fileName } = this.getType(
-        this,
         type,
         fileName,
         effectiveUrl,
