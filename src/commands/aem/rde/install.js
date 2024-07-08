@@ -51,6 +51,7 @@ class DeployCommand extends BaseCommand {
   /**
    *
    */
+  /* istanbul ignore next */ // ignore as this is cli related and no business logic
   createProgressBar() {
     return cli.progress({
       format:
@@ -95,6 +96,7 @@ class DeployCommand extends BaseCommand {
   /**
    * @param url
    */
+  /* istanbul ignore next */ // ignore as this is cli related and no business logic
   async computeStats(url) {
     switch (url.protocol) {
       case 'http:':
@@ -159,6 +161,7 @@ class DeployCommand extends BaseCommand {
     }
   }
 
+  /* istanbul ignore next */ // ignore as this is simply calling other methods that are tested individually, see install*.test.js files
   async runCommand(args, flags) {
     let progressBar;
     if (!flags.quiet && !flags.json) {
@@ -274,6 +277,7 @@ class DeployCommand extends BaseCommand {
       );
     }).finally(() => this.spinnerStop());
 
+    /* istanbul ignore next */ // ignore as this is tested in history.test.js
     await this.withCloudSdk((cloudSdkAPI) =>
       loadUpdateHistory(
         cloudSdkAPI,
@@ -300,6 +304,7 @@ class DeployCommand extends BaseCommand {
   ) {
     let uploadCallbacks;
     if (!flags.json && !flags.quiet) {
+      /* istanbul ignore next */ // ignore as this callback is no business logic
       uploadCallbacks = {
         progress: (copiedBytes) => progressBar.update(copiedBytes),
         abort: () => progressBar.stop(),
@@ -312,6 +317,7 @@ class DeployCommand extends BaseCommand {
       };
     }
 
+    /* istanbul ignore next */ // ignore as this callback is no business logic
     const deploymentCallbacks = () => {
       if (!this.spinnerIsSpinning()) {
         this.spinnerStart('applying update');
@@ -447,6 +453,7 @@ class DeployCommand extends BaseCommand {
   }
 }
 
+/* istanbul ignore next */ // ignore as this callback is no business logic
 Object.assign(DeployCommand, {
   description:
     'Install/update bundles, configs, and content-packages. When installing content-files, the path flag must be provided.',
