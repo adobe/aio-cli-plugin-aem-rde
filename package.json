@@ -51,8 +51,8 @@
     "url": "https://github.com/adobe/aio-cli-plugin-aem-rde.git"
   },
   "scripts": {
-    "testpattern": "nyc --all --reporter=text --reporter=html mocha ",
-    "test": "nyc --all --reporter=text --reporter=html mocha 'test/**/*.test.js'",
+    "testpattern": "nyc --all --exclude 'eslint_rules/*' --exclude 'coverage/*' --exclude 'src/index.js' --exclude 'test/*' --reporter=text --reporter=html mocha ",
+    "test": "nyc --all --exclude 'eslint_rules/*' --exclude 'coverage/*' --exclude 'src/index.js' --exclude 'test/*' --reporter=text --reporter=html mocha 'test/**/*.test.js'",
     "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",
     "lint": "eslint src --ext .js --rulesdir eslint_rules"
