@@ -102,10 +102,14 @@ describe('Inventory', function () {
     });
 
     it('Should trigger an error', async function () {
-      const [command] = createCloudSdkAPIStub(sinon, new Inventory([], null), {
-        ...stubbedMethods,
-        getInventories: () => errorObj,
-      });
+      const [command] = createCloudSdkAPIStub(
+        sinon,
+        new Inventory(['--quiet'], null),
+        {
+          ...stubbedMethods,
+          getInventories: () => errorObj,
+        }
+      );
       try {
         await command.run();
         assert.fail('Command should have failed with an exception');
