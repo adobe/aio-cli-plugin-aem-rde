@@ -69,13 +69,17 @@ class SetupCommand extends BaseCommand {
     return fn(this._cloudSdkAPIBase);
   }
 
+  getImsInstance() {
+    return new Ims(); // allow for easy mocking in tests
+  }
+
   /**
    *
    */
   async getOrganizationsFromToken() {
     try {
       const { accessToken } = await this.getTokenAndKey();
-      const ims = new Ims();
+      const ims = this.getImsInstance();
       const organizations = await ims.getOrganizations(accessToken);
       const orgMap = organizations.reduce((map, org) => {
         map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
@@ -112,6 +116,7 @@ class SetupCommand extends BaseCommand {
     return selectedOrg;
   }
 
+  /* istanbul ignore next */ // ignore as this method as it just congifures inquirer
   async chooseOrganizationFromList(organizations) {
     const orgChoices = Object.entries(organizations).map(([name, id]) => ({
       name: `${name} - ${id}`,
@@ -134,6 +139,7 @@ class SetupCommand extends BaseCommand {
     return organizationId;
   }
 
+  /* istanbul ignore next */ // ignore as this method as it just congifures inquirer and opens a browser
   async fallbackToManualOrganizationId() {
     this.doLog(
       chalk.yellow('Could not find an organization ID automatically.')
