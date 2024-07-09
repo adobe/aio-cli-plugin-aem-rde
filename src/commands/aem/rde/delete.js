@@ -57,6 +57,8 @@ class DeleteCommand extends BaseCommand {
           cloudSdkAPI.delete(artifact.id, flags.force)
         );
         const newLength = result.items.push(change);
+
+        /* istanbul ignore next */ // ignore as this is tested in history.test.js
         await this.withCloudSdk((cloudSdkAPI) =>
           loadUpdateHistory(
             cloudSdkAPI,
