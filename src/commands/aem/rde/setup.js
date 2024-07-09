@@ -48,9 +48,13 @@ const CONFIG_ENVIRONMENT_NAME = 'cloudmanager_environmentname';
 const LINK_ORGID =
   'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
 
-let programsCached = null;
-let environmentsCached = null;
 class SetupCommand extends BaseCommand {
+  constructor(argv, config) {
+    super(argv, config);
+    this.programsCached = [];
+    this.environmentsCached = [];
+  }
+
   async withCloudSdkBase(fn) {
     if (!this._cloudSdkAPIBase) {
       const { accessToken, apiKey } = await this.getTokenAndKey();
@@ -168,14 +172,14 @@ class SetupCommand extends BaseCommand {
   }
 
   async getProgramId() {
-    if (!programsCached) {
+    if (!this.programsCached || this.programsCached?.length === 0) {
       this.spinnerStart('retrieving programs of your organization');
-      programsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
+      this.programsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
         cloudSdkAPI.listProgramsIdAndName()
       );
       this.spinnerStop();
 
-      if (!programsCached || programsCached.length === 0) {
+      if (!this.programsCached || this.programsCached.length === 0) {
         this.doLog(
           chalk.red('No programs found for the selected organization.')
         );
@@ -183,12 +187,12 @@ class SetupCommand extends BaseCommand {
       }
     }
 
-    if (programsCached.length === 1) {
-      this.doLog(`Selected only program: ${programsCached[0].id}`);
-      return programsCached[0].id;
+    if (this.programsCached.length === 1) {
+      this.doLog(`Selected only program: ${this.programsCached[0].id}`);
+      return this.programsCached[0].id;
     }
 
-    const choices = programsCached.map((program) => ({
+    const choices = this.programsCached.map((program) => ({
       name: `(${program.id}) ${program.name}`,
       value: program.id,
     }));
@@ -215,15 +219,17 @@ class SetupCommand extends BaseCommand {
 
   async getEnvironmentId(selectedProgram) {
     this.spinnerStart(`retrieving environments of program ${selectedProgram}`);
-    environmentsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
+    this.environmentsCached = await this.withCloudSdkBase((cloudSdkAPI) =>
       cloudSdkAPI.listEnvironmentsIdAndName(selectedProgram)
     );
     this.spinnerStop();
 
     // FIXME this filter must be removed as soon as other types are supported
-    environmentsCached = environmentsCached.filter((env) => env.type === 'rde');
+    this.environmentsCached = this.environmentsCached.filter(
+      (env) => env.type === 'rde'
+    );
 
-    if (environmentsCached.length === 0) {
+    if (this.environmentsCached.length === 0) {
       this.doLog(
         chalk.red(`No environments found for program ${selectedProgram}`)
       );
@@ -231,12 +237,12 @@ class SetupCommand extends BaseCommand {
       return null;
     }
 
-    if (environmentsCached.length === 1) {
-      this.doLog(`Selected only environment: ${environmentsCached[0].id}`);
-      return environmentsCached[0].id;
+    if (this.environmentsCached.length === 1) {
+      this.doLog(`Selected only environment: ${this.environmentsCached[0].id}`);
+      return this.environmentsCached[0].id;
     }
 
-    const choicesEnv = environmentsCached.map((env) => ({
+    const choicesEnv = this.environmentsCached.map((env) => ({
       name: `(${env.id}) ${env.type}(${env.status}) - ${env.name}`,
       value: env.id,
     }));
@@ -317,7 +323,10 @@ class SetupCommand extends BaseCommand {
         }
 
         selectedEnvironmentId = await this.getEnvironmentId(selectedProgramId);
-        if (selectedEnvironmentId === null && programsCached?.length === 1) {
+        if (
+          selectedEnvironmentId === null &&
+          this.programsCached?.length === 1
+        ) {
           this.doLog(
             chalk.red(
               'No program or environment found for the selected organization.'
@@ -327,12 +336,12 @@ class SetupCommand extends BaseCommand {
         }
       }
 
-      const selectedEnvironmentName = environmentsCached.find(
+      const selectedEnvironmentName = this.environmentsCached.find(
         (e) => e.id === selectedEnvironmentId
-      ).name;
-      const selectedProgramName = programsCached.find(
+      )?.name;
+      const selectedProgramName = this.programsCached.find(
         (e) => e.id === selectedProgramId
-      ).name;
+      )?.name;
 
       this.doLog(
         chalk.green(

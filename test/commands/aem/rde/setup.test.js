@@ -418,6 +418,8 @@ describe('SetupCommand - runCommand', function () {
   it('should get organization ID and store it', async function () {
     inquirerStub.resolves({ storeLocal: true });
     sinon.stub(setupCommand, 'getOrgId').resolves('orgId');
+    sinon.stub(setupCommand, 'getProgramId').resolves('programId');
+    sinon.stub(setupCommand, 'getEnvironmentId').resolves('envId');
     await setupCommand.runCommand({}, {});
     assert(configSetStub.calledWith('cloudmanager_orgid', 'orgId', true));
   });

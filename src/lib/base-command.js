@@ -48,8 +48,8 @@ class BaseCommand extends Command {
     this.setupParams(flags);
 
     if (
-      !flags.quiet &&
-      !flags.json &&
+      !flags?.quiet &&
+      !flags?.json &&
       this.constructor.name !== 'SetupCommand'
     ) {
       this.doLog(this.getLogHeader());
@@ -127,7 +127,7 @@ class BaseCommand extends Command {
   }
 
   spinnerStart(message) {
-    if (!(this.flags.quiet || this.flags.json)) {
+    if (!(this.flags?.quiet || this.flags?.json)) {
       spinner.start(message);
     }
   }
