@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon').createSandbox();
 const chalk = require('chalk');
 const LogsCommand = require('../../../../src/commands/aem/rde/logs.js');
+const inquirer = require('inquirer');
 const {
   setupLogCapturing,
   createCloudSdkAPIStub,
@@ -293,6 +294,76 @@ describe('LogsCommand', function () {
           e.message,
           /^\[RDECLI:INTERNAL_CREATE_LOG_ERROR] There was an unexpected error when running create log command\. .*/
         );
+      }
+    });
+  });
+
+  describe('#chooseLogConfiguration', function () {
+    let originalExit;
+    beforeEach(() => {
+      originalExit = process.exit;
+      process.exit = sinon.stub();
+      sinon.stub(inquirer, 'prompt');
+    });
+
+    afterEach(() => {
+      process.exit = originalExit;
+      inquirer.prompt.restore();
+    });
+
+    it('Should successfully return the selected log configuration', async function () {
+      cloudSdkApiStub.getAemLogs.returns({
+        status: 200,
+        json: async () => ({
+          items: [
+            { id: '1', names: [{ logger: 'com.adobe', level: 'INFO' }] },
+            { id: '2', names: [{ logger: 'com.adobe', level: 'DEBUG' }] },
+          ],
+        }),
+      });
+      inquirer.prompt.resolves({ logId: '1' });
+
+      const result = await command.chooseLogConfiguration({}, false);
+      assert.deepEqual(result, {
+        id: '1',
+        names: [{ logger: 'com.adobe', level: 'INFO' }],
+      });
+    });
+
+    it('Should return null when no log configurations are available', async function () {
+      cloudSdkApiStub.getAemLogs.returns({
+        status: 200,
+        json: async () => ({ items: null }),
+      });
+
+      const result = await command.chooseLogConfiguration({}, false);
+      assert.equal(null, result);
+    });
+
+    it('Should exit the process when user cancels selection', async function () {
+      cloudSdkApiStub.getAemLogs.returns({
+        status: 200,
+        json: async () => ({
+          items: [{ id: '1', names: [{ logger: 'com.adobe', level: 'INFO' }] }],
+        }),
+      });
+      inquirer.prompt.resolves({ logId: 'cancel' });
+
+      await command.chooseLogConfiguration({}, false);
+      sinon.assert.calledOnce(process.exit);
+    });
+
+    it('Should throw UNEXPECTED_API_ERROR for unexpected status code', async function () {
+      cloudSdkApiStub.getAemLogs.returns({
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      try {
+        await command.chooseLogConfiguration({}, false);
+        assert.fail('Expected method to throw.');
+      } catch (err) {
+        // fine
       }
     });
   });
