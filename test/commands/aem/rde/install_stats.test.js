@@ -3,11 +3,14 @@ const sinon = require('sinon');
 const fs = require('fs');
 const proxyquire = require('proxyquire');
 const fetchMock = sinon.stub();
-const DeployCommand = proxyquire('../../../../src/commands/aem/rde/install.js', {
-  '@adobe/aio-lib-core-networking': {
-    createFetch: () => fetchMock
+const DeployCommand = proxyquire(
+  '../../../../src/commands/aem/rde/install.js',
+  {
+    '@adobe/aio-lib-core-networking': {
+      createFetch: () => fetchMock,
+    },
   }
-});
+);
 
 describe('DeployCommand.computeStats', function () {
   let deployCommand;
