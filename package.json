@@ -71,7 +71,8 @@
     "commands": "./src/commands",
     "bin": "aio",
     "experimental-features": [
-      "aem:rde:inspect"
+      "aem:rde:inspect",
+      "aem:rde:install#type=config"
     ],
     "hooks": {
       "init": "./src/lib/hooks/experimental-features-init-hook"
