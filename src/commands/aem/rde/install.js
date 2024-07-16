@@ -23,6 +23,7 @@ const {
 } = require('../../../lib/rde-utils');
 const { frontendInputBuild } = require('../../../lib/frontend');
 const { dispatcherInputBuild } = require('../../../lib/dispatcher');
+const { configInputBuild } = require('../../../lib/config');
 const { basename } = require('path');
 const fs = require('fs');
 const fetch = require('@adobe/aio-lib-core-networking').createFetch();
@@ -150,6 +151,12 @@ class DeployCommand extends BaseCommand {
           break;
         }
         return await dispatcherInputBuild(this, inputPath);
+      }
+      case 'config': {
+        if (!file.isDirectory()) {
+          break;
+        }
+        return await configInputBuild(this, inputPath);
       }
       default: {
         if (file.isDirectory()) {
@@ -442,6 +449,13 @@ class DeployCommand extends BaseCommand {
             zip.getEntry('package.json') !== null;
           if (isFrontend) {
             return ['frontend'];
+          }
+          // check if some zip entries have the yaml file extension
+          const isConfig = zip
+            .getEntries()
+            .some((entry) => entry.entryName.endsWith('.yaml'));
+          if (isConfig) {
+            return ['config'];
           }
         }
         return ['content-package', 'dispatcher-config', 'frontend'];
