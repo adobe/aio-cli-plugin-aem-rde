@@ -109,10 +109,6 @@ E(
   'There was an unexpected error when running get osgi services command. Please, try again later and if the error persists, report it. Error %s'
 );
 E(
-  'INTERNAL_GET_SLING_REQUESTS_ERROR',
-  'There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it. Error %s'
-);
-E(
   'INTERNAL_DELETE_ERROR',
   'There was an unexpected error when running delete command. Please, try again later and if the error persists, report it. Error %s'
 );

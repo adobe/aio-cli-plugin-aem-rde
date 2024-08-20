@@ -110,7 +110,10 @@ class BaseCommand extends Command {
   }
 
   getLogHeader() {
-    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+    if (this._programId && this._environmentId) {
+      return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+    }
+    return `Running ${!this.id ? this.constructor.name : this.id}`;
   }
 
   printNamesWhenAvailable() {
@@ -162,17 +165,21 @@ class BaseCommand extends Command {
     let accessToken;
     let apiKey;
 
+    const contextName = 'aio-cli-plugin-cloudmanager';
     try {
-      const contextName = 'aio-cli-plugin-cloudmanager';
       accessToken = await getToken(contextName);
       const contextData = await context.get(contextName);
       if (!contextData || !contextData.data) {
-        throw new configurationCodes.NO_IMS_CONTEXT({
+        throw new configurationCodes.IMS_CONTEXT_MISSING_FIELDS({
           messageValues: contextName,
+          fields: 'data',
         });
       }
       apiKey = contextData.data.client_id;
     } catch (err) {
+      this.doLog(
+        `\nError while getting token from ims context "${contextName}": ${err}. Try fallback to context "cli".`
+      );
       accessToken = await getToken('cli');
       const decodedToken = jwt.decode(accessToken);
       if (!decodedToken) {
