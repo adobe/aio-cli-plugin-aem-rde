@@ -41,6 +41,7 @@ Object.assign(RestartCommand, {
   args: [],
   aliases: [],
   flags: {
+    imsContextName: commonFlags.imsContextName,
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,

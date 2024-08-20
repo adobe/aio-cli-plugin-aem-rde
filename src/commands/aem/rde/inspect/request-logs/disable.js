@@ -52,6 +52,7 @@ Object.assign(DisableRequestLogsCommand, {
     environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

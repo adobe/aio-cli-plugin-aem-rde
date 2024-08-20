@@ -89,6 +89,7 @@ Object.assign(StatusCommand, {
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
   usage: [
     'status              # output as textual content',

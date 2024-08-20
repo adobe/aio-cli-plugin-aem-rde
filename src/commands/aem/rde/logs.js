@@ -364,6 +364,7 @@ Object.assign(LogsCommand, {
       helpGroup: 'format and color',
     }),
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

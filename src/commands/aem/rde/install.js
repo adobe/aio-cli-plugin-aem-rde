@@ -512,6 +512,7 @@ Object.assign(DeployCommand, {
       required: false,
     }),
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
   aliases: [],
 });

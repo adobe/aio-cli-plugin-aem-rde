@@ -53,6 +53,7 @@ Object.assign(ResetCommand, {
   description: 'Reset the RDE',
   args: [],
   flags: {
+    imsContextName: commonFlags.imsContextName,
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,

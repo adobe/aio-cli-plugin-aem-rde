@@ -84,6 +84,7 @@ Object.assign(HistoryCommand, {
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

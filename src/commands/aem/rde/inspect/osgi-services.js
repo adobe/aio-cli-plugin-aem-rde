@@ -111,6 +111,7 @@ Object.assign(OsgiServicesCommand, {
     scope: commonFlags.scope,
     include: commonFlags.include,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

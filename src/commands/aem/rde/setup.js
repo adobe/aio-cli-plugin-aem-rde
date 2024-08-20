@@ -73,7 +73,7 @@ class SetupCommand extends BaseCommand {
     return fn(this._cloudSdkAPIBase);
   }
 
-  getImsInstance() {
+  async getImsInstance() {
     return new Ims(); // allow for easy mocking in tests
   }
 
@@ -82,8 +82,8 @@ class SetupCommand extends BaseCommand {
    */
   async getOrganizationsFromToken() {
     try {
+      const ims = await this.getImsInstance();
       const { accessToken } = await this.getTokenAndKey();
-      const ims = this.getImsInstance();
       const organizations = await ims.getOrganizations(accessToken);
       const orgMap = organizations.reduce((map, org) => {
         map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
@@ -93,6 +93,8 @@ class SetupCommand extends BaseCommand {
     } catch (err) {
       if (err.code === 'CONTEXT_NOT_CONFIGURED') {
         this.doLog('No IMS context found. Please run `aio login` first.');
+      } else {
+        this.doLog(`Error retrieving organization from token: ${err.message}`);
       }
       return null;
     }
@@ -310,9 +312,10 @@ class SetupCommand extends BaseCommand {
         },
       ]);
 
+      this.storeLocal = storeLocal.storeLocal;
       const orgId = await this.getOrgId();
       const prevOrgId = Config.get(CONFIG_ORG);
-      Config.set(CONFIG_ORG, orgId, storeLocal.storeLocal);
+      Config.set(CONFIG_ORG, orgId, this.storeLocal);
 
       let selectedEnvironmentId = null;
       let selectedProgramId = null;
@@ -351,22 +354,14 @@ class SetupCommand extends BaseCommand {
 
       const { prevProgramId, prevProgramName } = this.getProgramFromConf();
       const { prevEnvId, prevEnvName } = this.getEnvironmentFromConf();
-      Config.set(CONFIG_PROGRAM, selectedProgramId, storeLocal.storeLocal);
-      Config.set(
-        CONFIG_ENVIRONMENT,
-        selectedEnvironmentId,
-        storeLocal.storeLocal
-      );
+      Config.set(CONFIG_PROGRAM, selectedProgramId, this.storeLocal);
+      Config.set(CONFIG_ENVIRONMENT, selectedEnvironmentId, this.storeLocal);
 
-      Config.set(
-        CONFIG_PROGRAM_NAME,
-        selectedProgramName,
-        storeLocal.storeLocal
-      );
+      Config.set(CONFIG_PROGRAM_NAME, selectedProgramName, this.storeLocal);
       Config.set(
         CONFIG_ENVIRONMENT_NAME,
         selectedEnvironmentName,
-        storeLocal.storeLocal
+        this.storeLocal
       );
 
       this.logPreviousConfig(

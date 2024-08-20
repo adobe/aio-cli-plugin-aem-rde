@@ -100,6 +100,7 @@ Object.assign(InventoryCommand, {
     target: commonFlags.targetInspect,
     include: commonFlags.include,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

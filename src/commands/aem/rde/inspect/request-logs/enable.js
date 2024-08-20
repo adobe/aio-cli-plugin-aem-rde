@@ -126,6 +126,7 @@ Object.assign(EnableRequestLogsCommand, {
       required: false,
     }),
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

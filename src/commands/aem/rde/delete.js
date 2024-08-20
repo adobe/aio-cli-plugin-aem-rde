@@ -119,6 +119,7 @@ Object.assign(DeleteCommand, {
       required: false,
     }),
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
   aliases: [],
 });

@@ -103,6 +103,7 @@ Object.assign(RequestLogsCommand, {
     target: commonFlags.targetInspect,
     include: commonFlags.include,
     quiet: commonFlags.quiet,
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

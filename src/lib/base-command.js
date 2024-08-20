@@ -15,6 +15,7 @@ const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
+const chalk = require('chalk');
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -168,8 +169,15 @@ class BaseCommand extends Command {
     let accessToken;
     let apiKey;
 
-    const contextName = 'aio-cli-plugin-cloudmanager';
+    const contextName =
+      this.flags.imsContextName || 'aio-cli-plugin-cloudmanager';
+    const userSpecifiedContext = contextName !== 'aio-cli-plugin-cloudmanager';
     try {
+      if (userSpecifiedContext) {
+        this.doLog(
+          chalk.yellow(`\nUsing user specified IMS context "${contextName}"`)
+        );
+      }
       accessToken = await getToken(contextName);
       const contextData = await context.get(contextName);
       if (!contextData || !contextData.data) {
@@ -179,11 +187,32 @@ class BaseCommand extends Command {
         });
       }
       apiKey = contextData.data.client_id;
+      // FIXME: this block needs to be moved to its own function
+      if (!apiKey && userSpecifiedContext) {
+        const decodedToken = jwt.decode(accessToken);
+        if (!decodedToken) {
+          throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+        }
+        apiKey = decodedToken.client_id;
+        if (!apiKey) {
+          throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+        }
+      }
     } catch (err) {
+      if (userSpecifiedContext) {
+        this.doLog(
+          chalk.red(
+            `Error on user specified IMS context "${contextName}", skip further execution. Error: ${err}`
+          )
+        );
+        throw err;
+      }
       logger.debug(
         `Error while getting token from ims context "${contextName}": ${err}. Try fallback to context "cli".`
       );
       accessToken = await getToken('cli');
+
+      // FIXME: this block needs to be moved to its own function
       const decodedToken = jwt.decode(accessToken);
       if (!decodedToken) {
         throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
@@ -193,6 +222,9 @@ class BaseCommand extends Command {
         throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
       }
     }
+    logger.debug(
+      `Token and apiKey found on context "${contextName}" are: ${accessToken} and ${apiKey}`
+    );
     return { accessToken, apiKey };
   }
 
@@ -347,7 +379,13 @@ module.exports = {
       multiple: false,
       required: false,
       default: false,
-      helpGroup: 'output',
+      helpGroup: 'GLOBAL',
+    }),
+    imsContextName: Flags.string({
+      description: 'The name of the IMS context to use',
+      multiple: false,
+      required: false,
+      helpGroup: 'GLOBAL',
     }),
   },
 };
