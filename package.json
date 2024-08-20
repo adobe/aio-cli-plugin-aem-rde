@@ -11,6 +11,7 @@
     "@adobe/aio-lib-cloudmanager": "^3.1.0",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-core-errors": "^4.0.1",
+    "@adobe/aio-lib-core-logging": "^3.0.1",
     "@adobe/aio-lib-core-networking": "^5.0.1",
     "@adobe/aio-lib-ims": "^7.0.1",
     "@azure/storage-file-share": "^12.12.0",

@@ -20,6 +20,9 @@ const spinner = require('ora')();
 const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
 const { init } = require('@adobe/aio-lib-cloudmanager');
+const logger = require('@adobe/aio-lib-core-logging')('AIO RDE Plugin', {
+  provider: 'debug',
+});
 
 // internals
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
@@ -177,8 +180,8 @@ class BaseCommand extends Command {
       }
       apiKey = contextData.data.client_id;
     } catch (err) {
-      this.doLog(
-        `\nError while getting token from ims context "${contextName}": ${err}. Try fallback to context "cli".`
+      logger.debug(
+        `Error while getting token from ims context "${contextName}": ${err}. Try fallback to context "cli".`
       );
       accessToken = await getToken('cli');
       const decodedToken = jwt.decode(accessToken);
