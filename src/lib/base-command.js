@@ -170,7 +170,7 @@ class BaseCommand extends Command {
     let apiKey;
 
     const contextName =
-      this.flags.imsContextName || 'aio-cli-plugin-cloudmanager';
+      this.flags?.imsContextName || 'aio-cli-plugin-cloudmanager';
     const userSpecifiedContext = contextName !== 'aio-cli-plugin-cloudmanager';
     try {
       if (userSpecifiedContext) {

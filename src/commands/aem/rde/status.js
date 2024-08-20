@@ -18,9 +18,7 @@ const { throwAioError } = require('../../../lib/error-helpers');
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
-      if (this._programId && !this._environmentId) {
-        this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
-      }
+      this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('retrieving environment status information');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
         loadAllArtifacts(cloudSdkAPI)
