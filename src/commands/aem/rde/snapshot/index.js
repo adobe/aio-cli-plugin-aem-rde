@@ -12,12 +12,8 @@
 'use strict';
 
 const { BaseCommand, Flags } = require('../../../../lib/base-command');
-const { CloudSdkAPIBase } = require('../../../../lib/cloud-sdk-api-base');
-const { codes: validationCodes } = require('../../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
-const chalk = require('chalk');
-const { concatEnvironemntId } = require('../../../../lib/utils');
 
 class ListSnapshots extends BaseCommand {
   constructor(argv, config) {
@@ -27,7 +23,36 @@ class ListSnapshots extends BaseCommand {
   }
 
   async runCommand(args, flags) {
-    this.log('Implement list snapshots...');
+    try {
+      const result = this.jsonResult();
+      this.spinnerStart('fetching snapshots');
+      const response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.getSnapshots()
+      );
+      if (response.status === 200) {
+        const json = await response.json();
+        result.status = json?.status;
+        this.spinnerStop();
+        if (json?.items?.length === 0) {
+          this.doLog('There are no snapshots yet.');
+        } else {
+          result.items = json?.items;
+          json?.items.forEach((e) => this.log(e));
+        }
+      } else {
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [response.status, response.statusText],
+        });
+      }
+      return result;
+    } catch (err) {
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
+      );
+    } finally {
+      this.spinnerStop();
+    }
   }
 }
 

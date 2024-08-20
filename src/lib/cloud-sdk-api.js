@@ -62,6 +62,12 @@ class CloudSdkAPI {
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
       authorizationHeaders
     );
+    this._snapshotClient = new DoRequest(
+      `${rdeUrl}/snapshots`,
+      authorizationHeaders
+    );
+    this.programId = programId;
+    this.environmentId = environmentId;
     this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
@@ -178,6 +184,36 @@ class CloudSdkAPI {
   async getOsgiService(serviceName, id) {
     return await this._rdeClient.doGet(
       `/runtime/${serviceName}/osgi-services/${id}`
+    );
+  }
+
+  async getSnapshots() {
+    return await this._snapshotClient.doGet(``);
+  }
+
+  async deleteAllSnapshots() {
+    return await this._snapshotClient.doDelete(``);
+  }
+
+  async deleteSnapshot(name) {
+    return await this._snapshotClient.doDelete(`/${name}`);
+  }
+
+  async restoreSnapshot(name) {
+    return await this._snapshotClient.doPut(`/${name}`);
+  }
+
+  async createSnapshot(name, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doPost(
+      `/program/${this.programId}/environment/${this.environmentId}${queryString}`
+    );
+  }
+
+  async applySnapshot(name, params) {
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doPatch(
+      `/program/${this.programId}/environment/${this.environmentId}${queryString}`
     );
   }
 
@@ -520,6 +556,20 @@ class CloudSdkAPI {
 
   async _resetEnv() {
     await this._cloudManagerClient.doPut(`/reset`);
+  }
+
+  async cleanEnv(wait, params) {
+    await this._checkRDE();
+    await this._waitForEnvReady();
+    await this._cleanEnv();
+    if (wait) {
+      await this._waitForEnvReady();
+    }
+  }
+
+  async _cleanEnv(params) {
+    const queryString = this.createUrlQueryStr(params);
+    await this._rdeClient.doPut(`/clean${queryString}`);
   }
 
   async _waitForEnvReady() {
