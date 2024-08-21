@@ -11,7 +11,11 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  Flags,
+  commonFlags,
+} = require('../../../lib/base-command');
 const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
 const { codes: validationCodes } = require('../../../lib/validation-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
@@ -45,6 +49,7 @@ const CONFIG_PROGRAM = 'cloudmanager_programid';
 const CONFIG_ENVIRONMENT = 'cloudmanager_environmentid';
 const CONFIG_PROGRAM_NAME = 'cloudmanager_programname';
 const CONFIG_ENVIRONMENT_NAME = 'cloudmanager_environmentname';
+const CONFIG_CONTEXT_NAME = 'ims_contextname';
 const LINK_ORGID =
   'https://experienceleague.adobe.com/en/docs/core-services/interface/administration/organizations#concept_EA8AEE5B02CF46ACBDAD6A8508646255';
 
@@ -364,6 +369,15 @@ class SetupCommand extends BaseCommand {
         this.storeLocal
       );
 
+      if (this.flags?.imsContextName && this.storeLocal) {
+        // store the ims context name only if the user wants to store the configuration locally
+        Config.set(
+          CONFIG_CONTEXT_NAME,
+          this.flags?.imsContextName,
+          this.storeLocal
+        );
+      }
+
       this.logPreviousConfig(
         prevOrgId,
         prevProgramId,
@@ -446,6 +460,7 @@ Object.assign(SetupCommand, {
       required: false,
       default: false,
     }),
+    imsContextName: commonFlags.imsContextName,
   },
 });
 

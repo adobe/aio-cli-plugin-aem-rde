@@ -49,6 +49,11 @@ class BaseCommand extends Command {
       this._environmentName = Config.get('cloudmanager_environmentname');
     }
 
+    const imsContextNameFromConfig = Config.get('ims_contextname');
+    if (!this.flags?.imsContextName && imsContextNameFromConfig) {
+      this.flags.imsContextName = imsContextNameFromConfig;
+    }
+
     this.setupParams(flags);
 
     if (
@@ -187,16 +192,8 @@ class BaseCommand extends Command {
         });
       }
       apiKey = contextData.data.client_id;
-      // FIXME: this block needs to be moved to its own function
       if (!apiKey && userSpecifiedContext) {
-        const decodedToken = jwt.decode(accessToken);
-        if (!decodedToken) {
-          throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-        }
-        apiKey = decodedToken.client_id;
-        if (!apiKey) {
-          throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
-        }
+        apiKey = this.readApiKeyFromToken(accessToken);
       }
     } catch (err) {
       if (userSpecifiedContext) {
@@ -211,21 +208,24 @@ class BaseCommand extends Command {
         `Error while getting token from ims context "${contextName}": ${err}. Try fallback to context "cli".`
       );
       accessToken = await getToken('cli');
-
-      // FIXME: this block needs to be moved to its own function
-      const decodedToken = jwt.decode(accessToken);
-      if (!decodedToken) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-      }
-      apiKey = decodedToken.client_id;
-      if (!apiKey) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
-      }
+      apiKey = this.readApiKeyFromToken(accessToken);
     }
     logger.debug(
       `Token and apiKey found on context "${contextName}" are: ${accessToken} and ${apiKey}`
     );
     return { accessToken, apiKey };
+  }
+
+  readApiKeyFromToken(accessToken) {
+    const decodedToken = jwt.decode(accessToken);
+    if (!decodedToken) {
+      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+    }
+    const apiKey = decodedToken.client_id;
+    if (!apiKey) {
+      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+    }
+    return apiKey;
   }
 
   /**
