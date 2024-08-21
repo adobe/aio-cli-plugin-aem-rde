@@ -275,6 +275,18 @@ class SetupCommand extends BaseCommand {
   }
 
   async runCommand(args, flags) {
+    if (flags.renameImsContext) {
+      const currentImsContext = Config.get('ims.contexts.cli');
+      if (currentImsContext) {
+        Config.set(`ims.contexts.${flags.renameImsContext}`, currentImsContext);
+        Config.delete('ims.contexts.cli');
+        this.doLog(
+          `Renamed IMS default context name 'cli' to user specified IMS context name '${flags.renameImsContext}'`
+        );
+      }
+      return;
+    }
+
     if (flags.show) {
       const orgId = Config.get(CONFIG_ORG);
       const programId = Config.get(CONFIG_PROGRAM);
@@ -459,6 +471,12 @@ Object.assign(SetupCommand, {
       multiple: false,
       required: false,
       default: false,
+    }),
+    renameImsContext: Flags.string({
+      description:
+        'Renames the IMS context name in the configuration. Use this flag to rename the IMS context name in the configuration.',
+      multiple: false,
+      required: false,
     }),
     imsContextName: commonFlags.imsContextName,
   },
