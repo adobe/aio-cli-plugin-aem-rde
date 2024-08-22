@@ -113,6 +113,10 @@ E(
   'There was an unexpected error when running get sling requests command. Please, try again later and if the error persists, report it. Error %s'
 );
 E(
+  'INTERNAL_SNAPSHOT_ERROR',
+  'There was an unexpected error when running a snapshot command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
   'INTERNAL_DELETE_ERROR',
   'There was an unexpected error when running delete command. Please, try again later and if the error persists, report it. Error %s'
 );
@@ -129,6 +133,10 @@ E(
   'There was an unexpected error when running reset command. Please, try again later and if the error persists, report it. Error %s'
 );
 E(
+  'INTERNAL_CLEAN_ERROR',
+  'There was an unexpected error when running clean command. Please, try again later and if the error persists, report it. Error %s'
+);
+E(
   'INTERNAL_RESTART_ERROR',
   'There was an unexpected error when running restart command. Please, try again later and if the error persists, report it. Error %s'
 );
@@ -136,3 +144,4 @@ E(
   'INTERNAL_STATUS_ERROR',
   'There was an unexpected error when running status command. Please, try again later and if the error persists, report it. Error %s'
 );
+E('UNKNOWN', 'An unknown error occurred');

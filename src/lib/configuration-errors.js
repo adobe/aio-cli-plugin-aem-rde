@@ -102,3 +102,8 @@ E(
   'MISSING_INSPECT_ACCESS_TOKEN',
   'The access token for the inspect commands is missing. Please set one up with the `aio aem rde inspect setup` command.'
 );
+E('DIFFERENT_ENV_TYPE', 'The given environment is not an RDE');
+E(
+  'PROGRAM_OR_ENVIRONMENT_NOT_FOUND',
+  'The environment or program does not exist'
+);

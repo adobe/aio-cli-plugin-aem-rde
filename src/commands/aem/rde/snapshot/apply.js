@@ -12,28 +12,59 @@
 'use strict';
 
 const { BaseCommand, Flags } = require('../../../../lib/base-command');
-const { CloudSdkAPIBase } = require('../../../../lib/cloud-sdk-api-base');
-const { codes: validationCodes } = require('../../../../lib/validation-errors');
+const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
-const { concatEnvironemntId } = require('../../../../lib/utils');
 
 class ApplySnapshots extends BaseCommand {
-  constructor(argv, config) {
-    super(argv, config);
-    this.programsCached = [];
-    this.environmentsCached = [];
-  }
-
   async runCommand(args, flags) {
-    this.log('Implement apply snapshot...');
+    let response;
+    try {
+      this.spinnerStart(`Applying snapshot ${args.name}...`);
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.applySnapshot(args.name, {
+          'keep-deployment': flags['keep-deployment'],
+        })
+      );
+    } catch (err) {
+      this.spinnerStop();
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+      );
+    }
+    this.spinnerStop();
+    if (response?.status === 200) {
+      this.doLog(
+        chalk.green(
+          `Snapshot ${args.name} applied successfully. Use 'aio rde status' to view installed artifacts.`
+        )
+      );
+    } else if (response?.status === 400) {
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
+    } else if (response?.status === 404) {
+      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+    } else if (response?.status === 406) {
+      throw new snapshotCodes.INVALID_STATE();
+    } else {
+      throw new internalCodes.UNKNOWN();
+    }
   }
 }
 
 Object.assign(ApplySnapshots, {
   description: 'Applies a snapshot to the environment.',
-  args: [],
+  args: [
+    {
+      name: 'name',
+      description: 'The name of the snapshot to apply to the current RDE.',
+      required: true,
+    },
+  ],
   aliases: [],
   flags: {
     'keep-deployment': Flags.boolean({

@@ -12,29 +12,88 @@
 'use strict';
 
 const { BaseCommand, Flags } = require('../../../../lib/base-command');
-const { CloudSdkAPIBase } = require('../../../../lib/cloud-sdk-api-base');
-const { codes: validationCodes } = require('../../../../lib/validation-errors');
+const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
-const { concatEnvironemntId } = require('../../../../lib/utils');
 
 class DeleteSnapshots extends BaseCommand {
-  constructor(argv, config) {
-    super(argv, config);
-    this.programsCached = [];
-    this.environmentsCached = [];
+  async runCommand(args, flags) {
+    if (flags.all) {
+      this.deleteAllSnapshots();
+    } else {
+      this.deleteSnapshot(args.name);
+    }
   }
 
-  async runCommand(args, flags) {
-    this.log('Implement delete snapshot...');
+  async deleteAllSnapshots() {
+    let response;
+    try {
+      this.spinnerStart('fetching all snapshots');
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.getSnapshots()
+      );
+    } catch (err) {
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+      );
+    } finally {
+      this.spinnerStop();
+    }
+
+    if (response.status === 200) {
+      const json = await response.json();
+      this.spinnerStop();
+      if (json?.items?.length === 0) {
+        this.doLog('There are no snapshots yet.');
+      } else {
+        json?.items.forEach((e) => this.deleteSnapshot(e.name));
+      }
+    } else {
+      throw new internalCodes.UNKNOWN();
+    }
+  }
+
+  async deleteSnapshot(name) {
+    let response;
+    try {
+      this.spinnerStart(`Deleting snapshot ${name}...`);
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.deleteSnapshot(name)
+      );
+    } catch (err) {
+      this.spinnerStop();
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+      );
+    }
+    this.spinnerStop();
+    if (response?.status === 200) {
+      this.doLog(
+        chalk.green(
+          `Snapshot ${name} deleted successfully. Use 'aio rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio rde snapshot restore' to restore it.`
+        )
+      );
+    } else if (response?.status === 404) {
+      throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+    } else {
+      throw new internalCodes.UNKNOWN();
+    }
   }
 }
 
 Object.assign(DeleteSnapshots, {
   description:
     'Marks a snapshot for deletion. The snapshot will be deleted after 7 days. A previously deleted snapshot can be restored.',
-  args: [],
+  args: [
+    {
+      name: 'name',
+      description: 'The name of the snapshot to apply to the current RDE.',
+      required: true,
+    },
+  ],
   aliases: [],
   flags: {
     all: Flags.boolean({

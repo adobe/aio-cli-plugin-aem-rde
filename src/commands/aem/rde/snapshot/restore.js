@@ -11,29 +11,50 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../../lib/base-command');
-const { CloudSdkAPIBase } = require('../../../../lib/cloud-sdk-api-base');
-const { codes: validationCodes } = require('../../../../lib/validation-errors');
+const { BaseCommand } = require('../../../../lib/base-command');
+const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
-const { concatEnvironemntId } = require('../../../../lib/utils');
-
 class RestoreSnapshots extends BaseCommand {
-  constructor(argv, config) {
-    super(argv, config);
-    this.programsCached = [];
-    this.environmentsCached = [];
-  }
-
   async runCommand(args, flags) {
-    this.log('Implement restore snapshot...');
+    let response;
+    try {
+      this.spinnerStart(`Restore snapshot ${args.name}...`);
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.restoreSnapshot(args.name)
+      );
+    } catch (err) {
+      this.spinnerStop();
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+      );
+    }
+    this.spinnerStop();
+    if (response?.status === 200) {
+      this.doLog(
+        chalk.green(
+          `Snapshot ${args.name} restored successfully. Use 'aio rde snapshot' to view its updated state. Use 'aio rde snapshot apply ${args.name}' to apply it on the RDE.`
+        )
+      );
+    } else if (response?.status === 404) {
+      throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+    } else {
+      throw new internalCodes.UNKNOWN();
+    }
   }
 }
 
 Object.assign(RestoreSnapshots, {
   description: 'Restores a snapshot so it will not be deleted any longer.',
-  args: [],
+  args: [
+    {
+      name: 'name',
+      description: 'The name of the snapshot to apply to the current RDE.',
+      required: true,
+    },
+  ],
   aliases: [],
   flags: {},
 });

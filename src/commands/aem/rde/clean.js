@@ -12,22 +12,42 @@
 'use strict';
 
 const { BaseCommand, Flags } = require('../../../lib/base-command');
-const { CloudSdkAPIBase } = require('../../../lib/cloud-sdk-api-base');
-const { codes: validationCodes } = require('../../../lib/validation-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../lib/configuration-errors');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
 const chalk = require('chalk');
-const { concatEnvironemntId } = require('../../../lib/utils');
 
 class CleanEnvrionment extends BaseCommand {
-  constructor(argv, config) {
-    super(argv, config);
-    this.programsCached = [];
-    this.environmentsCached = [];
-  }
-
   async runCommand(args, flags) {
-    this.log('Implement clean environmet...');
+    let response;
+    try {
+      this.spinnerStart(`Cleaning the rde...`);
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.cleanEnv(args.name, flags['drop-content'])
+      );
+    } catch (err) {
+      this.spinnerStop();
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_CLEAN_ERROR({ messageValues: err })
+      );
+    }
+    this.spinnerStop();
+    if (response?.status === 200) {
+      this.doLog(
+        chalk.green(
+          `RDE cleaned sucessfully. Use 'aio aem rde status' to view the updated state.`
+        )
+      );
+    } else if (response?.status === 400) {
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
+    } else if (response?.status === 404) {
+      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+    } else {
+      throw new internalCodes.UNKNOWN();
+    }
   }
 }
 

@@ -23,35 +23,34 @@ class ListSnapshots extends BaseCommand {
   }
 
   async runCommand(args, flags) {
+    let response;
+    const result = this.jsonResult();
     try {
-      const result = this.jsonResult();
       this.spinnerStart('fetching snapshots');
-      const response = await this.withCloudSdk((cloudSdkAPI) =>
+      response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.getSnapshots()
       );
-      if (response.status === 200) {
-        const json = await response.json();
-        result.status = json?.status;
-        this.spinnerStop();
-        if (json?.items?.length === 0) {
-          this.doLog('There are no snapshots yet.');
-        } else {
-          result.items = json?.items;
-          json?.items.forEach((e) => this.log(e));
-        }
-      } else {
-        throw new internalCodes.UNEXPECTED_API_ERROR({
-          messageValues: [response.status, response.statusText],
-        });
-      }
-      return result;
     } catch (err) {
       throwAioError(
         err,
-        new internalCodes.INTERNAL_HISTORY_ERROR({ messageValues: err })
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
       );
     } finally {
       this.spinnerStop();
+    }
+
+    if (response.status === 200) {
+      const json = await response.json();
+      result.status = json?.status;
+      this.spinnerStop();
+      if (json?.items?.length === 0) {
+        this.doLog('There are no snapshots yet.');
+      } else {
+        result.items = json?.items;
+        json?.items.forEach((e) => this.log(e));
+      }
+    } else {
+      throw new internalCodes.UNKNOWN();
     }
   }
 }
