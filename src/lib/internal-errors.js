@@ -144,4 +144,8 @@ E(
   'INTERNAL_STATUS_ERROR',
   'There was an unexpected error when running status command. Please, try again later and if the error persists, report it. Error %s'
 );
-E('UNKNOWN', 'An unknown error occurred');
+E('UNKNOWN', 'An unknown error occurred.');
+E(
+  'INVALID_STATE',
+  'The RDE is not in a state where the command can be executed.'
+);

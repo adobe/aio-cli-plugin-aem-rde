@@ -41,7 +41,7 @@ class ApplySnapshots extends BaseCommand {
     if (response?.status === 200) {
       this.doLog(
         chalk.green(
-          `Snapshot ${args.name} applied successfully. Use 'aio rde status' to view installed artifacts.`
+          `Snapshot ${args.name} applied successfully. Use 'aio aem rde status' to view installed artifacts.`
         )
       );
     } else if (response?.status === 400) {

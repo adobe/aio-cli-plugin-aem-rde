@@ -35,7 +35,7 @@ class RestoreSnapshots extends BaseCommand {
     if (response?.status === 200) {
       this.doLog(
         chalk.green(
-          `Snapshot ${args.name} restored successfully. Use 'aio rde snapshot' to view its updated state. Use 'aio rde snapshot apply ${args.name}' to apply it on the RDE.`
+          `Snapshot ${args.name} restored successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
         )
       );
     } else if (response?.status === 404) {

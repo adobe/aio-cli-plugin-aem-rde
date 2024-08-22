@@ -73,7 +73,7 @@ class DeleteSnapshots extends BaseCommand {
     if (response?.status === 200) {
       this.doLog(
         chalk.green(
-          `Snapshot ${name} deleted successfully. Use 'aio rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio rde snapshot restore' to restore it.`
+          `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot restore ${name}' to restore it.`
         )
       );
     } else if (response?.status === 404) {

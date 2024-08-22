@@ -51,7 +51,7 @@ module.exports = {
 // Define your error codes with the wrapper
 E(
   'INVALID_STATE',
-  'The RDE is not in a state where a snapshot can be created from'
+  'The RDE is not in a state where a snapshot can be created or applied'
 );
 E('ALREADY_EXISTS', 'A snapshot with the given name already exists');
 E('SNAPSHOT_NOT_FOUND', 'The snapshot does not exist');
