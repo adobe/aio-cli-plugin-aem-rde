@@ -303,8 +303,14 @@ describe('Authentication tests', function () {
   it('should return default base url', function () {
     const command = new BaseCommandAuthMock.BaseCommand();
     getConfigStub.returns(undefined);
-    const baseUrl = command.getBaseUrl();
+    const baseUrl = command.getBaseUrl(false);
     assert.equal(baseUrl, 'https://cloudmanager.adobe.io');
+  });
+  it('should return stage base url', function () {
+    const command = new BaseCommandAuthMock.BaseCommand();
+    getConfigStub.returns(undefined);
+    const baseUrl = command.getBaseUrl(true);
+    assert.equal(baseUrl, 'https://cloudmanager-stage.adobe.io');
   });
   it('cloud sdk should be initialized properly', async function () {
     const command = new BaseCommandAuthMock.BaseCommand();

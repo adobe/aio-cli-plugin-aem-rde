@@ -55,7 +55,7 @@ class BaseCommand extends Command {
       this.doLog(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
-        const executeCommand = await inquirer.prompt([
+        const { executeCommand } = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'executeCommand',
@@ -63,7 +63,7 @@ class BaseCommand extends Command {
             default: true,
           },
         ]);
-        if (!executeCommand.executeCommand) {
+        if (!executeCommand) {
           this.doLog('Command execution aborted.');
           return;
         }
@@ -150,48 +150,45 @@ class BaseCommand extends Command {
   /**
    *
    */
-  getBaseUrl() {
-    const configStr = Config.get('cloudmanager.base_url');
-    return configStr || 'https://cloudmanager.adobe.io';
+  getBaseUrl(stage) {
+    return !stage
+      ? 'https://cloudmanager.adobe.io'
+      : 'https://cloudmanager-stage.adobe.io';
   }
 
   /**
    *
    */
   async getTokenAndKey() {
-    let accessToken;
-    let apiKey;
-
-    try {
-      const contextName = 'aio-cli-plugin-cloudmanager';
-      accessToken = await getToken(contextName);
-      const contextData = await context.get(contextName);
-      if (!contextData || !contextData.data) {
-        throw new configurationCodes.NO_IMS_CONTEXT({
-          messageValues: contextName,
-        });
-      }
-      apiKey = contextData.data.client_id;
-    } catch (err) {
-      accessToken = await getToken('cli');
-      const decodedToken = jwt.decode(accessToken);
-      if (!decodedToken) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-      }
-      apiKey = decodedToken.client_id;
-      if (!apiKey) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
-      }
+    // TODO - support context flag
+    const contextName = (await context.getCurrent()) || 'cli';
+    const contextData = await context.get(contextName);
+    const local = contextData?.local || false;
+    const data = contextData?.data;
+    if (!data) {
+      throw new configurationCodes.NO_IMS_CONTEXT({
+        messageValues: contextName,
+      });
     }
-    return { accessToken, apiKey };
+    const accessToken = await getToken(contextName);
+    const decodedToken = jwt.decode(accessToken);
+    if (!decodedToken) {
+      throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+    }
+    const apiKey = decodedToken.client_id;
+    if (!apiKey) {
+      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+    }
+    return { accessToken, apiKey, local, data };
   }
 
   /**
    * @param cloudManagerUrl
    * @param orgId
+   * @param accessToken
+   * @param apiKey
    */
-  async initSdk(cloudManagerUrl, orgId) {
-    const { accessToken, apiKey } = await this.getTokenAndKey();
+  async initSdk(cloudManagerUrl, orgId, accessToken, apiKey) {
     return await init(orgId, apiKey, accessToken, cloudManagerUrl);
   }
 
@@ -199,9 +196,11 @@ class BaseCommand extends Command {
     cloudManagerUrl,
     orgId,
     programId,
-    environmentId
+    environmentId,
+    accessToken,
+    apiKey
   ) {
-    const sdk = await this.initSdk(cloudManagerUrl, orgId);
+    const sdk = await this.initSdk(cloudManagerUrl, orgId, accessToken, apiKey);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
@@ -213,8 +212,8 @@ class BaseCommand extends Command {
       if (!this._environmentId) {
         throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
-      const { accessToken, apiKey } = await this.getTokenAndKey();
-      const cloudManagerUrl = this.getBaseUrl();
+      const { accessToken, apiKey, data } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
       const orgId = this.getCliOrgId();
       const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
       let cacheEntry = Config.get(cacheKey);
@@ -228,7 +227,9 @@ class BaseCommand extends Command {
           cloudManagerUrl,
           orgId,
           this._programId,
-          this._environmentId
+          this._environmentId,
+          accessToken,
+          apiKey
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';
