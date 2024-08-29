@@ -48,10 +48,12 @@ class CreateSnapshots extends BaseCommand {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
       throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
-    } else if (response?.status === 406) {
-      throw new snapshotCodes.INVALID_STATE();
     } else if (response?.status === 409) {
       throw new snapshotCodes.ALREADY_EXISTS();
+    } else if (response?.status === 503) {
+      throw new snapshotCodes.INVALID_STATE();
+    } else if (response?.status === 507) {
+      throw new snapshotCodes.SNAPSHOT_LIMIT();
     } else {
       throw new internalCodes.UNKNOWN();
     }

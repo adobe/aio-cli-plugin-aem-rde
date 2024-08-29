@@ -45,7 +45,7 @@ class CleanEnvrionment extends BaseCommand {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
       throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
-    } else if (response?.status === 406) {
+    } else if (response?.status === 503) {
       throw new internalCodes.INVALID_STATE();
     } else {
       throw new internalCodes.UNKNOWN();

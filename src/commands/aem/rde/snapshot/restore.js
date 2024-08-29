@@ -40,6 +40,8 @@ class RestoreSnapshots extends BaseCommand {
       );
     } else if (response?.status === 404) {
       throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+    } else if (response?.status === 507) {
+      throw new snapshotCodes.SNAPSHOT_LIMIT();
     } else {
       throw new internalCodes.UNKNOWN();
     }

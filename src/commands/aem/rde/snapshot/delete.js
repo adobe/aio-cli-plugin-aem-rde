@@ -22,7 +22,7 @@ class DeleteSnapshots extends BaseCommand {
     if (flags.all) {
       this.deleteAllSnapshots();
     } else {
-      this.deleteSnapshot(args.name);
+      this.deleteSnapshot(args.name, flags.force);
     }
   }
 
@@ -55,12 +55,12 @@ class DeleteSnapshots extends BaseCommand {
     }
   }
 
-  async deleteSnapshot(name) {
+  async deleteSnapshot(name, force) {
     let response;
     try {
       this.spinnerStart(`Deleting snapshot ${name}...`);
       response = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.deleteSnapshot(name)
+        cloudSdkAPI.deleteSnapshot(name, force)
       );
     } catch (err) {
       this.spinnerStop();
@@ -76,6 +76,8 @@ class DeleteSnapshots extends BaseCommand {
           `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot restore ${name}' to restore it.`
         )
       );
+    } else if (response?.status === 400) {
+      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
     } else if (response?.status === 404) {
       throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
     } else {
@@ -102,6 +104,11 @@ Object.assign(DeleteSnapshots, {
       multiple: false,
       required: false,
       default: false,
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      multiple: false,
+      required: false,
     }),
   },
 });

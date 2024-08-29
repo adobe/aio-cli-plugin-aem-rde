@@ -55,3 +55,11 @@ E(
 );
 E('ALREADY_EXISTS', 'A snapshot with the given name already exists');
 E('SNAPSHOT_NOT_FOUND', 'The snapshot does not exist');
+E(
+  'SNAPSHOT_LIMIT',
+  'Reached the maximum number or diskspace of snapshots. Remove some snapshots and try again'
+);
+E(
+  'SNAPSHOT_WRONG_STATE',
+  'Snapshot is in wrong state. Must be in state "REMOVED" to be able to wipe.'
+);
