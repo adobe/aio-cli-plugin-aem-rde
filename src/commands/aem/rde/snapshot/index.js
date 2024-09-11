@@ -14,6 +14,9 @@
 const { BaseCommand, Flags } = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 
 class ListSnapshots extends BaseCommand {
   constructor(argv, config) {
@@ -49,6 +52,10 @@ class ListSnapshots extends BaseCommand {
         result.items = json?.items;
         json?.items.forEach((e) => this.log(e));
       }
+    } else if (response?.status === 400) {
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
+    } else if (response?.status === 404) {
+      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
     } else {
       throw new internalCodes.UNKNOWN();
     }

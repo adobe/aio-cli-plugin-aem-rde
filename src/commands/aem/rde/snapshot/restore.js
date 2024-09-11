@@ -14,6 +14,9 @@
 const { BaseCommand } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
 class RestoreSnapshots extends BaseCommand {
@@ -38,7 +41,11 @@ class RestoreSnapshots extends BaseCommand {
           `Snapshot ${args.name} restored successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
         )
       );
+    } else if (response?.status === 400) {
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
+      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+    } else if (response?.status === 410) {
       throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
     } else if (response?.status === 507) {
       throw new snapshotCodes.SNAPSHOT_LIMIT();

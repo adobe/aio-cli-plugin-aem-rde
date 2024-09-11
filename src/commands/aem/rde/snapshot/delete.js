@@ -14,6 +14,9 @@
 const { BaseCommand, Flags } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
+const {
+  codes: configurationCodes,
+} = require('../../../../lib/configuration-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
 
@@ -77,9 +80,13 @@ class DeleteSnapshots extends BaseCommand {
         )
       );
     } else if (response?.status === 400) {
-      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
+      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+    } else if (response?.status === 410) {
       throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+    } else if (response?.status === 412) {
+      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
     } else {
       throw new internalCodes.UNKNOWN();
     }
