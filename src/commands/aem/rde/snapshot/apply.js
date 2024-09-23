@@ -47,7 +47,14 @@ class ApplySnapshots extends BaseCommand {
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
-      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+      const json = await response.json();
+      if (
+        json.details === 'The requested environment or program does not exist.'
+      ) {
+        throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+      } else if (json.details === 'The requested snapshot does not exist.') {
+        throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+      }
     } else if (response?.status === 406) {
       throw new snapshotCodes.INVALID_STATE();
     } else {

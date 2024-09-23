@@ -82,11 +82,21 @@ class DeleteSnapshots extends BaseCommand {
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
-      throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
-    } else if (response?.status === 410) {
-      throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
-    } else if (response?.status === 412) {
-      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
+      const json = await response.json();
+      if (
+        json.details === 'The requested environment or program does not exist.'
+      ) {
+        throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+      } else if (json.details === 'The requested snapshot does not exist.') {
+        throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+      }
+    } else if (response?.status === 403) {
+      const json = await response.json();
+      if (
+        json.details === "The snapshot to be wiped is not in state 'removed'."
+      ) {
+        throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
+      }
     } else {
       throw new internalCodes.UNKNOWN();
     }
@@ -99,7 +109,7 @@ Object.assign(DeleteSnapshots, {
   args: [
     {
       name: 'name',
-      description: 'The name of the snapshot to apply to the current RDE.',
+      description: 'The name of the snapshot to delete.',
       required: true,
     },
   ],

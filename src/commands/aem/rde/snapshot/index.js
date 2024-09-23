@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../../lib/base-command');
+const { BaseCommand, Flags, cli } = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const {
@@ -49,8 +49,8 @@ class ListSnapshots extends BaseCommand {
       if (json?.items?.length === 0) {
         this.doLog('There are no snapshots yet.');
       } else {
-        result.items = json?.items;
-        json?.items.forEach((e) => this.log(e));
+        result.snapshots = json;
+        this.logInTableFormat(json);
       }
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
@@ -59,6 +59,27 @@ class ListSnapshots extends BaseCommand {
     } else {
       throw new internalCodes.UNKNOWN();
     }
+    return result;
+  }
+
+  logInTableFormat(items) {
+    cli.table(
+      items,
+      {
+        name: {
+          minWidth: 20,
+        },
+        description: {
+          minWidth: 20,
+        },
+        usage: {},
+        size: {},
+        state: {},
+        created: {},
+        lastUsed: { header: 'Last Used' },
+      },
+      { printLine: (s) => this.doLog(s, true) }
+    );
   }
 }
 

@@ -193,7 +193,7 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doGet(`${queryString}`);
+    return await this._rdeClient.doGet(`/snapshots${queryString}`);
   }
 
   async deleteSnapshot(name, force) {
@@ -203,7 +203,7 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doDelete(`/${name}${queryString}`);
+    return await this._rdeClient.doDelete(`/snapshots/${name}${queryString}`);
   }
 
   async restoreSnapshot(name) {
@@ -212,18 +212,18 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPut(`/${name}${queryString}`);
+    return await this._rdeClient.doPut(`/snapshots/${name}${queryString}`);
   }
 
   async createSnapshot(name, params) {
     params = {
       ...params,
-      name,
+      'snapshot-name': name,
       programId: this.programId,
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(`${queryString}`);
+    return await this._rdeClient.doPost(`/snapshots${queryString}`);
   }
 
   async applySnapshot(name, params) {
@@ -233,7 +233,7 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(
+    return await this._rdeClient.doPost(
       `/snapshots/${name}/apply${queryString}`
     );
   }
