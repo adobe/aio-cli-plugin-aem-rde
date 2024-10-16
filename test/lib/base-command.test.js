@@ -199,6 +199,7 @@ describe('Authentication tests', function () {
   );
   const getOrganizationsStub = sinon.stub();
   const contextGetStub = sinon.stub();
+  const contextGetCurrentStub = sinon.stub();
   const getTokenStub = sinon.stub();
   const getConfigStub = sinon.stub();
   const BaseCommandAuthMock = proxyquire('../../src/lib/base-command', {
@@ -210,6 +211,7 @@ describe('Authentication tests', function () {
       },
       context: {
         get: contextGetStub,
+        getCurrent: contextGetCurrentStub,
       },
       getToken: getTokenStub,
     },
@@ -236,35 +238,47 @@ describe('Authentication tests', function () {
         },
       ])
     );
-    contextGetStub.returns({
-      data: {
-        client_id: 'client_id',
-      },
+    contextGetStub.callsFake((contextName) => {
+      switch (contextName) {
+        case 'my-context':
+          return {
+            data: {
+              client_id: 'my-context-client_id',
+            },
+            local: true,
+          };
+        case 'cli':
+          return {
+            data: {},
+          };
+      }
     });
+    contextGetCurrentStub.returns(undefined);
     getTokenStub.returns(accessToken);
   });
   afterEach(function () {
     getOrganizationsStub.reset();
     contextGetStub.reset();
+    contextGetCurrentStub.reset();
     getTokenStub.reset();
     getConfigStub.reset();
   });
   it('should be able to fetch token and api key', async function () {
+    contextGetCurrentStub.returns('my-context');
     const command = new BaseCommandAuthMock.BaseCommand();
     const result = await command.getTokenAndKey();
-    assert.deepEqual(result, {
-      accessToken,
-      apiKey: 'client_id',
-    });
+    assert.equal(result.accessToken, accessToken);
+    assert.equal(result.apiKey, 'my-context-client_id');
+    assert.equal(result.local, true);
   });
   it('should be able to fetch cli token and api key in case of api error', async function () {
-    contextGetStub.returns({});
     const command = new BaseCommandAuthMock.BaseCommand();
     const result = await command.getTokenAndKey();
-    assert.deepEqual(result, { accessToken, apiKey: 'jwt_client_id' });
+    assert.equal(result.accessToken, accessToken);
+    assert.equal(result.apiKey, 'jwt_client_id');
+    assert.equal(result.local, false);
   });
   it('should throw cannot decode error', async function () {
-    contextGetStub.returns({});
     getTokenStub.returns(undefined);
     let err;
     try {
@@ -276,7 +290,7 @@ describe('Authentication tests', function () {
     assert.equal(err.code, 'CLI_AUTH_CONTEXT_CANNOT_DECODE');
   });
   it('should throw no client id error', async function () {
-    contextGetStub.returns({});
+    contextGetStub.returns({ data: {} });
     getTokenStub.returns(jwt.sign({}, 'pKey', {}));
     let err;
     try {
