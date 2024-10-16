@@ -73,18 +73,15 @@ class SetupCommand extends BaseCommand {
     return fn(this._cloudSdkAPIBase);
   }
 
-  getImsInstance() {
-    return new Ims(); // allow for easy mocking in tests
+  async getOrganizationsFromIms(accessToken) {
+    const { ims } = await Ims.fromToken(accessToken);
+    return await ims.getOrganizations(accessToken);
   }
 
-  /**
-   *
-   */
   async getOrganizationsFromToken() {
     try {
       const { accessToken } = await this.getTokenAndKey();
-      const { ims } = await Ims.fromToken(accessToken);
-      const organizations = await ims.getOrganizations(accessToken);
+      const organizations = await this.getOrganizationsFromIms(accessToken);
       const orgMap = organizations.reduce((map, org) => {
         map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
         return map;

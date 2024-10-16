@@ -65,15 +65,12 @@ describe('SetupCommand - withCloudSdkBase', function () {
 
 describe('SetupCommand - getOrganizationsFromToken', function () {
   let setupCommand;
-  let imsInstanceStub;
 
   beforeEach(function () {
     setupCommand = new SetupCommand();
-    imsInstanceStub = sinon.createStubInstance(Ims);
     sinon
       .stub(setupCommand, 'getTokenAndKey')
       .resolves({ accessToken: 'testAccessToken' });
-    sinon.stub(setupCommand, 'getImsInstance').returns(imsInstanceStub);
   });
 
   afterEach(function () {
@@ -81,10 +78,11 @@ describe('SetupCommand - getOrganizationsFromToken', function () {
   });
 
   it('should return the correct organization map when IMS returns organizations', async function () {
-    imsInstanceStub.getOrganizations.resolves([
+    sinon.stub(setupCommand, 'getOrganizationsFromIms').resolves([
       { orgName: 'Org1', orgRef: { ident: '123', authSrc: 'AuthSrc1' } },
       { orgName: 'Org2', orgRef: { ident: '456', authSrc: 'AuthSrc2' } },
     ]);
+
     const expectedOrgMap = {
       Org1: '123@AuthSrc1',
       Org2: '456@AuthSrc2',
@@ -95,7 +93,7 @@ describe('SetupCommand - getOrganizationsFromToken', function () {
 
   it('should log a message and return null when no IMS context is found', async function () {
     const logStub = sinon.stub(setupCommand, 'doLog');
-    imsInstanceStub.getOrganizations.rejects({
+    sinon.stub(setupCommand, 'getOrganizationsFromIms').rejects({
       code: 'CONTEXT_NOT_CONFIGURED',
     });
     const orgMap = await setupCommand.getOrganizationsFromToken();
@@ -106,7 +104,9 @@ describe('SetupCommand - getOrganizationsFromToken', function () {
   });
 
   it('should return null when IMS throws an error other than "CONTEXT_NOT_CONFIGURED"', async function () {
-    imsInstanceStub.getOrganizations.rejects(new Error('Some other error'));
+    sinon
+      .stub(setupCommand, 'getOrganizationsFromIms')
+      .rejects(new Error('Some other error'));
     const orgMap = await setupCommand.getOrganizationsFromToken();
     assert.strictEqual(orgMap, null);
   });
