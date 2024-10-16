@@ -53,7 +53,7 @@ For build environments, include below into the scripts.
 ```
 
 > **Note**:
-> Working with multiple environments: it is highly recommend to use the flag `-l` or `--local` together with the `config:set` so that the configuration is stored in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations).
+> Working with multiple environments: it is highly recommend to use the flag `-l` or `--local` together with the `config:set` so that the configuration is stored in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations). Also, make use of the possibility to store the login information in seperate contexts locally. [Follow the RDE documentation](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/implementing/developing/rapid-development-environments#installing-the-rde-command-line-tools) for further information, take a close look to the step 3 details.
 
 ### Configuration for `aio aem rde inspect` commands \*
 
