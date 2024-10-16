@@ -91,7 +91,7 @@ class LogsCommand extends BaseCommand {
 
   async chooseLogConfiguration(flags, tooManyLogs) {
     const response = await this.withCloudSdk((cloudSdkAPI) =>
-      cloudSdkAPI.getAemLogs(this.flags.target, {})
+      cloudSdkAPI.getAemLogs(this.flags?.target, {})
     );
     if (response.status === 200) {
       inquirer.registerPrompt(
@@ -101,17 +101,19 @@ class LogsCommand extends BaseCommand {
 
       const json = await response.json();
 
-      const logChoices = json?.items.map(({ id, names }) => ({
+      let logChoices = json?.items?.map(({ id, names }) => ({
         name: `${names.map((n) => `${n.logger}:${n.level}`).join(' ')}`,
         value: id,
       }));
-      logChoices.push({ name: 'cancel', value: 'cancel' });
+      if (!logChoices) {
+        logChoices = [];
+      }
 
       const nrOfLogs = Object.keys(logChoices).length;
-
       if (nrOfLogs === 0) {
         return null;
       }
+      logChoices.push({ name: 'cancel', value: 'cancel' });
 
       const msg = tooManyLogs
         ? 'Too many log configurations. Choose one to replace (type to filter):'
@@ -152,7 +154,7 @@ class LogsCommand extends BaseCommand {
       process.removeListener('SIGINT', this.stopAndCleanupCallback);
       process.removeListener('SIGTERM', this.stopAndCleanupCallback);
       if (this.lastItemId !== undefined) {
-        await this.deleteLog(this.flags.target, this.lastItemId);
+        await this.deleteLog(this.flags?.target, this.lastItemId);
       }
     }
   }
