@@ -1,7 +1,7 @@
 {
   "name": "@adobe/aio-cli-plugin-aem-rde",
   "description": "Adobe I/O CLI plugin for interacting with AEM Rapid Development Environments",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "author": "Adobe Inc.",
   "engines": {
     "npm": ">= 8.0.0",
