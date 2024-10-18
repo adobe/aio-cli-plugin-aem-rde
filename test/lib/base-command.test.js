@@ -295,6 +295,7 @@ describe('Authentication tests', function () {
     let err;
     try {
       const command = new BaseCommandAuthMock.BaseCommand();
+      sinon.stub(command, 'doLog');
       await command.getTokenAndKey();
     } catch (e) {
       err = e;
