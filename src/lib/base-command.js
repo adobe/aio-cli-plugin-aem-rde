@@ -15,6 +15,7 @@ const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
+const chalk = require('chalk');
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -149,6 +150,7 @@ class BaseCommand extends Command {
 
   /**
    *
+   * @param stage
    */
   getBaseUrl(stage) {
     return !stage
@@ -161,8 +163,25 @@ class BaseCommand extends Command {
    */
   async getTokenAndKey() {
     // TODO - support context flag
-    const contextName = (await context.getCurrent()) || 'cli';
-    const contextData = await context.get(contextName);
+    let contextName =
+      (await context.getCurrent()) || 'aio-cli-plugin-cloudmanager';
+    let contextData = await context.get(contextName);
+
+    if (!contextData?.data) {
+      if (contextName !== 'aio-cli-plugin-cloudmanager') {
+        this.doLog(
+          chalk.red(`\nConfigured default context '${contextName}' not found.`),
+          true
+        );
+        throw new configurationCodes.NO_IMS_CONTEXT({
+          messageValues: contextName,
+        });
+      } else {
+        contextName = 'cli';
+        contextData = await context.get(contextName);
+      }
+    }
+
     const local = contextData?.local || false;
     const data = contextData?.data;
     if (!data) {
@@ -170,6 +189,15 @@ class BaseCommand extends Command {
         messageValues: contextName,
       });
     }
+
+    if (contextName === 'aio-cli-plugin-cloudmanager') {
+      this.doLog(
+        chalk.yellow(
+          `\nUsing deprecated context '${contextName}'. Refer to the documentation to update your context: https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/implementing/developing/rapid-development-environments#aio-rde-plugin-troubleshooting-deprecatedcontext`
+        )
+      );
+    }
+
     const accessToken = await getToken(contextName);
     const apiKey = data.client_id
       ? data.client_id
