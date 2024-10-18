@@ -2,7 +2,9 @@
 
 In order to build a new release and push it to npmjs.com, run the following commands
 
-    # inside your git clone with the "main" branch checked out
+    # inside your git clone with the "main" branch checked out, ensure to have latest code locally after some PR merges
+    git checkout main
+    git pull
     npm version [<newversion> | major | minor | patch]
     git push && git push --tags
 
