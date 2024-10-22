@@ -225,6 +225,31 @@ describe('Authentication tests', function () {
       }),
     },
   });
+
+  class TestCommand extends BaseCommandAuthMock.BaseCommand {
+    constructor(commandLine) {
+      super(commandLine?.split(/\s+/) || []);
+    }
+
+    runCommand(args, flags) {
+      /* do nothing */
+    }
+  }
+
+  /**
+   * Utillity to create and run a test command. Running the
+   * command exercises the logic parsing the command-line arguments
+   * and initializing various fields in the command.
+   *
+   * @param commandLine The command line arguments as a string.
+   * @returns A fully initialized TestCommand instance.
+   */
+  async function createCommand(commandLine) {
+    const command = new TestCommand(commandLine);
+    await command.run();
+    return command;
+  }
+
   beforeEach(function () {
     getOrganizationsStub.returns(
       Promise.resolve([
@@ -247,6 +272,13 @@ describe('Authentication tests', function () {
             },
             local: true,
           };
+        case 'context-via-flag':
+          return {
+            data: {
+              client_id: 'context-via-flag-id',
+            },
+            local: true,
+          };
         case 'cli':
           return {
             data: {},
@@ -265,14 +297,32 @@ describe('Authentication tests', function () {
   });
   it('should be able to fetch token and api key', async function () {
     contextGetCurrentStub.returns('my-context');
-    const command = new BaseCommandAuthMock.BaseCommand();
+    const command = await createCommand();
     const result = await command.getTokenAndKey();
     assert.equal(result.accessToken, accessToken);
     assert.equal(result.apiKey, 'my-context-client_id');
     assert.equal(result.local, true);
   });
+  it('should use the --context flag', async function () {
+    const command = await createCommand('--context context-via-flag');
+    const { apiKey, local } = await command.getTokenAndKey();
+    assert.equal(apiKey, 'context-via-flag-id');
+    assert.equal(local, true);
+  });
+  it('should use the --ctx flag (alias of --context)', async function () {
+    const command = await createCommand('--ctx context-via-flag');
+    const { apiKey, local } = await command.getTokenAndKey();
+    assert.equal(apiKey, 'context-via-flag-id');
+    assert.equal(local, true);
+  });
+  it('should use the --imsContextName flag (alias of --context)', async function () {
+    const command = await createCommand('--imsContextName context-via-flag');
+    const { apiKey, local } = await command.getTokenAndKey();
+    assert.equal(apiKey, 'context-via-flag-id');
+    assert.equal(local, true);
+  });
   it('should be able to fetch cli token and api key in case of api error', async function () {
-    const command = new BaseCommandAuthMock.BaseCommand();
+    const command = await createCommand();
     const result = await command.getTokenAndKey();
     assert.equal(result.accessToken, accessToken);
     assert.equal(result.apiKey, 'jwt_client_id');
@@ -282,7 +332,7 @@ describe('Authentication tests', function () {
     getTokenStub.returns(undefined);
     let err;
     try {
-      const command = new BaseCommandAuthMock.BaseCommand();
+      const command = await createCommand();
       await command.getTokenAndKey();
     } catch (e) {
       err = e;
@@ -294,7 +344,7 @@ describe('Authentication tests', function () {
     getTokenStub.returns(jwt.sign({}, 'pKey', {}));
     let err;
     try {
-      const command = new BaseCommandAuthMock.BaseCommand();
+      const command = await createCommand();
       sinon.stub(command, 'doLog');
       await command.getTokenAndKey();
     } catch (e) {
@@ -315,20 +365,20 @@ describe('Authentication tests', function () {
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
   });
-  it('should return default base url', function () {
-    const command = new BaseCommandAuthMock.BaseCommand();
+  it('should return default base url', async function () {
+    const command = await createCommand();
     getConfigStub.returns(undefined);
     const baseUrl = command.getBaseUrl(false);
     assert.equal(baseUrl, 'https://cloudmanager.adobe.io');
   });
-  it('should return stage base url', function () {
-    const command = new BaseCommandAuthMock.BaseCommand();
+  it('should return stage base url', async function () {
+    const command = await createCommand();
     getConfigStub.returns(undefined);
     const baseUrl = command.getBaseUrl(true);
     assert.equal(baseUrl, 'https://cloudmanager-stage.adobe.io');
   });
   it('cloud sdk should be initialized properly', async function () {
-    const command = new BaseCommandAuthMock.BaseCommand();
+    const command = await createCommand();
     const flags = {
       organizationId: 'orgId',
       programId: 'progId',
