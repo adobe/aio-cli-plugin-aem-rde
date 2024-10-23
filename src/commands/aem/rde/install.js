@@ -45,7 +45,7 @@ const deploymentTypes = [
   'content-xml',
   'dispatcher-config',
   'frontend',
-  'config',
+  'env-config',
 ];
 
 class DeployCommand extends BaseCommand {
@@ -152,7 +152,7 @@ class DeployCommand extends BaseCommand {
         }
         return await dispatcherInputBuild(this, inputPath);
       }
-      case 'config': {
+      case 'env-config': {
         if (!file.isDirectory()) {
           break;
         }
@@ -455,7 +455,7 @@ class DeployCommand extends BaseCommand {
             .getEntries()
             .some((entry) => entry.entryName.endsWith('.yaml'));
           if (isConfig) {
-            return ['config'];
+            return ['env-config'];
           }
         }
         return ['content-package', 'dispatcher-config', 'frontend'];
