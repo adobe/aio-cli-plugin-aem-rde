@@ -502,7 +502,9 @@ class CloudSdkAPI {
   async restartEnv() {
     const response = await this._rdeClient.doPost(`/runtime/restart`, {});
     if (response.status !== 201) {
-      throw await this._createError(response);
+      throw new internalCodes.UNEXPECTED_API_ERROR({
+        messageValues: [response.status, response.statusText],
+      });
     }
     const namespace = await this._getNamespace();
     const tries = 3;
