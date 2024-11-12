@@ -500,13 +500,16 @@ class CloudSdkAPI {
   }
 
   async restartEnv() {
-    await this._checkRDE();
-    const namespace = await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
-    if (status === 'running') {
-      await this._stopEnv(namespace);
+    const response = await this._rdeClient.doPost(`/runtime/restart`, {});
+    if (response.status !== 201) {
+      throw await this._createError(response);
     }
-    await this._startEnv(namespace);
+    const namespace = await this._getNamespace();
+    const tries = 3;
+    for (let i = 0; i < tries; i++) {
+      await sleepSeconds(5);
+      await this._waitForEnvRunning(namespace);
+    }
   }
 
   async resetEnv(wait) {
