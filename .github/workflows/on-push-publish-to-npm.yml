@@ -16,7 +16,12 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm test
-      - uses: JS-DevTools/npm-publish@v1
+      - name: Publish to NPM
+        uses: JS-DevTools/npm-publish@v3
+        id: publish
         with:
           token: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
           access: public
+      - name: Check if version changed
+        if: ${{ steps.publish.outputs.type }}
+        run: echo "Version changed!"
