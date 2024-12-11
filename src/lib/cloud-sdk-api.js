@@ -321,7 +321,7 @@ class CloudSdkAPI {
     }
   }
 
-  async _createError(response) {
+  async _createError(response, defaultError=internalCodes.UNEXPECTED_API_ERROR) {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
@@ -335,7 +335,8 @@ class CloudSdkAPI {
           throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
       }
     }
-    throw new internalCodes.UNEXPECTED_API_ERROR({
+    
+    throw new defaultError({
       messageValues: [response.status, errMessage],
     });
   }
@@ -502,9 +503,7 @@ class CloudSdkAPI {
   async restartEnv() {
     const response = await this._rdeClient.doPost(`/runtime/restart`, {});
     if (response.status !== 201) {
-      throw new internalCodes.UNEXPECTED_API_ERROR({
-        messageValues: [response.status, response.statusText],
-      });
+      throw await this._createError(response);
     }
     const namespace = await this._getNamespace();
     const tries = 3;
