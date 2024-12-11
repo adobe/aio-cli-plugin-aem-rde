@@ -16,6 +16,11 @@ const os = require('os');
 const path = require('path');
 const archiver = require('archiver');
 
+/**
+ *
+ * @param basecommand
+ * @param inputPath
+ */
 async function frontendInputBuild(basecommand, inputPath) {
   return new Promise((resolve, reject) => {
     // analyse that dist/ folder and package.json folder are present on this directory

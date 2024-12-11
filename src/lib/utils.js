@@ -14,7 +14,7 @@
 /**
  * Sleep a defined number of seconds.
  * @param seconds The number of seconds to sleep.
- * @return promise for the sleep duration
+ * @returns promise for the sleep duration
  */
 function sleepSeconds(seconds) {
   return sleepMillis(seconds * 1000);
@@ -23,7 +23,7 @@ function sleepSeconds(seconds) {
 /**
  * Sleep a defined number of milliseconds.
  * @param millis The number of milliseconds to sleep.
- * @return promise for the sleep duration
+ * @returns promise for the sleep duration
  */
 function sleepMillis(millis) {
   return millis === 0
