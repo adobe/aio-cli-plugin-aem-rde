@@ -76,7 +76,7 @@ E(
 );
 E(
   'CONCURRENT_MODIFICATION',
-  'Your RDE is waiting for a previous invocation of an AIO command that either installs a package or restart the environment. You might ignore this by using the "--force" flag.'
+  'Your RDE is waiting for a previous invocation of an AIO command that either installs a package or restart the environment. You may ignore this by using the "--force" flag.'
 );
 E(
   'DEPLOYMENT_IN_PROGRESS',
