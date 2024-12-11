@@ -321,7 +321,10 @@ class CloudSdkAPI {
     }
   }
 
-  async _createError(response, defaultError=internalCodes.UNEXPECTED_API_ERROR) {
+  async _createError(
+    response,
+    defaultError = internalCodes.UNEXPECTED_API_ERROR
+  ) {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
@@ -335,7 +338,7 @@ class CloudSdkAPI {
           throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
       }
     }
-    
+
     throw new defaultError({
       messageValues: [response.status, errMessage],
     });

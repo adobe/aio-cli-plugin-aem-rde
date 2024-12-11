@@ -30,22 +30,26 @@ $ aio plugins:update
 
 The plugin needs to be configured to point to an existing RDE environment. To do so, the organization, program and environment must be configured accordingly.
 As a user, use below command to do so.
+
 ```
 $ aio login
 $ aio aem:rde:setup
 ```
+
 The setup command offers the following functionality:
+
 - Change from one program/environment to another.
 - Display the previously active configuration when changed.
-- Store the configuration locally in a ```.aio``` file in the current folder. This allows to setup a config for each RDE independently.
-- Switch organization by ```aio logout``` and then use the setup command again.
+- Store the configuration locally in a `.aio` file in the current folder. This allows to setup a config for each RDE independently.
+- Switch organization by `aio logout` and then use the setup command again.
 
 > **Note**:
 > Working with multiple environments: it is highly recommended to use the local storage. For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations). However, the default is to use global for users who have one environment only.
 
-
 ## Configuration to be used in build environments
+
 For build environments, include below into the scripts.
+
 ```
  $ aio config:set cloudmanager_orgid <org-id>
  $ aio config:set cloudmanager_programid <program-id>
@@ -105,4 +109,5 @@ Primarily for scripting application purposes, the following exit codes are used:
 - 40 - An error emanating from the deployment not being fully performed has occurred. This error might be interpretable by some users as ok if that's a middle step they need to go through
 
 # Releasing a new version
+
 Please read the [RELEASE.md](https://github.com/adobe/aio-cli-plugin-aem-rde/blob/main/RELEASE.md)
