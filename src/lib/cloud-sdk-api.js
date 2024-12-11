@@ -323,7 +323,7 @@ class CloudSdkAPI {
 
   async _createError(
     response,
-    defaultError = internalCodes.UNEXPECTED_API_ERROR
+    DefaultError = internalCodes.UNEXPECTED_API_ERROR
   ) {
     let errMessage = response.statusText;
     try {
@@ -339,7 +339,7 @@ class CloudSdkAPI {
       }
     }
 
-    throw new defaultError({
+    throw new DefaultError({
       messageValues: [response.status, errMessage],
     });
   }
