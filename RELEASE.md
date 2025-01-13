@@ -15,3 +15,7 @@ to npmjs.com is automatically performed by the github action
 
 The progress and status of the deployment can be inspected on the
 [Actions tab](//github.com/adobe/aio-cli-plugin-aem-rde/actions).
+
+# Steps to do after the release
+- Create a release note in https://github.com/adobe/aio-cli-plugin-aem-rde/releases
+- Send a message in #aem-rde in both, slack and discord

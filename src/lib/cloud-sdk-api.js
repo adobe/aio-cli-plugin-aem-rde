@@ -328,7 +328,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) {}
+    } catch (err) { }
 
     if (errMessage) {
       switch (errMessage) {
@@ -518,10 +518,10 @@ class CloudSdkAPI {
 
   async resetEnv(wait) {
     await this._checkRDE();
-    await this._waitForEnvReady();
+    await this._waitForEnv();
     await this._resetEnv();
     if (wait) {
-      await this._waitForEnvReady();
+      return await this._waitForEnv();
     }
   }
 
@@ -529,11 +529,12 @@ class CloudSdkAPI {
     await this._cloudManagerClient.doPut(`/reset`);
   }
 
-  async _waitForEnvReady() {
-    await this._waitForJson(
-      (status) => status.status === 'ready',
+  async _waitForEnv() {
+    const json = await this._waitForJson(
+      (status) => status.status === 'ready' || status.status === 'reset_failed',
       async () => await this._cloudManagerClient.doGet('')
     );
+    return json.status;
   }
 }
 
