@@ -25,13 +25,18 @@ class ResetCommand extends BaseCommand {
       const result = this.jsonResult();
       this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('resetting environment');
-      await this.withCloudSdk((cloudSdkAPI) =>
+      const status = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.resetEnv(flags.wait)
       );
       this.spinnerStop();
       if (flags.wait) {
-        result.status = 'reset';
-        this.doLog(`Environment reset.`);
+        if (status === 'ready') {
+          result.status = 'reset';
+          this.doLog(`Environment reset.`);
+        } else if (status === 'reset_failed') {
+          result.status = 'reset_failed';
+          this.doLog(`Failed to reset the environment.`);
+        }
       } else {
         result.status = 'resetting';
         this.doLog(
