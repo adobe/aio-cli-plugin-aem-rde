@@ -522,7 +522,7 @@ Object.assign(DeployCommand, {
     restart: Flags.boolean({
       char: 'r',
       description:
-        'restart the environment after a successful installation. This could also be manually done later using the restart command',
+        'restarts the environment after a successful installation. It is not recommended to perform a restart for most scenarios, as it adds a couple of minutes and normal installations should be able to deploy while running. However, certain installations may require a restart of the entire RDE. The restart could also be manually done later using the restart command.',
       multiple: false,
       required: false,
     }),
