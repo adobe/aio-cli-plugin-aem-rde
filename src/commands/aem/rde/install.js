@@ -225,6 +225,11 @@ class DeployCommand extends BaseCommand {
         result
       );
       progressBar?.stop();
+
+      if (flags.restart) {
+        await this.config.runCommand('aem:rde:restart', []);
+      }
+
       return result;
     } catch (err) {
       progressBar?.stop();
@@ -508,10 +513,19 @@ Object.assign(DeployCommand, {
     }),
     force: Flags.boolean({
       char: 'f',
+      description:
+        'forces the installation, used when the RDE is waiting on an upload from a previous install than can be skipped',
       multiple: false,
       required: false,
     }),
     quiet: commonFlags.quiet,
+    restart: Flags.boolean({
+      char: 'r',
+      description:
+        'restart the environment after a successful installation. This could also be manually done later using the restart command',
+      multiple: false,
+      required: false,
+    }),
   },
   aliases: [],
 });
