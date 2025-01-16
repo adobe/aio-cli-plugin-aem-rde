@@ -186,11 +186,17 @@ class LogsCommand extends BaseCommand {
       }
       // check if there are values for the name key
       // formats the flags in the right way to pass them to the request
-      if (flags.info || flags.debug || flags.warn || flags.error) {
+      if (
+        flags.info ||
+        flags.debug ||
+        flags.warn ||
+        flags.error ||
+        flags.trace
+      ) {
         const namesArray = [];
-        // flags?.trace?.forEach((logger) => {
-        //   namesArray.push({ logger, level: 'TRACE' });
-        // });
+        flags?.trace?.forEach((logger) => {
+          namesArray.push({ logger, level: 'TRACE' });
+        });
         flags?.debug?.forEach((logger) => {
           namesArray.push({ logger, level: 'DEBUG' });
         });
@@ -306,11 +312,14 @@ Object.assign(LogsCommand, {
       helpValue: `<logback format definition>`,
       helpGroup: 'format and color',
     }),
-    // trace: Flags.string({
-    //   description: `Optional logger on TRACE level.`,
-    //   multiple: true,
-    //   required: false,
-    // }),
+    trace: Flags.string({
+      char: 't',
+      description: `Optional logger on TRACE level.`,
+      multiple: true,
+      required: false,
+      helpValue: `<package or class name>`,
+      helpGroup: 'level',
+    }),
     debug: Flags.string({
       char: 'd',
       description: `Optional logger on DEBUG level.`,
