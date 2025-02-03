@@ -378,7 +378,10 @@ class CloudSdkAPI {
     }
   }
 
-  async _createError(response) {
+  async _createError(
+    response,
+    DefaultError = internalCodes.UNEXPECTED_API_ERROR
+  ) {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
@@ -392,7 +395,8 @@ class CloudSdkAPI {
           throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
       }
     }
-    throw new internalCodes.UNEXPECTED_API_ERROR({
+
+    throw new DefaultError({
       messageValues: [response.status, errMessage],
     });
   }
@@ -557,21 +561,24 @@ class CloudSdkAPI {
   }
 
   async restartEnv() {
-    await this._checkRDE();
-    const namespace = await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
-    if (status === 'running') {
-      await this._stopEnv(namespace);
+    const response = await this._rdeClient.doPost(`/runtime/restart`, {});
+    if (response.status !== 201) {
+      throw await this._createError(response);
     }
-    await this._startEnv(namespace);
+    const namespace = await this._getNamespace();
+    const tries = 3;
+    for (let i = 0; i < tries; i++) {
+      await sleepSeconds(5);
+      await this._waitForEnvRunning(namespace);
+    }
   }
 
   async resetEnv(wait) {
     await this._checkRDE();
-    await this._waitForEnvReady();
+    await this._waitForCMStatus();
     await this._resetEnv();
     if (wait) {
-      await this._waitForEnvReady();
+      return await this._waitForCMStatus();
     }
   }
 
@@ -592,12 +599,13 @@ class CloudSdkAPI {
     const queryString = this.createUrlQueryStr(params);
     await this._rdeClient.doPut(`/clean${queryString}`);
   }
-
-  async _waitForEnvReady() {
-    await this._waitForJson(
-      (status) => status.status === 'ready',
+  
+  async _waitForCMStatus() {
+    const json = await this._waitForJson(
+      (status) => status.status === 'ready' || status.status === 'reset_failed',
       async () => await this._cloudManagerClient.doGet('')
     );
+    return json.status;
   }
 }
 

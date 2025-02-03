@@ -57,8 +57,8 @@ class SetupCommand extends BaseCommand {
 
   async withCloudSdkBase(fn) {
     if (!this._cloudSdkAPIBase) {
-      const { accessToken, apiKey } = await this.getTokenAndKey();
-      const cloudManagerUrl = this.getBaseUrl();
+      const { accessToken, apiKey, data } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
       const orgId = this.getCliOrgId();
       if (!orgId) {
         throw new validationCodes.MISSING_ORG_ID();
@@ -73,18 +73,15 @@ class SetupCommand extends BaseCommand {
     return fn(this._cloudSdkAPIBase);
   }
 
-  getImsInstance() {
-    return new Ims(); // allow for easy mocking in tests
+  async getOrganizationsFromIms(accessToken) {
+    const { ims } = await Ims.fromToken(accessToken);
+    return await ims.getOrganizations(accessToken);
   }
 
-  /**
-   *
-   */
   async getOrganizationsFromToken() {
     try {
       const { accessToken } = await this.getTokenAndKey();
-      const ims = this.getImsInstance();
-      const organizations = await ims.getOrganizations(accessToken);
+      const organizations = await this.getOrganizationsFromIms(accessToken);
       const orgMap = organizations.reduce((map, org) => {
         map[org.orgName] = org.orgRef.ident + '@' + org.orgRef.authSrc;
         return map;
@@ -300,7 +297,7 @@ class SetupCommand extends BaseCommand {
         `Setup the CLI configuration necessary to use the RDE commands.`
       );
 
-      const storeLocal = await inquirer.prompt([
+      const { storeLocal } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'storeLocal',
@@ -312,7 +309,7 @@ class SetupCommand extends BaseCommand {
 
       const orgId = await this.getOrgId();
       const prevOrgId = Config.get(CONFIG_ORG);
-      Config.set(CONFIG_ORG, orgId, storeLocal.storeLocal);
+      Config.set(CONFIG_ORG, orgId, storeLocal);
 
       let selectedEnvironmentId = null;
       let selectedProgramId = null;
@@ -351,23 +348,11 @@ class SetupCommand extends BaseCommand {
 
       const { prevProgramId, prevProgramName } = this.getProgramFromConf();
       const { prevEnvId, prevEnvName } = this.getEnvironmentFromConf();
-      Config.set(CONFIG_PROGRAM, selectedProgramId, storeLocal.storeLocal);
-      Config.set(
-        CONFIG_ENVIRONMENT,
-        selectedEnvironmentId,
-        storeLocal.storeLocal
-      );
+      Config.set(CONFIG_PROGRAM, selectedProgramId, storeLocal);
+      Config.set(CONFIG_ENVIRONMENT, selectedEnvironmentId, storeLocal);
 
-      Config.set(
-        CONFIG_PROGRAM_NAME,
-        selectedProgramName,
-        storeLocal.storeLocal
-      );
-      Config.set(
-        CONFIG_ENVIRONMENT_NAME,
-        selectedEnvironmentName,
-        storeLocal.storeLocal
-      );
+      Config.set(CONFIG_PROGRAM_NAME, selectedProgramName, storeLocal);
+      Config.set(CONFIG_ENVIRONMENT_NAME, selectedEnvironmentName, storeLocal);
 
       this.logPreviousConfig(
         prevOrgId,

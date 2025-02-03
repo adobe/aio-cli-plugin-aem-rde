@@ -15,6 +15,7 @@ const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
+const chalk = require('chalk');
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -55,7 +56,7 @@ class BaseCommand extends Command {
       this.doLog(this.getLogHeader());
       const lastAction = Config.get('rde_lastaction');
       if (lastAction && Date.now() - lastAction > 24 * 60 * 60 * 1000) {
-        const executeCommand = await inquirer.prompt([
+        const { executeCommand } = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'executeCommand',
@@ -63,7 +64,7 @@ class BaseCommand extends Command {
             default: true,
           },
         ]);
-        if (!executeCommand.executeCommand) {
+        if (!executeCommand) {
           this.doLog('Command execution aborted.');
           return;
         }
@@ -149,49 +150,74 @@ class BaseCommand extends Command {
 
   /**
    *
+   * @param stage
    */
-  getBaseUrl() {
-    const configStr = Config.get('cloudmanager.base_url');
-    return configStr || 'https://cloudmanager.adobe.io';
+  getBaseUrl(stage) {
+    return !stage
+      ? 'https://cloudmanager.adobe.io'
+      : 'https://cloudmanager-stage.adobe.io';
   }
 
   /**
    *
    */
   async getTokenAndKey() {
-    let accessToken;
-    let apiKey;
+    // TODO - support context flag
+    let contextName =
+      (await context.getCurrent()) || 'aio-cli-plugin-cloudmanager';
+    let contextData = await context.get(contextName);
 
-    try {
-      const contextName = 'aio-cli-plugin-cloudmanager';
-      accessToken = await getToken(contextName);
-      const contextData = await context.get(contextName);
-      if (!contextData || !contextData.data) {
+    if (!contextData?.data) {
+      if (contextName !== 'aio-cli-plugin-cloudmanager') {
+        this.doLog(
+          chalk.red(`\nConfigured default context '${contextName}' not found.`),
+          true
+        );
         throw new configurationCodes.NO_IMS_CONTEXT({
           messageValues: contextName,
         });
-      }
-      apiKey = contextData.data.client_id;
-    } catch (err) {
-      accessToken = await getToken('cli');
-      const decodedToken = jwt.decode(accessToken);
-      if (!decodedToken) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
-      }
-      apiKey = decodedToken.client_id;
-      if (!apiKey) {
-        throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+      } else {
+        contextName = 'cli';
+        contextData = await context.get(contextName);
       }
     }
-    return { accessToken, apiKey };
+
+    const local = contextData?.local || false;
+    const data = contextData?.data;
+    if (!data) {
+      throw new configurationCodes.NO_IMS_CONTEXT({
+        messageValues: contextName,
+      });
+    }
+
+    if (contextName === 'aio-cli-plugin-cloudmanager') {
+      this.doLog(
+        chalk.yellow(
+          `\nUsing deprecated context '${contextName}'. Refer to the documentation to update your context: https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/implementing/developing/rapid-development-environments#aio-rde-plugin-troubleshooting-deprecatedcontext`
+        )
+      );
+    }
+
+    const accessToken = await getToken(contextName);
+    const apiKey = data.client_id
+      ? data.client_id
+      : jwt.decode(accessToken)?.client_id;
+    if (!apiKey) {
+      if (!jwt.decode(accessToken)) {
+        throw new configurationCodes.CLI_AUTH_CONTEXT_CANNOT_DECODE();
+      }
+      throw new configurationCodes.CLI_AUTH_CONTEXT_NO_CLIENT_ID();
+    }
+    return { accessToken, apiKey, local, data };
   }
 
   /**
    * @param cloudManagerUrl
    * @param orgId
+   * @param accessToken
+   * @param apiKey
    */
-  async initSdk(cloudManagerUrl, orgId) {
-    const { accessToken, apiKey } = await this.getTokenAndKey();
+  async initSdk(cloudManagerUrl, orgId, accessToken, apiKey) {
     return await init(orgId, apiKey, accessToken, cloudManagerUrl);
   }
 
@@ -199,9 +225,11 @@ class BaseCommand extends Command {
     cloudManagerUrl,
     orgId,
     programId,
-    environmentId
+    environmentId,
+    accessToken,
+    apiKey
   ) {
-    const sdk = await this.initSdk(cloudManagerUrl, orgId);
+    const sdk = await this.initSdk(cloudManagerUrl, orgId, accessToken, apiKey);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
 
@@ -213,8 +241,8 @@ class BaseCommand extends Command {
       if (!this._environmentId) {
         throw new validationCodes.MISSING_ENVIRONMENT_ID();
       }
-      const { accessToken, apiKey } = await this.getTokenAndKey();
-      const cloudManagerUrl = this.getBaseUrl();
+      const { accessToken, apiKey, data } = await this.getTokenAndKey();
+      const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
       const orgId = this.getCliOrgId();
       const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
       let cacheEntry = Config.get(cacheKey);
@@ -228,7 +256,9 @@ class BaseCommand extends Command {
           cloudManagerUrl,
           orgId,
           this._programId,
-          this._environmentId
+          this._environmentId,
+          accessToken,
+          apiKey
         );
         const url = new URL(developerConsoleUrl);
         url.hash = '';

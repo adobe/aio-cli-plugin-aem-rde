@@ -45,7 +45,7 @@ const deploymentTypes = [
   'content-xml',
   'dispatcher-config',
   'frontend',
-  'config',
+  'env-config',
 ];
 
 class DeployCommand extends BaseCommand {
@@ -152,7 +152,7 @@ class DeployCommand extends BaseCommand {
         }
         return await dispatcherInputBuild(this, inputPath);
       }
-      case 'config': {
+      case 'env-config': {
         if (!file.isDirectory()) {
           break;
         }
@@ -225,6 +225,11 @@ class DeployCommand extends BaseCommand {
         result
       );
       progressBar?.stop();
+
+      if (flags.restart) {
+        await this.config.runCommand('aem:rde:restart', []);
+      }
+
       return result;
     } catch (err) {
       progressBar?.stop();
@@ -455,7 +460,7 @@ class DeployCommand extends BaseCommand {
             .getEntries()
             .some((entry) => entry.entryName.endsWith('.yaml'));
           if (isConfig) {
-            return ['config'];
+            return ['env-config'];
           }
         }
         return ['content-package', 'dispatcher-config', 'frontend'];
@@ -508,10 +513,19 @@ Object.assign(DeployCommand, {
     }),
     force: Flags.boolean({
       char: 'f',
+      description:
+        'forces the installation, used when the RDE is waiting on an upload from a previous install than can be skipped',
       multiple: false,
       required: false,
     }),
     quiet: commonFlags.quiet,
+    restart: Flags.boolean({
+      char: 'r',
+      description:
+        'restarts the environment after a successful installation. It is not recommended to perform a restart for most scenarios, as it adds a couple of minutes and normal installations should be able to deploy while running. However, certain installations may require a restart of the entire RDE. The restart could also be manually done later using the restart command.',
+      multiple: false,
+      required: false,
+    }),
   },
   aliases: [],
 });

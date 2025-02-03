@@ -16,6 +16,11 @@ const os = require('os');
 const path = require('path');
 const archiver = require('archiver');
 
+/**
+ *
+ * @param basecommand
+ * @param inputPath
+ */
 async function configInputBuild(basecommand, inputPath) {
   return new Promise((resolve, reject) => {
     fs.mkdtemp(path.join(os.tmpdir(), 'aio-rde-'), (err, folder) => {
@@ -35,6 +40,12 @@ async function configInputBuild(basecommand, inputPath) {
   });
 }
 
+/**
+ *
+ * @param basecommand
+ * @param sourceDir
+ * @param outputFilePath
+ */
 async function archiveDirectory(basecommand, sourceDir, outputFilePath) {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputFilePath);
