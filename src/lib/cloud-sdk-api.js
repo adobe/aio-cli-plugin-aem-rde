@@ -218,12 +218,16 @@ class CloudSdkAPI {
   async createSnapshot(name, params) {
     params = {
       ...params,
-      'snapshot-name': name,
       programId: this.programId,
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(`${queryString}`);
+    return this._snapshotClient.doPost(queryString, {
+      metadata: {
+        'snapshot-name': name,
+        'snapshot-description': params.description
+      }
+    });
   }
 
   async applySnapshot(name, params) {
@@ -599,7 +603,7 @@ class CloudSdkAPI {
     const queryString = this.createUrlQueryStr(params);
     await this._rdeClient.doPut(`/clean${queryString}`);
   }
-  
+
   async _waitForCMStatus() {
     const json = await this._waitForJson(
       (status) => status.status === 'ready' || status.status === 'reset_failed',
