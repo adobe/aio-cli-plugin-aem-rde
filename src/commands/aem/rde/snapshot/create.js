@@ -38,7 +38,7 @@ class CreateSnapshots extends BaseCommand {
       );
     }
     this.spinnerStop();
-    if (response?.status === 200) {
+    if (response?.status === 200 || response?.status === 201) {
       this.doLog(
         chalk.green(
           `Snapshot ${args.name} created successfully. Use 'aio aem rde snapshot' to view or 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
