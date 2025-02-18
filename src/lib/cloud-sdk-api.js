@@ -233,9 +233,7 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(
-      `/${name}/apply${queryString}`
-    );
+    return await this._snapshotClient.doPost(`/${name}/apply${queryString}`);
   }
 
   async getLogs(id) {
@@ -599,7 +597,7 @@ class CloudSdkAPI {
     const queryString = this.createUrlQueryStr(params);
     await this._rdeClient.doPut(`/clean${queryString}`);
   }
-  
+
   async _waitForCMStatus() {
     const json = await this._waitForJson(
       (status) => status.status === 'ready' || status.status === 'reset_failed',
