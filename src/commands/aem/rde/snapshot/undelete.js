@@ -19,13 +19,13 @@ const {
 } = require('../../../../lib/configuration-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
-class RestoreSnapshots extends BaseCommand {
+class UndeleteSnapshots extends BaseCommand {
   async runCommand(args, flags) {
     let response;
     try {
-      this.spinnerStart(`Restore snapshot ${args.name}...`);
+      this.spinnerStart(`Undelete snapshot ${args.name}...`);
       response = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.restoreSnapshot(args.name)
+        cloudSdkAPI.undeleteSnapshot(args.name)
       );
     } catch (err) {
       this.spinnerStop();
@@ -38,7 +38,7 @@ class RestoreSnapshots extends BaseCommand {
     if (response?.status === 200) {
       this.doLog(
         chalk.green(
-          `Snapshot ${args.name} restored successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
+          `Snapshot ${args.name} undeleted successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
         )
       );
     } else if (response?.status === 400) {
@@ -60,12 +60,12 @@ class RestoreSnapshots extends BaseCommand {
   }
 }
 
-Object.assign(RestoreSnapshots, {
-  description: 'Restores a snapshot so it will not be deleted any longer.',
+Object.assign(UndeleteSnapshots, {
+  description: 'Undeletes a snapshot so it will not be deleted any longer.',
   args: [
     {
       name: 'name',
-      description: 'The name of the snapshot to apply to the restore.',
+      description: 'The name of the snapshot to apply to the undeleted.',
       required: true,
     },
   ],
@@ -73,4 +73,4 @@ Object.assign(RestoreSnapshots, {
   flags: {},
 });
 
-module.exports = RestoreSnapshots;
+module.exports = UndeleteSnapshots;

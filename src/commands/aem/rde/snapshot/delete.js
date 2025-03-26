@@ -76,7 +76,7 @@ class DeleteSnapshots extends BaseCommand {
     if (response?.status === 200 || response?.status === 201) {
       this.doLog(
         chalk.green(
-          `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot restore ${name}' to restore it.`
+          `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot undelete ${name}' to undelete it.`
         )
       );
     } else if (response?.status === 400) {
@@ -105,7 +105,7 @@ class DeleteSnapshots extends BaseCommand {
 
 Object.assign(DeleteSnapshots, {
   description:
-    'Marks a snapshot for deletion. The snapshot will be deleted after 7 days. A previously deleted snapshot can be restored.',
+    'Marks a snapshot for deletion. The snapshot will be deleted after 7 days. A previously deleted snapshot can be undeleted.',
   args: [
     {
       name: 'name',

@@ -206,7 +206,7 @@ class CloudSdkAPI {
     return await this._snapshotClient.doDelete(`/${name}${queryString}`);
   }
 
-  async restoreSnapshot(name) {
+  async undeleteSnapshot(name) {
     const params = {
       programId: this.programId,
       environmentId: this.environmentId,
@@ -383,7 +383,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) {}
+    } catch (err) { }
 
     if (errMessage) {
       switch (errMessage) {
