@@ -97,6 +97,8 @@ class DeleteSnapshots extends BaseCommand {
       ) {
         throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
       }
+    } else if (response?.status === 503) {
+      throw new snapshotCodes.INVALID_STATE();
     } else {
       throw new internalCodes.UNKNOWN();
     }
@@ -116,7 +118,7 @@ Object.assign(DeleteSnapshots, {
   aliases: [],
   flags: {
     all: Flags.boolean({
-      description: 'Wipe all snapshots from the organization.',
+      description: 'Mark all snapshots as deleted.',
       char: 'a',
       multiple: false,
       required: false,
