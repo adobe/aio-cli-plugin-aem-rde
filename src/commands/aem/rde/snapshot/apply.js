@@ -27,7 +27,7 @@ class ApplySnapshots extends BaseCommand {
       this.spinnerStart(`Applying snapshot ${args.name}...`);
       response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.applySnapshot(args.name, {
-          'keep-deployment': flags['keep-deployment'],
+          'only-mutable-content': flags['only-mutable-content'],
         })
       );
     } catch (err) {
@@ -74,10 +74,8 @@ Object.assign(ApplySnapshots, {
   ],
   aliases: [],
   flags: {
-    'keep-deployment': Flags.boolean({
-      description:
-        'Keeps the deployment of the RDE and applies the content only.',
-      char: 'k',
+    'only-mutable-content': Flags.boolean({
+      description: 'Applies the mutable content only.',
       multiple: false,
       required: false,
       default: false,
