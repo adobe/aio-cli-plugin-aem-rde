@@ -23,9 +23,9 @@ const chalk = require('chalk');
 class DeleteSnapshots extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.all) {
-      await this.deleteAllSnapshots();
+      this.deleteAllSnapshots();
     } else {
-      await this.deleteSnapshot(args.name, flags.force);
+      this.deleteSnapshot(args.name, flags.force);
     }
   }
 
@@ -91,7 +91,12 @@ class DeleteSnapshots extends BaseCommand {
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       }
     } else if (response?.status === 403) {
-      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
+      const json = await response.json();
+      if (
+        json.details === "The snapshot to be wiped is not in state 'removed'."
+      ) {
+        throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
+      }
     } else if (response?.status === 503) {
       throw new snapshotCodes.INVALID_STATE();
     } else {
