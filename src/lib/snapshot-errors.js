@@ -63,3 +63,4 @@ E(
   'SNAPSHOT_WRONG_STATE',
   'Snapshot is in wrong state. Must be in state "REMOVED" to be able to wipe.'
 );
+E('SNAPSHOT_DELETED', 'The snapshot is in deleted state, change the state to available before applying.');

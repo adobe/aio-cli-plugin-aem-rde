@@ -54,6 +54,8 @@ class ApplySnapshots extends BaseCommand {
         throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
       } else if (json.details === 'The requested snapshot does not exist.') {
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+      } else if (json.details === 'The snapshot is in deleted state.') {
+        throw new snapshotCodes.SNAPSHOT_DELETED();
       }
     } else if (response?.status === 406) {
       throw new snapshotCodes.INVALID_STATE();
