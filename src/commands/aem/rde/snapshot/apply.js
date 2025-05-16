@@ -46,6 +46,8 @@ class ApplySnapshots extends BaseCommand {
       );
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
+    } else if (response?.status === 403) {
+      throw new snapshotCodes.SNAPSHOT_WRONG_STATE();
     } else if (response?.status === 404) {
       const json = await response.json();
       if (
