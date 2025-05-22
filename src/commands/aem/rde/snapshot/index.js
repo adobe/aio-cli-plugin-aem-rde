@@ -63,8 +63,29 @@ class ListSnapshots extends BaseCommand {
   }
 
   logInTableFormat(items) {
+    // Helper to format bytes to MB or GB
+    function formatSize(bytes) {
+      if (typeof bytes !== 'number' || isNaN(bytes)) return '';
+      const gb = 1024 * 1024 * 1024;
+      const mb = 1024 * 1024;
+      if (bytes >= gb) {
+        return (bytes / gb).toFixed(2) + ' GB';
+      } else if (bytes >= mb) {
+        return (bytes / mb).toFixed(2) + ' MB';
+      }
+      return bytes + ' B';
+    }
+
+    const mappedItems = items.map((item) => {
+      const sizeBytes = item.size?.total_size ?? item.size;
+      return {
+        ...item,
+        size: formatSize(sizeBytes),
+      };
+    });
+
     cli.table(
-      items,
+      mappedItems,
       {
         name: {
           minWidth: 20,
