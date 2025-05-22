@@ -38,7 +38,7 @@ class UndeleteSnapshots extends BaseCommand {
     if (response?.status === 200) {
       this.doLog(
         chalk.green(
-          `Snapshot ${args.name} undeleted successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
+          `Snapshot ${args.name} undeleted successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot restore ${args.name}' to restore it on the RDE.`
         )
       );
     } else if (response?.status === 400) {
@@ -65,7 +65,7 @@ Object.assign(UndeleteSnapshots, {
   args: [
     {
       name: 'name',
-      description: 'The name of the snapshot to apply to the undeleted.',
+      description: 'The name of the snapshot to undelete.',
       required: true,
     },
   ],

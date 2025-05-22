@@ -53,6 +53,10 @@ class DoRequest {
     return this.do('put', path, body);
   }
 
+  async doOptions(path, body) {
+    return this.do('options', path, body);
+  }
+
   async doPatch(path, body) {
     return this.do('patch', path, body);
   }

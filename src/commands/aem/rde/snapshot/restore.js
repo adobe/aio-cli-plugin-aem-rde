@@ -26,20 +26,20 @@ const { loadAllArtifacts } = require('../../../../lib/rde-utils');
 
 const Spinnies = require('spinnies');
 
-class ApplySnapshots extends BaseCommand {
+class RestoreSnapshot extends BaseCommand {
   async runCommand(args, flags) {
     const spinnies = flags.quiet || flags.json ? undefined : new Spinnies();
 
     if (!flags.status) {
       spinnies?.add('spinner-requesting', {
-        text: `Requesting to apply snapshot ${args.name} (<1m) ...`,
+        text: `Requesting to restore snapshot ${args.name} (<1m) ...`,
       });
     }
     spinnies?.add('spinner-backend', {
-      text: 'Waiting for backend to pick up the job to apply the snapshot (<1min) ...',
+      text: 'Waiting for backend to pick up the job to restore the snapshot (<1min) ...',
     });
-    spinnies?.add('spinner-apply', {
-      text: 'Applying snapshot to RDE (2-5m) ...',
+    spinnies?.add('spinner-restore', {
+      text: 'Restoring snapshot to RDE (2-5m) ...',
     });
     spinnies?.add('spinner-restart', {
       text: 'Wait for the RDE to restart (5-10m)...',
@@ -52,7 +52,7 @@ class ApplySnapshots extends BaseCommand {
       let response;
       try {
         response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.applySnapshot(args.name, {
+          cloudSdkAPI.restoreSnapshot(args.name, {
             'only-mutable-content': flags['only-mutable-content'],
           })
         );
@@ -68,7 +68,7 @@ class ApplySnapshots extends BaseCommand {
       if (response?.status === 200) {
         const took = this.formatElapsedTime(startTime, Date.now());
         spinnies?.succeed('spinner-requesting', {
-          text: `Requested to apply the snapshot successfully. (${took})`,
+          text: `Requested to restore the snapshot successfully. (${took})`,
           successColor: 'greenBright',
         });
       } else if (response?.status === 400) {
@@ -108,7 +108,7 @@ class ApplySnapshots extends BaseCommand {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSnapshotProgress('apply', args.name)
+          cloudSdkAPI.getSnapshotProgress('restore', args.name)
         );
       } catch (err) {
         result.error = err;
@@ -137,7 +137,7 @@ class ApplySnapshots extends BaseCommand {
           Date.now()
         );
         spinnies?.succeed('spinner-backend', {
-          text: `Backend picked up the job to apply the snapshot. (${took})`,
+          text: `Backend picked up the job to restore the snapshot. (${took})`,
           successColor: 'greenBright',
         });
         result.processnigsnapshotstarted = new Date();
@@ -150,8 +150,8 @@ class ApplySnapshots extends BaseCommand {
         result.processnigsnapshotstarted,
         Date.now()
       );
-      spinnies?.succeed('spinner-apply', {
-        text: `Applied snapshot to RDE successfully. (${took})`,
+      spinnies?.succeed('spinner-restore', {
+        text: `Restored snapshot to RDE successfully. (${took})`,
         successColor: 'greenBright',
       });
     }
@@ -178,7 +178,7 @@ class ApplySnapshots extends BaseCommand {
 
     this.doLog(
       chalk.green(
-        `Snapshot ${args.name} applied successfully. Check the deployment using the command: 'aio aem rde status'`
+        `Snapshot ${args.name} restored successfully. Check the deployment using the command: 'aio aem rde status'`
       )
     );
 
@@ -194,34 +194,25 @@ class ApplySnapshots extends BaseCommand {
   }
 }
 
-Object.assign(ApplySnapshots, {
-  description: 'Applies a snapshot to the environment.',
+Object.assign(RestoreSnapshot, {
+  description: 'Restores a snapshot to the environment.',
   args: [
     {
       name: 'name',
-      description: 'The name of the snapshot to apply to the current RDE.',
+      description: 'The name of the snapshot to restore to the current RDE.',
       required: true,
     },
   ],
   aliases: [],
   flags: {
     'only-mutable-content': Flags.boolean({
-      description: 'Applies the mutable content only.',
-      multiple: false,
-      required: false,
-      default: false,
-    }),
-    quiet: Flags.boolean({
-      description:
-        'Does not ask for user confirmation before applying the snapshot.',
-      char: 'q',
+      description: 'Restores the mutable content only.',
       multiple: false,
       required: false,
       default: false,
     }),
     status: Flags.boolean({
-      description:
-        'Checks the progress of the snapshot application. If the snapshot is already applied, it will return the progress.',
+      description: 'Checks the progress of the snapshot restore.',
       char: 's',
       multiple: false,
       required: false,
@@ -230,4 +221,4 @@ Object.assign(ApplySnapshots, {
   },
 });
 
-module.exports = ApplySnapshots;
+module.exports = RestoreSnapshot;

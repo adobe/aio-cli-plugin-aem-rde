@@ -51,7 +51,7 @@ class DeleteSnapshots extends BaseCommand {
       if (json?.items?.length === 0) {
         this.doLog('There are no snapshots yet.');
       } else {
-        json?.items.forEach((e) => this.deleteSnapshot(e.name));
+        json?.forEach((e) => this.deleteSnapshot(e.name, this.flags.force));
       }
     } else {
       throw new internalCodes.UNKNOWN();
@@ -74,11 +74,19 @@ class DeleteSnapshots extends BaseCommand {
     }
     this.spinnerStop();
     if (response?.status === 200 || response?.status === 201) {
-      this.doLog(
-        chalk.green(
-          `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot undelete ${name}' to undelete it.`
-        )
-      );
+      if (this.flags.force) {
+        this.doLog(
+          chalk.green(
+            `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to vlaidate its removal.`
+          )
+        );
+      } else {
+        this.doLog(
+          chalk.green(
+            `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to view its updated state, it will be removed once the retention time has passed. Use 'aio aem rde snapshot undelete ${name}' to undelete it.`
+          )
+        );
+      }
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {

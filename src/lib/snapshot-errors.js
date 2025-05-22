@@ -51,7 +51,7 @@ module.exports = {
 // Define your error codes with the wrapper
 E(
   'INVALID_STATE',
-  'The RDE is not in a state where a snapshot can be created or applied'
+  'The RDE is not in a state where a snapshot can be created or restored.'
 );
 E('ALREADY_EXISTS', 'A snapshot with the given name already exists');
 E('SNAPSHOT_NOT_FOUND', 'The snapshot does not exist');
@@ -63,4 +63,7 @@ E(
   'SNAPSHOT_WRONG_STATE',
   'Snapshot is in wrong state. Must be in state "REMOVED" to be able to wipe.'
 );
-E('SNAPSHOT_DELETED', 'The snapshot is in deleted state, change the state to available before applying.');
+E(
+  'SNAPSHOT_DELETED',
+  'The snapshot is in deleted state, change the state to available before restoring.'
+);

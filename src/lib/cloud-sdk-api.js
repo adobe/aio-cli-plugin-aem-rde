@@ -195,7 +195,7 @@ class CloudSdkAPI {
       action,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPut(`${queryString}`);
+    return await this._snapshotClient.doOptions(`${queryString}`);
   }
 
   async getSnapshots() {
@@ -237,14 +237,14 @@ class CloudSdkAPI {
     return await this._snapshotClient.doPost(`${queryString}`);
   }
 
-  async applySnapshot(name, params) {
+  async restoreSnapshot(name, params) {
     params = {
       ...params,
       programId: this.programId,
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(`/${name}/apply${queryString}`);
+    return await this._snapshotClient.doPost(`/${name}/restore${queryString}`);
   }
 
   async getLogs(id) {
