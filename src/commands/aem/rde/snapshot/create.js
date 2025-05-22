@@ -167,13 +167,15 @@ class CreateSnapshots extends BaseCommand {
       )
     );
 
-    result.endTime = Date.now();
+    result.endTime = new Date();
     this.doLog(
       chalk.yellow(
-        `Total time to create the snapshot: ${this.formatElapsedTime(startTime, result.endTime)}`
+        `Total time to create the snapshot: ${this.formatElapsedTime(startTime, Date.now())}`
       )
     );
     result.totalseconds = (result.endTime - startTime) / 1000;
+    result.startTime = new Date(startTime);
+    return result;
   }
 }
 

@@ -182,12 +182,13 @@ class ApplySnapshots extends BaseCommand {
       )
     );
 
-    result.endTime = Date.now();
+    result.endTime = new Date();
     this.doLog(
       chalk.yellow(
-        `Total time to rebase on snapshot: ${this.formatElapsedTime(startTime, result.endTime)}`
+        `Total time to rebase on snapshot: ${this.formatElapsedTime(startTime, Date.now())}`
       )
     );
+    result.startTime = new Date(startTime);
     result.totalseconds = (result.endTime - startTime) / 1000;
     return result;
   }
