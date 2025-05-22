@@ -187,6 +187,17 @@ class CloudSdkAPI {
     );
   }
 
+  async getSnapshotProgress(action, snapshotName) {
+    const params = {
+      programId: this.programId,
+      environmentId: this.environmentId,
+      'snapshot-name': snapshotName,
+      action,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doPut(`${queryString}`);
+  }
+
   async getSnapshots() {
     const params = {
       programId: this.programId,
@@ -383,7 +394,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) {}
+    } catch (err) { }
 
     if (errMessage) {
       switch (errMessage) {
