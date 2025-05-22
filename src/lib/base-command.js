@@ -296,6 +296,17 @@ class BaseCommand extends Command {
     };
     return result;
   }
+
+  formatElapsedTime(startTime, endTime) {
+    const ms = endTime - startTime;
+    if (ms < 1000) {
+      return `${ms}ms`;
+    } else if (ms < 60000) {
+      return `${(ms / 1000).toFixed(2)}s`;
+    } else {
+      return `${(ms / 60000).toFixed(2)}m`;
+    }
+  }
 }
 
 Object.assign(BaseCommand, {
