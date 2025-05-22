@@ -40,6 +40,7 @@ class StatusCommand extends BaseCommand {
           }
           await sleepMillis(10000);
         }
+        this.notify('ready', 'RDE environment is ready');
       } else {
         this.spinnerStart('retrieving environment status information');
         status = await this.withCloudSdk((cloudSdkAPI) =>

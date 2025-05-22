@@ -127,6 +127,13 @@ class CreateSnapshots extends BaseCommand {
         });
         result.processnigsnapshotstarted = new Date();
       }
+      if (lastProgress === -2) {
+        spinnies?.stopAll('fail');
+        this.doLog(chalk.red('Snapshot creation failed.'));
+        this.notify('failed', 'Snapshot creation failed.');
+        throw new snapshotCodes.SNAPSHOT_CREATION_FAILED();
+      }
+
       await sleepMillis(5000);
     }
 
@@ -175,6 +182,7 @@ class CreateSnapshots extends BaseCommand {
     );
     result.totalseconds = (result.endTime - startTime) / 1000;
     result.startTime = new Date(startTime);
+    this.notify('restored', 'Snapshot created.');
     return result;
   }
 }

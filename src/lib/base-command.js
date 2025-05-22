@@ -16,6 +16,7 @@ const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
+const notifier = require('node-notifier');
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -110,8 +111,12 @@ class BaseCommand extends Command {
     handleError(err, this.error);
   }
 
+  rdeIdentification() {
+    return `${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+  }
+
   getLogHeader() {
-    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+    return `Running ${!this.id ? this.constructor.name : this.id} on ${this.rdeIdentification()}`;
   }
 
   printNamesWhenAvailable() {
@@ -139,6 +144,13 @@ class BaseCommand extends Command {
 
   spinnerStop() {
     spinner.stop();
+  }
+
+  notify(title, message) {
+    if (Config.get('rde_enableNotifications')) {
+      title = `${this.rdeIdentification()} - ${title}`;
+      notifier.notify({ title, message });
+    }
   }
 
   /**

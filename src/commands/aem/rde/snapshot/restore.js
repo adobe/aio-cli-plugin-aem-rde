@@ -142,6 +142,12 @@ class RestoreSnapshot extends BaseCommand {
         });
         result.processnigsnapshotstarted = new Date();
       }
+      if (lastProgress === -2) {
+        spinnies?.stopAll('fail');
+        this.doLog(chalk.red('Snapshot creation failed.'));
+        this.notify('failed', 'Snapshot creation failed.');
+        throw new snapshotCodes.SNAPSHOT_RESTORE_FAILED();
+      }
       await sleepMillis(5000);
     }
 
@@ -190,6 +196,7 @@ class RestoreSnapshot extends BaseCommand {
     );
     result.startTime = new Date(startTime);
     result.totalseconds = (result.endTime - startTime) / 1000;
+    this.notify('restored', 'Snapshot restored.');
     return result;
   }
 }

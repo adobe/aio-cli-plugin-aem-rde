@@ -67,3 +67,11 @@ E(
   'SNAPSHOT_DELETED',
   'The snapshot is in deleted state, change the state to available before restoring.'
 );
+E(
+  'SNAPSHOT_CREATION_FAILED',
+  'The snapshot failed to be created. Please contact support.'
+);
+E(
+  'SNAPSHOT_RESTORE_FAILED',
+  'The snapshot failed to be restored. Please try again. When this still happens, reset the RDE and try again. Otherwise contact support.'
+);

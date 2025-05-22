@@ -33,9 +33,11 @@ class ResetCommand extends BaseCommand {
         if (status === 'ready') {
           result.status = 'reset';
           this.doLog(`Environment reset.`);
+          this.notify('reset', 'RDE environment is reset.');
         } else if (status === 'reset_failed') {
           result.status = 'reset_failed';
           this.doLog(`Failed to reset the environment.`);
+          this.notify('reset failed', 'RDE environment failed to reset.');
         }
       } else {
         result.status = 'resetting';
