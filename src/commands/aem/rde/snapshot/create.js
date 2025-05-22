@@ -20,43 +20,160 @@ const {
 const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
 
+const { sleepMillis } = require('../../../../lib/utils');
+const { loadAllArtifacts } = require('../../../../lib/rde-utils');
+
+const Spinnies = require('spinnies');
+
 class CreateSnapshots extends BaseCommand {
   async runCommand(args, flags) {
+    const spinnies = flags.quiet || flags.json ? undefined : new Spinnies();
+    spinnies?.add('spinner-requesting', {
+      text: `Requesting to create snapshot ${args.name} (<1m) ...`,
+    });
+    spinnies?.add('spinner-backend', {
+      text: 'Waiting for backend to pick up the job to create the snapshot (<1min) ...',
+    });
+    spinnies?.add('spinner-create', {
+      text: 'Locking RDE and create the snapshot (2-5m) ...',
+    });
+    spinnies?.add('spinner-restart', {
+      text: 'Unlocking the RDE (1-2m)...',
+    });
+
+    const result = this.jsonResult();
+    const startTime = Date.now();
+    result.startTime = startTime;
+
     let response;
     try {
-      this.spinnerStart(`Creating snapshot ${args.name}...`);
       response = await this.withCloudSdk((cloudSdkAPI) =>
         cloudSdkAPI.createSnapshot(args.name, {
           description: flags.description,
         })
       );
     } catch (err) {
-      this.spinnerStop();
+      spinnies?.stopAll('fail');
       throwAioError(
         err,
         new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
       );
     }
-    this.spinnerStop();
     if (response?.status === 200 || response?.status === 201) {
-      this.doLog(
-        chalk.green(
-          `Snapshot ${args.name} created successfully. Use 'aio aem rde snapshot' to view or 'aio aem rde snapshot apply ${args.name}' to apply it on the RDE.`
-        )
-      );
+      const took = this.formatElapsedTime(startTime, Date.now());
+      spinnies?.succeed('spinner-requesting', {
+        text: `Requested to create the snapshot successfully. (${took})`,
+        successColor: 'greenBright',
+      });
     } else if (response?.status === 400) {
+      spinnies?.stopAll('fail');
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
+      spinnies?.stopAll('fail');
       throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
     } else if (response?.status === 409) {
+      spinnies?.stopAll('fail');
       throw new snapshotCodes.ALREADY_EXISTS();
     } else if (response?.status === 503) {
+      spinnies?.stopAll('fail');
       throw new snapshotCodes.INVALID_STATE();
     } else if (response?.status === 507) {
+      spinnies?.stopAll('fail');
       throw new snapshotCodes.SNAPSHOT_LIMIT();
     } else {
+      spinnies?.stopAll('fail');
       throw new internalCodes.UNKNOWN();
     }
+
+    let lastProgress = -1;
+    result.waitingforbackend = new Date();
+
+    while (lastProgress < 100) {
+      let progressResponse;
+      try {
+        progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
+          cloudSdkAPI.getSnapshotProgress('create', args.name)
+        );
+      } catch (err) {
+        result.error = err;
+        spinnies?.stopAll('fail');
+        throwAioError(
+          err,
+          new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+        );
+      }
+
+      if (progressResponse.status === 200) {
+        const json = await progressResponse.json();
+        lastProgress = json?.progressPercentage;
+      } else if (progressResponse.status === 404) {
+        spinnies?.stopAll('fail');
+        throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+      } else {
+        spinnies?.stopAll('fail');
+        this.doLog('Could not get the progress of the snapshot creation.');
+        spinnies?.stopAll('fail');
+        throw new internalCodes.UNKNOWN();
+      }
+
+      if (lastProgress > 0 && !result.processnigsnapshotstarted) {
+        const took = this.formatElapsedTime(
+          result.waitingforbackend,
+          Date.now()
+        );
+        spinnies?.succeed('spinner-backend', {
+          text: `Backend picked up the job to create the snapshot. (${took})`,
+          successColor: 'greenBright',
+        });
+        result.processnigsnapshotstarted = new Date();
+      }
+      await sleepMillis(5000);
+    }
+
+    if (lastProgress === 100) {
+      const took = this.formatElapsedTime(
+        result.processnigsnapshotstarted,
+        Date.now()
+      );
+      spinnies?.succeed('spinner-create', {
+        text: `Created snapshot successfully. (${took})`,
+        successColor: 'greenBright',
+      });
+    }
+    result.processnigsnapshotended = new Date();
+
+    while (true) {
+      const status = await this.withCloudSdk((cloudSdkAPI) =>
+        loadAllArtifacts(cloudSdkAPI)
+      );
+      if (status.status === 'Ready') {
+        break;
+      }
+      await sleepMillis(10000);
+    }
+
+    const took = this.formatElapsedTime(
+      result.processnigsnapshotended,
+      Date.now()
+    );
+    spinnies?.succeed('spinner-restart', {
+      text: `RDE unlocked successfully. (${took})`,
+      successColor: 'greenBright',
+    });
+
+    this.doLog(
+      chalk.green(
+        `Snapshot ${args.name} created successfully. Check the list of snapshots using the command: 'aio aem rde snapshot'`
+      )
+    );
+
+    result.endTime = Date.now();
+    this.doLog(
+      chalk.yellow(
+        `Total time to create the snapshot: ${this.formatElapsedTime(startTime, result.endTime)}`
+      )
+    );
+    result.totalseconds = (result.endTime - startTime) / 1000;
   }
 }
 

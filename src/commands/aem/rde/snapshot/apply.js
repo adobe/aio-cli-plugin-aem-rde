@@ -28,20 +28,20 @@ const Spinnies = require('spinnies');
 
 class ApplySnapshots extends BaseCommand {
   async runCommand(args, flags) {
-    const spinnies = new Spinnies();
+    const spinnies = flags.quiet || flags.json ? undefined : new Spinnies();
 
     if (!flags.status) {
-      spinnies.add('spinner-requesting', {
+      spinnies?.add('spinner-requesting', {
         text: `Requesting to apply snapshot ${args.name} (<1m) ...`,
       });
     }
-    spinnies.add('spinner-backend', {
+    spinnies?.add('spinner-backend', {
       text: 'Waiting for backend to pick up the job to apply the snapshot (<1min) ...',
     });
-    spinnies.add('spinner-apply', {
+    spinnies?.add('spinner-apply', {
       text: 'Applying snapshot to RDE (2-5m) ...',
     });
-    spinnies.add('spinner-restart', {
+    spinnies?.add('spinner-restart', {
       text: 'Wait for the RDE to restart (5-10m)...',
     });
 
@@ -58,7 +58,7 @@ class ApplySnapshots extends BaseCommand {
         );
       } catch (err) {
         result.error = err;
-        spinnies.stopAll('fail');
+        spinnies?.stopAll('fail');
         throwAioError(
           err,
           new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
@@ -67,11 +67,12 @@ class ApplySnapshots extends BaseCommand {
 
       if (response?.status === 200) {
         const took = this.formatElapsedTime(startTime, Date.now());
-        spinnies.succeed('spinner-requesting', {
-          text: `Requested to apply snapshot successfully. (${took})`,
+        spinnies?.succeed('spinner-requesting', {
+          text: `Requested to apply the snapshot successfully. (${took})`,
           successColor: 'greenBright',
         });
       } else if (response?.status === 400) {
+        spinnies?.stopAll('fail');
         throw new configurationCodes.DIFFERENT_ENV_TYPE();
       } else if (response?.status === 404) {
         const json = await response.json();
@@ -79,18 +80,23 @@ class ApplySnapshots extends BaseCommand {
           json.details ===
           'The requested environment or program does not exist.'
         ) {
+          spinnies?.stopAll('fail');
           throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
         } else if (json.details === 'The requested snapshot does not exist.') {
+          spinnies?.stopAll('fail');
           throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
         } else if (json.details === 'The snapshot is in deleted state.') {
+          spinnies?.stopAll('fail');
           throw new snapshotCodes.SNAPSHOT_DELETED();
         }
       } else if (response?.status === 406) {
+        spinnies?.stopAll('fail');
         throw new snapshotCodes.INVALID_STATE();
       } else if (response?.status === 503) {
+        spinnies?.stopAll('fail');
         throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
       } else {
-        spinnies.stopAll('fail');
+        spinnies?.stopAll('fail');
         throw new internalCodes.UNKNOWN();
       }
     }
@@ -106,7 +112,7 @@ class ApplySnapshots extends BaseCommand {
         );
       } catch (err) {
         result.error = err;
-        spinnies.stopAll('fail');
+        spinnies?.stopAll('fail');
         throwAioError(
           err,
           new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
@@ -117,19 +123,20 @@ class ApplySnapshots extends BaseCommand {
         const json = await progressResponse.json();
         lastProgress = json?.progressPercentage;
       } else if (progressResponse.status === 404) {
+        spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       } else {
-        spinnies.stopAll('fail');
+        spinnies?.stopAll('fail');
         this.doLog('Could not get the progress of the snapshot application.');
         throw new internalCodes.UNKNOWN();
       }
 
-      if (lastProgress > 0) {
+      if (lastProgress > 0 && !result.processnigsnapshotstarted) {
         const took = this.formatElapsedTime(
           result.waitingforbackend,
           Date.now()
         );
-        spinnies.succeed('spinner-backend', {
+        spinnies?.succeed('spinner-backend', {
           text: `Backend picked up the job to apply the snapshot. (${took})`,
           successColor: 'greenBright',
         });
@@ -143,7 +150,7 @@ class ApplySnapshots extends BaseCommand {
         result.processnigsnapshotstarted,
         Date.now()
       );
-      spinnies.succeed('spinner-apply', {
+      spinnies?.succeed('spinner-apply', {
         text: `Applied snapshot to RDE successfully. (${took})`,
         successColor: 'greenBright',
       });
@@ -164,7 +171,7 @@ class ApplySnapshots extends BaseCommand {
       result.processnigsnapshotended,
       Date.now()
     );
-    spinnies.succeed('spinner-restart', {
+    spinnies?.succeed('spinner-restart', {
       text: `RDE restarted successfully. (${took})`,
       successColor: 'greenBright',
     });
