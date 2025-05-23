@@ -108,7 +108,7 @@ class RestoreSnapshot extends BaseCommand {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSnapshotProgress('restore', args.name)
+          cloudSdkAPI.getSnapshotProgress('snapshot_restore', args.name)
         );
       } catch (err) {
         result.error = err;

@@ -92,7 +92,7 @@ class CreateSnapshots extends BaseCommand {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSnapshotProgress('create', args.name)
+          cloudSdkAPI.getSnapshotProgress('snapshot_create', args.name)
         );
       } catch (err) {
         result.error = err;

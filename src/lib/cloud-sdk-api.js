@@ -195,7 +195,7 @@ class CloudSdkAPI {
       action,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doOptions(`${queryString}`);
+    return await this._rdeClient.doGet(`/runtime/status${queryString}`);
   }
 
   async getSnapshots() {
