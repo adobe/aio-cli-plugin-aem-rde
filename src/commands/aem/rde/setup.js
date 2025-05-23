@@ -273,11 +273,11 @@ class SetupCommand extends BaseCommand {
       );
       return;
     } else if (flags['disable-notifications']) {
-      Config.set('rde_enableNotifications', false);
       this.notify(
         'RDE notifictions disabled',
         'You will no longer receive notifications for long running tasks.'
       );
+      Config.set('rde_enableNotifications', false);
       return;
     } else if (flags.show) {
       const orgId = Config.get(CONFIG_ORG);
@@ -462,14 +462,16 @@ Object.assign(SetupCommand, {
       default: false,
     }),
     'enable-notifications': Flags.boolean({
-      description: 'Enables desktop notifications for long-running tasks.',
+      description:
+        'Enables desktop notifications for long-running tasks (global aio config).',
       char: 'e',
       multiple: false,
       required: false,
       default: false,
     }),
     'disable-notifications': Flags.boolean({
-      description: 'Disables desktop notifications for long-running tasks.',
+      description:
+        'Disables desktop notifications for long-running tasks (global aio config).',
       char: 'd',
       multiple: false,
       required: false,
