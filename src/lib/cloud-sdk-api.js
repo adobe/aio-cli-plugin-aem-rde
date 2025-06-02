@@ -395,7 +395,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) { }
+    } catch (err) {}
 
     if (errMessage) {
       switch (errMessage) {
