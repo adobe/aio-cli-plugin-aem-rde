@@ -46,9 +46,9 @@ class ListSnapshots extends BaseCommand {
       throw new configurationCodes.NON_EAP();
     } else if (response.status === 200) {
       const json = await response.json();
-      result.status = json?.status;
+      result.status = response.status;
       this.spinnerStop();
-      if (json?.items?.length === 0) {
+      if (json?.length === 0) {
         this.doLog('There are no snapshots yet.');
       } else {
         result.snapshots = json;

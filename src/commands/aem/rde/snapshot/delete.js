@@ -81,7 +81,7 @@ class DeleteSnapshots extends BaseCommand {
       if (this.flags.force) {
         this.doLog(
           chalk.green(
-            `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to vlaidate its removal.`
+            `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to validate its removal.`
           )
         );
       } else {
