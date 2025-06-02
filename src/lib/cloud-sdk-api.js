@@ -187,12 +187,13 @@ class CloudSdkAPI {
     );
   }
 
-  async getSnapshotProgress(action, snapshotName) {
+  async getSnapshotProgress(action, snapshotName, actionid) {
     const params = {
       programId: this.programId,
       environmentId: this.environmentId,
       'snapshot-name': snapshotName,
       action,
+      actionid,
     };
     const queryString = this.createUrlQueryStr(params);
     return await this._rdeClient.doGet(`/runtime/status${queryString}`);
@@ -394,7 +395,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) {}
+    } catch (err) { }
 
     if (errMessage) {
       switch (errMessage) {

@@ -42,7 +42,9 @@ class ListSnapshots extends BaseCommand {
       this.spinnerStop();
     }
 
-    if (response.status === 200) {
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response.status === 200) {
       const json = await response.json();
       result.status = json?.status;
       this.spinnerStop();

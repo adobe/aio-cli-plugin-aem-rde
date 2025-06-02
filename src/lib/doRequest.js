@@ -33,7 +33,8 @@ class DoRequest {
       (response) =>
         response &&
         ((response.status >= 200 && response.status < 300) ||
-          response.status === 404),
+          response.status === 404 ||
+          response.status === 451), // 451 Unavailable For Legal Reasons, EAP early access),
       1,
       5
     );

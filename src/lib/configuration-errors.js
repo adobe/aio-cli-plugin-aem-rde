@@ -107,3 +107,7 @@ E(
   'PROGRAM_OR_ENVIRONMENT_NOT_FOUND',
   'The environment or program does not exist'
 );
+E(
+  'NON_EAP',
+  'The feature is part of the EAP program and not available for general use. Please contact your Adobe representative for more information on how to join the early access program.'
+);

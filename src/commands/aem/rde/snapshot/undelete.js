@@ -35,7 +35,9 @@ class UndeleteSnapshots extends BaseCommand {
       );
     }
     this.spinnerStop();
-    if (response?.status === 200) {
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response?.status === 200) {
       this.doLog(
         chalk.green(
           `Snapshot ${args.name} undeleted successfully. Use 'aio aem rde snapshot' to view its updated state. Use 'aio aem rde snapshot restore ${args.name}' to restore it on the RDE.`

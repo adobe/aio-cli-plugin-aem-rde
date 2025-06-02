@@ -48,57 +48,58 @@ class RestoreSnapshot extends BaseCommand {
     const result = this.jsonResult();
     const startTime = Date.now();
     result.startTime = startTime;
-    if (!flags.status) {
-      let response;
-      try {
-        response = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.restoreSnapshot(args.name, {
-            'only-mutable-content': flags['only-mutable-content'],
-          })
-        );
-      } catch (err) {
-        result.error = err;
+    let response;
+    try {
+      response = await this.withCloudSdk((cloudSdkAPI) =>
+        cloudSdkAPI.restoreSnapshot(args.name, {
+          'only-mutable-content': flags['only-mutable-content'],
+        })
+      );
+    } catch (err) {
+      result.error = err;
+      spinnies?.stopAll('fail');
+      throwAioError(
+        err,
+        new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
+      );
+    }
+    let actionid;
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response?.status === 200) {
+      const json = await response.json();
+      actionid = json?.actionid;
+      const took = this.formatElapsedTime(startTime, Date.now());
+      spinnies?.succeed('spinner-requesting', {
+        text: `Requested to restore the snapshot successfully. (${took})`,
+        successColor: 'greenBright',
+      });
+    } else if (response?.status === 400) {
+      spinnies?.stopAll('fail');
+      throw new configurationCodes.DIFFERENT_ENV_TYPE();
+    } else if (response?.status === 404) {
+      const json = await response.json();
+      if (
+        json.details === 'The requested environment or program does not exist.'
+      ) {
         spinnies?.stopAll('fail');
-        throwAioError(
-          err,
-          new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
-        );
+        throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
+      } else if (json.details === 'The requested snapshot does not exist.') {
+        spinnies?.stopAll('fail');
+        throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
+      } else if (json.details === 'The snapshot is in deleted state.') {
+        spinnies?.stopAll('fail');
+        throw new snapshotCodes.SNAPSHOT_DELETED();
       }
-
-      if (response?.status === 200) {
-        const took = this.formatElapsedTime(startTime, Date.now());
-        spinnies?.succeed('spinner-requesting', {
-          text: `Requested to restore the snapshot successfully. (${took})`,
-          successColor: 'greenBright',
-        });
-      } else if (response?.status === 400) {
-        spinnies?.stopAll('fail');
-        throw new configurationCodes.DIFFERENT_ENV_TYPE();
-      } else if (response?.status === 404) {
-        const json = await response.json();
-        if (
-          json.details ===
-          'The requested environment or program does not exist.'
-        ) {
-          spinnies?.stopAll('fail');
-          throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
-        } else if (json.details === 'The requested snapshot does not exist.') {
-          spinnies?.stopAll('fail');
-          throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
-        } else if (json.details === 'The snapshot is in deleted state.') {
-          spinnies?.stopAll('fail');
-          throw new snapshotCodes.SNAPSHOT_DELETED();
-        }
-      } else if (response?.status === 406) {
-        spinnies?.stopAll('fail');
-        throw new snapshotCodes.INVALID_STATE();
-      } else if (response?.status === 503) {
-        spinnies?.stopAll('fail');
-        throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
-      } else {
-        spinnies?.stopAll('fail');
-        throw new internalCodes.UNKNOWN();
-      }
+    } else if (response?.status === 406) {
+      spinnies?.stopAll('fail');
+      throw new snapshotCodes.INVALID_STATE();
+    } else if (response?.status === 503) {
+      spinnies?.stopAll('fail');
+      throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
+    } else {
+      spinnies?.stopAll('fail');
+      throw new internalCodes.UNKNOWN();
     }
 
     let lastProgress = -1;
@@ -108,7 +109,11 @@ class RestoreSnapshot extends BaseCommand {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSnapshotProgress('snapshot_restore', args.name)
+          cloudSdkAPI.getSnapshotProgress(
+            'snapshot_restore',
+            args.name,
+            actionid
+          )
         );
       } catch (err) {
         result.error = err;
@@ -214,13 +219,6 @@ Object.assign(RestoreSnapshot, {
   flags: {
     'only-mutable-content': Flags.boolean({
       description: 'Restores the mutable content only.',
-      multiple: false,
-      required: false,
-      default: false,
-    }),
-    status: Flags.boolean({
-      description: 'Checks the progress of the snapshot restore.',
-      char: 's',
       multiple: false,
       required: false,
       default: false,

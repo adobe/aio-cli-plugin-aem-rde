@@ -45,7 +45,9 @@ class DeleteSnapshots extends BaseCommand {
       this.spinnerStop();
     }
 
-    if (response.status === 200) {
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response.status === 200) {
       const json = await response.json();
       this.spinnerStop();
       if (json?.items?.length === 0) {
@@ -73,7 +75,9 @@ class DeleteSnapshots extends BaseCommand {
       );
     }
     this.spinnerStop();
-    if (response?.status === 200 || response?.status === 201) {
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response?.status === 200 || response?.status === 201) {
       if (this.flags.force) {
         this.doLog(
           chalk.green(

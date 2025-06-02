@@ -59,7 +59,12 @@ class CreateSnapshots extends BaseCommand {
         new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
       );
     }
-    if (response?.status === 200 || response?.status === 201) {
+    let actionid;
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    } else if (response?.status === 200 || response?.status === 201) {
+      const json = await response.json();
+      actionid = json?.actionid;
       const took = this.formatElapsedTime(startTime, Date.now());
       spinnies?.succeed('spinner-requesting', {
         text: `Requested to create the snapshot successfully. (${took})`,
@@ -92,7 +97,11 @@ class CreateSnapshots extends BaseCommand {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.getSnapshotProgress('snapshot_create', args.name)
+          cloudSdkAPI.getSnapshotProgress(
+            'snapshot_create',
+            args.name,
+            actionid
+          )
         );
       } catch (err) {
         result.error = err;
