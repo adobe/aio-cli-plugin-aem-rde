@@ -52,7 +52,7 @@ class ListSnapshots extends BaseCommand {
         this.doLog('There are no snapshots yet.');
       } else {
         result.snapshots = json;
-        this.logInTableFormat(json);
+        this.logInTableFormat(json, flags);
       }
     } else if (response?.status === 400) {
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
@@ -64,7 +64,7 @@ class ListSnapshots extends BaseCommand {
     return result;
   }
 
-  logInTableFormat(items) {
+  logInTableFormat(items, flags) {
     // Helper to format bytes to MB or GB
     function formatSize(bytes) {
       if (typeof bytes !== 'number' || isNaN(bytes)) return '';
@@ -78,13 +78,21 @@ class ListSnapshots extends BaseCommand {
       return bytes + ' B';
     }
 
-    const mappedItems = items.map((item) => {
+    let mappedItems = items.map((item) => {
       const sizeBytes = item.size?.total_size ?? item.size;
       return {
         ...item,
         size: formatSize(sizeBytes),
       };
     });
+
+    if (flags.usage) {
+      mappedItems = mappedItems.sort((a, b) => {
+        const usageA = a.usage ?? 0;
+        const usageB = b.usage ?? 0;
+        return usageB - usageA; // Sort by usage, most used first
+      });
+    }
 
     cli.table(
       mappedItems,
