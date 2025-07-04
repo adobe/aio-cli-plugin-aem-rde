@@ -81,9 +81,12 @@ describe('CreateSnapshot', function () {
       }),
     });
 
-    const getSnapshotProgressResponse = (percentages = [20, 100]) => {
+    const getSnapshotProgressResponse = (
+      percentages = [20, 100],
+      status = 200
+    ) => {
       const result = {
-        status: 200,
+        status,
         json: async () => ({
           action: 'create-snapshot',
           progressPercentage: percentages[progressCounter],
@@ -206,6 +209,38 @@ describe('CreateSnapshot', function () {
         expect(err.message).to.contain(
           'The snapshot failed to be created. Please contact support.'
         );
+      }
+    });
+
+    it('catches 404 on progress response', async function () {
+      prepareStubs({
+        createSnapshot: stub(stubbedCreateResponseSuccess),
+        getArtifacts: stub(getArtifactsResponse),
+        getSnapshotProgress: stub(getSnapshotProgressResponse([20, 50], 404)),
+      });
+
+      try {
+        await command.runCommand([], {});
+        assert.fail('Expected command to throw an error');
+      } catch (err) {
+        expect(err).to.be.an('error');
+        expect(err.message).to.contain('The snapshot does not exist');
+      }
+    });
+
+    it('catches unknown on progress response', async function () {
+      prepareStubs({
+        createSnapshot: stub(stubbedCreateResponseSuccess),
+        getArtifacts: stub(getArtifactsResponse),
+        getSnapshotProgress: stub(getSnapshotProgressResponse([20, 50], 500)),
+      });
+
+      try {
+        await command.runCommand([], {});
+        assert.fail('Expected command to throw an error');
+      } catch (err) {
+        expect(err).to.be.an('error');
+        expect(err.message).to.contain('An unknown error occurred.');
       }
     });
 
