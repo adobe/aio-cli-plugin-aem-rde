@@ -106,6 +106,7 @@ describe('CreateSnapshot', function () {
     };
 
     const stub = (response) => sinon.stub().resolves(response);
+    const stubReject = (message) => sinon.stub().rejects(message);
 
     const prepareStubs = (cloudSdkMethods) => {
       command = new CreateSnapshot([], {}, 10);
@@ -192,6 +193,40 @@ describe('CreateSnapshot', function () {
           obj.successColor === 'greenBright'
       );
     });
+
+    it('catches a withCloudSdk exception - createSnapshot', async function () {
+      prepareStubs({
+        createSnapshot: stubReject('Internal error'),
+      });
+
+      try {
+        await command.runCommand([], {});
+        assert.fail('Expected command to throw an error');
+      } catch (err) {
+        expect(err).to.be.an('error');
+        expect(err.message).to.contain(
+          'There was an unexpected error when running a snapshot command.'
+        );
+      }
+    });
+
+    it('catches a withCloudSdk exception - getSnapshotProgress', async function () {
+      prepareStubs({
+        createSnapshot: stub(stubbedCreateResponseSuccess),
+        getSnapshotProgress: stubReject('Internal error'),
+      });
+
+      try {
+        await command.runCommand([], {});
+        assert.fail('Expected command to throw an error');
+      } catch (err) {
+        expect(err).to.be.an('error');
+        expect(err.message).to.contain(
+          'There was an unexpected error when running a snapshot command.'
+        );
+      }
+    });
+
 
     it('calls the appropriate api and shows failures', async function () {
       const checkError = async (statusCode, expectedMessage) => {
