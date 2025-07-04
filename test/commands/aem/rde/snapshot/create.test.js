@@ -59,13 +59,22 @@ describe('CreateSnapshot', function () {
       stopAllSpinniesSpy,
       succeedSpinniesSpy;
 
-    const stubbedCreateResponse = {
+    const stubbedCreateResponseSuccess = {
       status: 200,
       json: async () => ({
         actionid: 1234123,
         success: true,
       }),
     };
+
+    const stubbedCreateResponseFailure = (status = 400) => ({
+      status,
+      json: async () => ({
+        actionid: 1234123,
+        success: false,
+        error: 'Failed to create snapshot',
+      }),
+    });
 
     let counter = 0;
     const getSnapshotProgressResponse = {
@@ -98,13 +107,13 @@ describe('CreateSnapshot', function () {
 
     const stub = (response) => sinon.stub().resolves(response);
 
-    beforeEach(() => {
+    const prepareStubs = (cloudSdkMethods) => {
       command = new CreateSnapshot([], {}, 10);
-      [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, command, {
-        createSnapshot: stub(stubbedCreateResponse),
-        getSnapshotProgress: stub(getSnapshotProgressResponse),
-        getArtifacts: stub(getArtifactsResponse),
-      });
+      [command, cloudSdkApiStub] = createCloudSdkAPIStub(
+        sinon,
+        command,
+        cloudSdkMethods
+      );
       const { addSpy, stopAllSpy, succeedSpy } = createSpinniesStub(
         sinon,
         command
@@ -113,13 +122,19 @@ describe('CreateSnapshot', function () {
       stopAllSpinniesSpy = stopAllSpy;
       succeedSpinniesSpy = succeedSpy;
       setupLogCapturing(sinon, command);
-    });
+    };
 
     afterEach(() => {
       sinon.restore();
     });
 
-    it('returns result object with status and snapshots', async function () {
+    it('calls the appropriate api and shows success spinners if the result is good.', async function () {
+      prepareStubs({
+        createSnapshot: stub(stubbedCreateResponseSuccess),
+        getSnapshotProgress: stub(getSnapshotProgressResponse),
+        getArtifacts: stub(getArtifactsResponse),
+      });
+
       const result = await command.runCommand([], {});
 
       expect(result.totalseconds).to.be.a('number');
@@ -176,6 +191,37 @@ describe('CreateSnapshot', function () {
           obj.text.startsWith('Created snapshot successfully.') &&
           obj.successColor === 'greenBright'
       );
+    });
+
+    it('calls the appropriate api and shows failures', async function () {
+      const checkError = async (statusCode, expectedMessage) => {
+        prepareStubs({
+          createSnapshot: stub(stubbedCreateResponseFailure(statusCode)),
+          getSnapshotProgress: stub(getSnapshotProgressResponse),
+          getArtifacts: stub(getArtifactsResponse),
+        });
+        try {
+          await command.runCommand([], {});
+          assert.fail('Expected command to throw an error');
+        } catch (err) {
+          expect(err).to.be.an('error');
+          expect(err.message).to.include(expectedMessage);
+        }
+        expect(stopAllSpinniesSpy.callCount).to.equal(1);
+      };
+
+      await checkError(400, 'The given environment is not an RDE');
+      await checkError(404, 'The environment or program does not exist');
+      await checkError(409, 'A snapshot with the given name already exists');
+      await checkError(
+        503,
+        'The RDE is not in a state where a snapshot can be created or restored.'
+      );
+      await checkError(
+        507,
+        'Reached the maximum number or diskspace of snapshots. Remove some snapshots and try again'
+      );
+      await checkError(500, 'An unknown error occurred.');
     });
   });
 });
