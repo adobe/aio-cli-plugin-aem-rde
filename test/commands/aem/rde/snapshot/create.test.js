@@ -54,10 +54,15 @@ function setupLogCapturing(sinon, command) {
 describe('CreateSnapshot', function () {
   describe('#runCommand', function () {
     let command,
+      progressCounter,
       cloudSdkApiStub,
       addSpinniesSpy,
       stopAllSpinniesSpy,
       succeedSpinniesSpy;
+
+    beforeEach(function () {
+      progressCounter = 0;
+    });
 
     const stubbedCreateResponseSuccess = {
       status: 200,
@@ -76,25 +81,17 @@ describe('CreateSnapshot', function () {
       }),
     });
 
-    let counter = 0;
-    const getSnapshotProgressResponse = {
-      status: 200,
-      json: async () => {
-        if (counter === 0) {
-          counter++;
-          return {
-            action: 'create-snapshot',
-            progressPercentage: 20,
-            snapshotName: 'snapshot-001',
-          };
-        } else {
-          return {
-            action: 'create-snapshot',
-            progressPercentage: 100,
-            snapshotName: 'snapshot-001',
-          };
-        }
-      },
+    const getSnapshotProgressResponse = (percentages = [20, 100]) => {
+      const result = {
+        status: 200,
+        json: async () => ({
+          action: 'create-snapshot',
+          progressPercentage: percentages[progressCounter],
+          snapshotName: 'snapshot-001',
+        }),
+      };
+      progressCounter++;
+      return result;
     };
 
     const getArtifactsResponse = {
@@ -132,7 +129,7 @@ describe('CreateSnapshot', function () {
     it('calls the appropriate api and shows success spinners if the result is good.', async function () {
       prepareStubs({
         createSnapshot: stub(stubbedCreateResponseSuccess),
-        getSnapshotProgress: stub(getSnapshotProgressResponse),
+        getSnapshotProgress: stub(getSnapshotProgressResponse()),
         getArtifacts: stub(getArtifactsResponse),
       });
 
@@ -194,6 +191,24 @@ describe('CreateSnapshot', function () {
       );
     });
 
+    it('catches a bad progress result (-2)', async function () {
+      prepareStubs({
+        createSnapshot: stub(stubbedCreateResponseSuccess),
+        getArtifacts: stub(getArtifactsResponse),
+        getSnapshotProgress: stub(getSnapshotProgressResponse([20, -2])),
+      });
+
+      try {
+        await command.runCommand([], {});
+        assert.fail('Expected command to throw an error');
+      } catch (err) {
+        expect(err).to.be.an('error');
+        expect(err.message).to.contain(
+          'The snapshot failed to be created. Please contact support.'
+        );
+      }
+    });
+
     it('catches a withCloudSdk exception - createSnapshot', async function () {
       prepareStubs({
         createSnapshot: stubReject('Internal error'),
@@ -227,12 +242,11 @@ describe('CreateSnapshot', function () {
       }
     });
 
-
     it('calls the appropriate api and shows failures', async function () {
       const checkError = async (statusCode, expectedMessage) => {
         prepareStubs({
           createSnapshot: stub(stubbedCreateResponseFailure(statusCode)),
-          getSnapshotProgress: stub(getSnapshotProgressResponse),
+          getSnapshotProgress: stub(getSnapshotProgressResponse()),
           getArtifacts: stub(getArtifactsResponse),
         });
         try {
