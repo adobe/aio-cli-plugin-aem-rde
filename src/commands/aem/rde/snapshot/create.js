@@ -26,8 +26,13 @@ const { loadAllArtifacts } = require('../../../../lib/rde-utils');
 const Spinnies = require('spinnies');
 
 class CreateSnapshots extends BaseCommand {
+  constructor(argv, config, sleepTime = 5000) {
+    super(argv, config);
+    this.sleepTime = sleepTime;
+  }
+
   async runCommand(args, flags) {
-    const spinnies = flags.quiet || flags.json ? undefined : new Spinnies();
+    const spinnies = this.getSpinnies(flags);
     spinnies?.add('spinner-requesting', {
       text: `Requesting to create snapshot ${args.name} (<1m) ...`,
     });
@@ -143,7 +148,7 @@ class CreateSnapshots extends BaseCommand {
         throw new snapshotCodes.SNAPSHOT_CREATION_FAILED();
       }
 
-      await sleepMillis(5000);
+      await sleepMillis(this.sleepTime);
     }
 
     if (lastProgress === 100) {
@@ -165,7 +170,7 @@ class CreateSnapshots extends BaseCommand {
       if (status.status === 'Ready') {
         break;
       }
-      await sleepMillis(10000);
+      await sleepMillis(this.sleepTime * 2);
     }
 
     const took = this.formatElapsedTime(
@@ -193,6 +198,10 @@ class CreateSnapshots extends BaseCommand {
     result.startTime = new Date(startTime);
     this.notify('restored', 'Snapshot created.');
     return result;
+  }
+
+  getSpinnies(flags) {
+    return flags.quiet || flags.json ? undefined : new Spinnies();
   }
 }
 
