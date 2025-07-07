@@ -58,6 +58,15 @@ describe('ListSnapshots', function () {
           created: '2024-06-03T12:00:00Z',
           lastUsed: '2024-06-04T12:00:00Z',
         },
+        {
+          name: 'snap3',
+          description: 'desc3',
+          usage: 2,
+          size: { total_size: 5012 },
+          state: 'AVAILABLE',
+          created: '2024-06-03T12:00:00Z',
+          lastUsed: '2024-06-04T12:00:00Z',
+        },
       ],
     };
 
@@ -86,8 +95,10 @@ describe('ListSnapshots', function () {
       const output = command.log.getCapturedLogOutput();
       expect(output).to.include('snap1');
       expect(output).to.include('snap2');
+      expect(output).to.include('snap3');
       expect(output).to.include('1.00 MB');
       expect(output).to.include('1.00 GB');
+      expect(output).to.include('4.89 KB');
     });
 
     it('logs "There are no snapshots yet." for empty items', async function () {
