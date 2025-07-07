@@ -23,13 +23,13 @@ const chalk = require('chalk');
 class DeleteSnapshots extends BaseCommand {
   async runCommand(args, flags) {
     if (flags.all) {
-      this.deleteAllSnapshots();
+      await this.deleteAllSnapshots(flags.force);
     } else {
-      this.deleteSnapshot(args.name, flags.force);
+      await this.deleteSnapshot(args.name, flags.force);
     }
   }
 
-  async deleteAllSnapshots() {
+  async deleteAllSnapshots(force) {
     let response;
     try {
       this.spinnerStart('fetching all snapshots');
@@ -53,7 +53,9 @@ class DeleteSnapshots extends BaseCommand {
       if (json?.items?.length === 0) {
         this.doLog('There are no snapshots yet.');
       } else {
-        json?.forEach((e) => this.deleteSnapshot(e.name, this.flags.force));
+        const promises =
+          json?.map((e) => this.deleteSnapshot(e.name, force)) || [];
+        await Promise.all(promises);
       }
     } else {
       throw new internalCodes.UNKNOWN();
@@ -78,7 +80,7 @@ class DeleteSnapshots extends BaseCommand {
     if (response?.status === 451) {
       throw new configurationCodes.NON_EAP();
     } else if (response?.status === 200 || response?.status === 201) {
-      if (this.flags.force) {
+      if (force) {
         this.doLog(
           chalk.green(
             `Snapshot ${name} deleted successfully. Use 'aio aem rde snapshot' to validate its removal.`
