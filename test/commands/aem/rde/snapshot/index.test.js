@@ -4,6 +4,7 @@ const ListSnapshots = require('../../../../../src/commands/aem/rde/snapshot');
 const internalErrors = require('../../../../../src/lib/internal-errors');
 const configErrors = require('../../../../../src/lib/configuration-errors');
 const errorHelpers = require('../../../../../src/lib/error-helpers');
+const { snapshots, response } = require('./snapshots.mocks');
 
 /**
  *
@@ -37,30 +38,6 @@ describe('ListSnapshots', function () {
   describe('#runCommand', function () {
     let command, cloudSdkApiStub;
 
-    const stubbedSnapshotsResponse = {
-      status: 200,
-      json: async () => [
-        {
-          name: 'snap1',
-          description: 'desc1',
-          usage: 1,
-          size: { total_size: 1048576 },
-          state: 'AVAILABLE',
-          created: '2024-06-01T12:00:00Z',
-          lastUsed: '2024-06-02T12:00:00Z',
-        },
-        {
-          name: 'snap2',
-          description: 'desc2',
-          usage: 2,
-          size: { total_size: 1073741824 },
-          state: 'DELETED',
-          created: '2024-06-03T12:00:00Z',
-          lastUsed: '2024-06-04T12:00:00Z',
-        },
-      ],
-    };
-
     const stubbedEmptySnapshotsResponse = {
       status: 200,
       json: async () => [],
@@ -69,7 +46,7 @@ describe('ListSnapshots', function () {
     beforeEach(() => {
       command = new ListSnapshots([], {});
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, command, {
-        getSnapshots: sinon.stub().resolves(stubbedSnapshotsResponse),
+        getSnapshots: sinon.stub().resolves(snapshots),
       });
       sinon.stub(command, 'spinnerStart');
       sinon.stub(command, 'spinnerStop');
