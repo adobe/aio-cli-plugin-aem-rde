@@ -583,17 +583,33 @@ class CloudSdkAPI {
     }
   }
 
-  async resetEnv(wait) {
+  async resetEnv(wait, keepMutableContent) {
     await this._checkRDE();
-    await this._waitForCMStatus();
-    await this._resetEnv();
-    if (wait) {
-      return await this._waitForCMStatus();
-    }
-  }
 
-  async _resetEnv() {
-    await this._cloudManagerClient.doPut(`/reset`);
+    // later we should fold everything into the RDE API and not use the CM API
+    if (keepMutableContent) {
+      const result = await this._rdeClient.doPost(`/runtime/reset`, {
+        keepMutableContent: 'true',
+      });
+
+      if(result.status !== 201) {
+        throw await this._createError(response);
+      }
+
+      const namespace = await this._getNamespace();
+      const tries = 3;
+      for (let i = 0; i < tries; i++) {
+        await sleepSeconds(5);
+        await this._waitForEnvRunning(namespace);
+      }
+
+    } else {
+      await this._waitForCMStatus();
+      await this._cloudManagerClient.doPut(`/reset`);
+      if (wait) {
+        return await this._waitForCMStatus();
+      }
+    }
   }
 
   async cleanEnv(wait, params) {

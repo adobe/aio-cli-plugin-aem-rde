@@ -26,7 +26,7 @@ class ResetCommand extends BaseCommand {
       this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('resetting environment');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.resetEnv(flags.wait)
+          cloudSdkAPI.resetEnv(flags.wait, flags['keep-mutable-content'])
       );
       this.spinnerStop();
       if (flags.wait) {
@@ -63,6 +63,12 @@ Object.assign(ResetCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
+    'keep-mutable-content': Flags.boolean({
+      description: 'Reset the RDE but keep mutable content.',
+      required: false,
+      default: false,
+      multiple: false,
+    }),
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',
