@@ -26,7 +26,7 @@ class ResetCommand extends BaseCommand {
       this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
       this.spinnerStart('resetting environment');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
-          cloudSdkAPI.resetEnv(flags.wait, flags['keep-mutable-content'])
+        cloudSdkAPI.resetEnv(flags.wait, flags['keep-mutable-content'])
       );
       this.spinnerStop();
       if (flags.wait) {

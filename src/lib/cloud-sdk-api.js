@@ -593,7 +593,7 @@ class CloudSdkAPI {
       });
 
       if (result.status !== 201) {
-        throw await this._createError(response);
+        throw await this._createError(result);
       }
 
       const namespace = await this._getNamespace();
