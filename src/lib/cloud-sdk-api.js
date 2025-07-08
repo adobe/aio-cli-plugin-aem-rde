@@ -592,7 +592,7 @@ class CloudSdkAPI {
         'keep-mutable-content': 'true',
       });
 
-      if(result.status !== 201) {
+      if (result.status !== 201) {
         throw await this._createError(response);
       }
 
@@ -602,7 +602,6 @@ class CloudSdkAPI {
         await sleepSeconds(5);
         await this._waitForEnvRunning(namespace);
       }
-
     } else {
       await this._waitForCMStatus();
       await this._cloudManagerClient.doPut(`/reset`);
