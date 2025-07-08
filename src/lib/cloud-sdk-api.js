@@ -589,7 +589,7 @@ class CloudSdkAPI {
     // later we should fold everything into the RDE API and not use the CM API
     if (keepMutableContent) {
       const result = await this._rdeClient.doPost(`/runtime/reset`, {
-        keepMutableContent: 'true',
+        'keep-mutable-content': 'true',
       });
 
       if(result.status !== 201) {
