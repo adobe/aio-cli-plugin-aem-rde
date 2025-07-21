@@ -112,8 +112,11 @@ describe('DeleteSnapshots', function () {
 
       if (isSingle) {
         assert.equal(cloudSdkApiStub.deleteSnapshot.callCount, 1);
-      }else{
-        assert.equal(cloudSdkApiStub.deleteSnapshot.callCount, snapshots.length);
+      } else {
+        assert.equal(
+          cloudSdkApiStub.deleteSnapshot.callCount,
+          snapshots.length
+        );
       }
 
       const output = command.log.getCapturedLogOutput();
