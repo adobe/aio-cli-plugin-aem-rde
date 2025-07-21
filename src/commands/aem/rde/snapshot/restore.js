@@ -27,7 +27,6 @@ const { loadAllArtifacts } = require('../../../../lib/rde-utils');
 const Spinnies = require('spinnies');
 
 class RestoreSnapshot extends BaseCommand {
-
   constructor(argv, config, sleepTime = 5000) {
     super(argv, config);
     this.sleepTime = sleepTime;
