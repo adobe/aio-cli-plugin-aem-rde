@@ -24,9 +24,18 @@ class ResetCommand extends BaseCommand {
     try {
       const result = this.jsonResult();
       this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      this.spinnerStart('resetting environment');
+      this.spinnerStart(
+        'resetting environment ...  ' +
+          flags['keep-mutable-content'] +
+          ' ' +
+          flags.force
+      );
       const status = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.resetEnv(flags.wait, flags['keep-mutable-content'])
+        cloudSdkAPI.resetEnv(
+          flags.wait,
+          flags['keep-mutable-content'],
+          flags.force
+        )
       );
       this.spinnerStop();
       if (flags.wait) {
@@ -68,6 +77,14 @@ Object.assign(ResetCommand, {
       required: false,
       default: false,
       multiple: false,
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      multiple: false,
+      required: false,
+      default: false,
+      description:
+        'Force resets the RDE, not re-using a previously generated base repository. Can be used in case of issues but takes longer.',
     }),
     wait: Flags.boolean({
       description:

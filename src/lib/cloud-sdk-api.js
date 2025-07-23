@@ -239,13 +239,14 @@ class CloudSdkAPI {
   }
 
   async restoreSnapshot(name, params) {
-    params = {
-      ...params,
+    const queryString = this.createUrlQueryStr({
       programId: this.programId,
       environmentId: this.environmentId,
-    };
-    const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(`/${name}/restore${queryString}`);
+    });
+    return await this._snapshotClient.doPost(
+      `/${name}/restore${queryString}`,
+      params
+    );
   }
 
   async getLogs(id) {
@@ -583,13 +584,14 @@ class CloudSdkAPI {
     }
   }
 
-  async resetEnv(wait, keepMutableContent) {
+  async resetEnv(wait, keepMutableContent, force) {
     await this._checkRDE();
 
     // later we should fold everything into the RDE API and not use the CM API
-    if (keepMutableContent) {
+    if (keepMutableContent || force) {
       const result = await this._rdeClient.doPost(`/runtime/reset`, {
-        'keep-mutable-content': 'true',
+        'keep-mutable-content': keepMutableContent,
+        force,
       });
 
       if (result.status !== 201) {

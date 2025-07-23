@@ -313,11 +313,10 @@ describe('RestoreSnapshot', function () {
       );
 
       await checkError(
-          406,
-          '',
-          'The RDE is not in a state where a snapshot can be created or restored.'
+        406,
+        '',
+        'The RDE is not in a state where a snapshot can be created or restored.'
       );
-
 
       await checkError(
         503,
