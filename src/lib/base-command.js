@@ -174,9 +174,10 @@ class BaseCommand extends Command {
    *
    */
   async getTokenAndKey() {
-    // TODO - support context flag
     let contextName =
-      (await context.getCurrent()) || 'aio-cli-plugin-cloudmanager';
+      this.flags?.context ||
+      (await context.getCurrent()) ||
+      'aio-cli-plugin-cloudmanager';
     let contextData = await context.get(contextName);
 
     if (!contextData?.data) {
@@ -324,6 +325,15 @@ class BaseCommand extends Command {
 Object.assign(BaseCommand, {
   description: 'Enable json output for all commands by default.',
   enableJsonFlag: true,
+  flags: {
+    context: Flags.string({
+      aliases: ['ctx', 'imsContextName'],
+      description: 'The IMS context used to retrieve login information',
+      multiple: false,
+      required: false,
+      helpGroup: 'GLOBAL',
+    }),
+  },
 });
 
 module.exports = {
