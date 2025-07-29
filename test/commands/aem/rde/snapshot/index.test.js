@@ -4,7 +4,7 @@ const ListSnapshots = require('../../../../../src/commands/aem/rde/snapshot');
 const internalErrors = require('../../../../../src/lib/internal-errors');
 const configErrors = require('../../../../../src/lib/configuration-errors');
 const errorHelpers = require('../../../../../src/lib/error-helpers');
-const { snapshots, response } = require('./snapshots.mocks');
+const { snapshots, snapshotsResponse } = require('./snapshots.mocks');
 
 /**
  *
@@ -58,6 +58,7 @@ describe('ListSnapshots', function () {
     });
 
     it('calls getSnapshots and logs table output for non-empty items', async function () {
+      cloudSdkApiStub.getSnapshots.resolves(snapshotsResponse);
       await command.runCommand([], {});
       expect(cloudSdkApiStub.getSnapshots.calledOnce).to.be.true;
       const output = command.log.getCapturedLogOutput();
@@ -127,6 +128,7 @@ describe('ListSnapshots', function () {
     });
 
     it('returns result object with status and snapshots', async function () {
+      cloudSdkApiStub.getSnapshots.resolves(snapshotsResponse);
       const result = await command.runCommand([], {});
       expect(result.status).to.equal(200);
       expect(result.snapshots).to.exist;
