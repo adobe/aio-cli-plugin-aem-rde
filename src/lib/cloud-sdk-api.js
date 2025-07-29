@@ -239,13 +239,14 @@ class CloudSdkAPI {
   }
 
   async restoreSnapshot(name, params) {
-    params = {
-      ...params,
+    const queryString = this.createUrlQueryStr({
       programId: this.programId,
       environmentId: this.environmentId,
-    };
-    const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPost(`/${name}/restore${queryString}`);
+    });
+    return await this._snapshotClient.doPost(
+      `/${name}/restore${queryString}`,
+      params
+    );
   }
 
   async getLogs(id) {
@@ -583,17 +584,33 @@ class CloudSdkAPI {
     }
   }
 
-  async resetEnv(wait) {
+  async resetEnv(wait, keepMutableContent, force) {
     await this._checkRDE();
-    await this._waitForCMStatus();
-    await this._resetEnv();
-    if (wait) {
-      return await this._waitForCMStatus();
-    }
-  }
 
-  async _resetEnv() {
-    await this._cloudManagerClient.doPut(`/reset`);
+    // later we should fold everything into the RDE API and not use the CM API
+    if (keepMutableContent || force) {
+      const result = await this._rdeClient.doPost(`/runtime/reset`, {
+        'keep-mutable-content': keepMutableContent,
+        force,
+      });
+
+      if (result.status !== 201) {
+        throw await this._createError(result);
+      }
+
+      const namespace = await this._getNamespace();
+      const tries = 3;
+      for (let i = 0; i < tries; i++) {
+        await sleepSeconds(5);
+        await this._waitForEnvRunning(namespace);
+      }
+    } else {
+      await this._waitForCMStatus();
+      await this._cloudManagerClient.doPut(`/reset`);
+      if (wait) {
+        return await this._waitForCMStatus();
+      }
+    }
   }
 
   async cleanEnv(wait, params) {

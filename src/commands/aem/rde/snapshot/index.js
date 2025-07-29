@@ -18,6 +18,51 @@ const {
   codes: configurationCodes,
 } = require('../../../../lib/configuration-errors');
 
+const DATE_FORMATTER = (val) =>
+  new Date(val).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+// Helper to format bytes to MB or GB
+const BYTE_FORMATTER = (bytes) => {
+  if (typeof bytes !== 'number' || isNaN(bytes)) return '';
+  const kb = 1024;
+  const mb = 1024 * kb;
+  const gb = 1024 * mb;
+  if (bytes >= gb) {
+    return (bytes / gb).toFixed(2) + ' GB';
+  } else if (bytes >= mb) {
+    return (bytes / mb).toFixed(2) + ' MB';
+  } else if (bytes >= kb) {
+    return (bytes / kb).toFixed(2) + ' KB';
+  }
+  return bytes + ' B';
+};
+
+const SIZE_FORMATTER = (size) => {
+  const bytes = size.total_size ?? size;
+  return BYTE_FORMATTER(bytes);
+};
+
+const FORMATTERS = {
+  created: DATE_FORMATTER,
+  lastUsed: DATE_FORMATTER,
+  size: SIZE_FORMATTER,
+};
+
+const formatItem = (row) => {
+  const copy = Object.assign({}, row);
+  const keys = Object.keys(copy);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    if (Object.hasOwn(FORMATTERS, key)) {
+      copy[key] = FORMATTERS[key].call(null, copy[key]);
+    }
+  }
+  return copy;
+};
+
 class ListSnapshots extends BaseCommand {
   constructor(argv, config) {
     super(argv, config);
@@ -65,37 +110,8 @@ class ListSnapshots extends BaseCommand {
   }
 
   logInTableFormat(items, flags) {
-    // Helper to format bytes to MB or GB
-    function formatSize(bytes) {
-      if (typeof bytes !== 'number' || isNaN(bytes)) return '';
-      const gb = 1024 * 1024 * 1024;
-      const mb = 1024 * 1024;
-      if (bytes >= gb) {
-        return (bytes / gb).toFixed(2) + ' GB';
-      } else if (bytes >= mb) {
-        return (bytes / mb).toFixed(2) + ' MB';
-      }
-      return bytes + ' B';
-    }
-
-    let mappedItems = items.map((item) => {
-      const sizeBytes = item.size?.total_size ?? item.size;
-      return {
-        ...item,
-        size: formatSize(sizeBytes),
-      };
-    });
-
-    if (flags.usage) {
-      mappedItems = mappedItems.sort((a, b) => {
-        const usageA = a.usage ?? 0;
-        const usageB = b.usage ?? 0;
-        return usageB - usageA; // Sort by usage, most used first
-      });
-    }
-
     cli.table(
-      mappedItems,
+      items.map(formatItem),
       {
         name: {
           minWidth: 20,
@@ -109,7 +125,10 @@ class ListSnapshots extends BaseCommand {
         created: {},
         lastUsed: { header: 'Last Used' },
       },
-      { printLine: (s) => this.doLog(s, true) }
+      {
+        sort: flags.sort,
+        printLine: (s) => this.doLog(s, true),
+      }
     );
   }
 }
@@ -120,12 +139,13 @@ Object.assign(ListSnapshots, {
   args: [],
   aliases: [],
   flags: {
-    usage: Flags.boolean({
-      description: 'Sorts the snapshots by usage, most used first.',
-      char: 'u',
+    sort: Flags.string({
+      description:
+        'Sort the table by a table header, prefixed by a minus symbol for reverse sorting',
+      char: 's',
       multiple: false,
       required: false,
-      default: false,
+      default: '-Last Used',
     }),
   },
 });

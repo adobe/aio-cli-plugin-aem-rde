@@ -63,8 +63,10 @@ describe('ListSnapshots', function () {
       const output = command.log.getCapturedLogOutput();
       expect(output).to.include('snap1');
       expect(output).to.include('snap2');
+      expect(output).to.include('snap3');
       expect(output).to.include('1.00 MB');
       expect(output).to.include('1.00 GB');
+      expect(output).to.include('4.89 KB');
     });
 
     it('logs "There are no snapshots yet." for empty items', async function () {
