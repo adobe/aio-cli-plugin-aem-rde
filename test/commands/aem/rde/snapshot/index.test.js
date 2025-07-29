@@ -4,7 +4,7 @@ const ListSnapshots = require('../../../../../src/commands/aem/rde/snapshot');
 const internalErrors = require('../../../../../src/lib/internal-errors');
 const configErrors = require('../../../../../src/lib/configuration-errors');
 const errorHelpers = require('../../../../../src/lib/error-helpers');
-const { snapshotsResponse } = require('./snapshots.mocks');
+const { snapshots, response } = require('./snapshots.mocks');
 
 /**
  *
@@ -46,7 +46,7 @@ describe('ListSnapshots', function () {
     beforeEach(() => {
       command = new ListSnapshots([], {});
       [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, command, {
-        getSnapshots: sinon.stub().resolves(snapshotsResponse),
+        getSnapshots: sinon.stub().resolves(snapshots),
       });
       sinon.stub(command, 'spinnerStart');
       sinon.stub(command, 'spinnerStop');
