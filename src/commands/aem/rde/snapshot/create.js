@@ -95,10 +95,12 @@ class CreateSnapshots extends BaseCommand {
       throw new internalCodes.UNKNOWN();
     }
 
+    let currentProgress = -1;
+    let lastProgressChange = new Date();
     let lastProgress = -1;
     result.waitingforbackend = new Date();
 
-    while (lastProgress < 100) {
+    while (currentProgress < 100) {
       let progressResponse;
       try {
         progressResponse = await this.withCloudSdk((cloudSdkAPI) =>
@@ -119,7 +121,8 @@ class CreateSnapshots extends BaseCommand {
 
       if (progressResponse.status === 200) {
         const json = await progressResponse.json();
-        lastProgress = json?.progressPercentage;
+        lastProgress = currentProgress;
+        currentProgress = json?.progressPercentage;
       } else if (progressResponse.status === 404) {
         spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
@@ -130,7 +133,7 @@ class CreateSnapshots extends BaseCommand {
         throw new internalCodes.UNKNOWN();
       }
 
-      if (lastProgress > 0 && !result.processnigsnapshotstarted) {
+      if (currentProgress > 0 && !result.processnigsnapshotstarted) {
         const took = this.formatElapsedTime(
           result.waitingforbackend,
           Date.now()
@@ -148,10 +151,24 @@ class CreateSnapshots extends BaseCommand {
         throw new snapshotCodes.SNAPSHOT_CREATION_FAILED();
       }
 
+      if (currentProgress > lastProgress) {
+        lastProgressChange = new Date();
+      } else if (lastProgressChange.getTime() + 1000 * 60 * 15 < Date.now()) {
+        // If the progress hasn't changed in 15 minutes, we assume the process is stuck.
+        spinnies?.stopAll('fail');
+        this.doLog(
+          chalk.red(
+            'The snapshot creation seems stuck. Either the snapshot is huge and takes a long time, or the backend is not responding. Please monitor snapshot creation using the list of snapshots to check on the state. If the snapshot is stuck for more than an hour, please contact support.'
+          )
+        );
+        this.notify('failed', 'Snapshot creation is stuck.');
+        throw new snapshotCodes.SNAPSHOT_CREATION_STUCK();
+      }
+
       await sleepMillis(this.sleepTime);
     }
 
-    if (lastProgress === 100) {
+    if (currentProgress === 100) {
       const took = this.formatElapsedTime(
         result.processnigsnapshotstarted,
         Date.now()

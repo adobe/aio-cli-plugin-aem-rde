@@ -72,6 +72,10 @@ E(
   'The snapshot failed to be created. Please contact support.'
 );
 E(
+  'SNAPSHOT_CREATION_STUCK',
+  'The snapshot creation seems stuck. Either the snapshot is huge and takes a long time, or the backend is not responding. Please monitor snapshot creation using the list of snapshots to check on the state. If the snapshot is stuck for some hours, please contact support.'
+);
+E(
   'SNAPSHOT_RESTORE_FAILED',
   'The snapshot failed to be restored. Please try again. When this still happens, reset the RDE and try again. Otherwise contact support.'
 );
