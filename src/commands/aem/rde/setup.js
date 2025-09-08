@@ -265,7 +265,21 @@ class SetupCommand extends BaseCommand {
   }
 
   async runCommand(args, flags) {
-    if (flags.show) {
+    if (flags['enable-notifications']) {
+      Config.set('rde_enableNotifications', true);
+      this.notify(
+        'RDE notifictions enabled',
+        'Notifications enabled for long running tasks.'
+      );
+      return;
+    } else if (flags['disable-notifications']) {
+      this.notify(
+        'RDE notifictions disabled',
+        'You will no longer receive notifications for long running tasks.'
+      );
+      Config.set('rde_enableNotifications', false);
+      return;
+    } else if (flags.show) {
       const orgId = Config.get(CONFIG_ORG);
       const programId = Config.get(CONFIG_PROGRAM);
       const programName = Config.get(CONFIG_PROGRAM_NAME);
@@ -306,6 +320,17 @@ class SetupCommand extends BaseCommand {
           default: false,
         },
       ]);
+
+      const { enableNotifications } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'enableNotifications',
+          message:
+            'Do you want to enable desktop notifications for long running tasks, such as reset, snapshot handling and more?',
+          default: true,
+        },
+      ]);
+      Config.set('rde_enableNotifications', enableNotifications, storeLocal);
 
       const orgId = await this.getOrgId();
       const prevOrgId = Config.get(CONFIG_ORG);
@@ -432,6 +457,22 @@ Object.assign(SetupCommand, {
     show: Flags.boolean({
       description: 'Shows the current configuration of the RDE connection.',
       char: 's',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+    'enable-notifications': Flags.boolean({
+      description:
+        'Enables desktop notifications for long-running tasks (global aio config).',
+      char: 'e',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+    'disable-notifications': Flags.boolean({
+      description:
+        'Disables desktop notifications for long-running tasks (global aio config).',
+      char: 'd',
       multiple: false,
       required: false,
       default: false,

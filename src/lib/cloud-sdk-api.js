@@ -62,6 +62,12 @@ class CloudSdkAPI {
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
       authorizationHeaders
     );
+    this._snapshotClient = new DoRequest(
+      `${rdeUrl}/snapshots`,
+      authorizationHeaders
+    );
+    this.programId = programId;
+    this.environmentId = environmentId;
     this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
@@ -178,6 +184,68 @@ class CloudSdkAPI {
   async getOsgiService(serviceName, id) {
     return await this._rdeClient.doGet(
       `/runtime/${serviceName}/osgi-services/${id}`
+    );
+  }
+
+  async getSnapshotProgress(action, snapshotName, actionid) {
+    const params = {
+      programId: this.programId,
+      environmentId: this.environmentId,
+      'snapshot-name': snapshotName,
+      action,
+      actionid,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._rdeClient.doGet(`/runtime/status${queryString}`);
+  }
+
+  async getSnapshots() {
+    const params = {
+      programId: this.programId,
+      environmentId: this.environmentId,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doGet(`${queryString}`);
+  }
+
+  async deleteSnapshot(name, force) {
+    const params = {
+      force,
+      programId: this.programId,
+      environmentId: this.environmentId,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doDelete(`/${name}${queryString}`);
+  }
+
+  async undeleteSnapshot(name) {
+    const params = {
+      programId: this.programId,
+      environmentId: this.environmentId,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doPut(`/${name}${queryString}`);
+  }
+
+  async createSnapshot(name, params) {
+    params = {
+      ...params,
+      'snapshot-name': name,
+      programId: this.programId,
+      environmentId: this.environmentId,
+    };
+    const queryString = this.createUrlQueryStr(params);
+    return await this._snapshotClient.doPost(`${queryString}`);
+  }
+
+  async restoreSnapshot(name, params) {
+    const queryString = this.createUrlQueryStr({
+      programId: this.programId,
+      environmentId: this.environmentId,
+    });
+    return await this._snapshotClient.doPost(
+      `/${name}/restore${queryString}`,
+      params
     );
   }
 
@@ -516,17 +584,47 @@ class CloudSdkAPI {
     }
   }
 
-  async resetEnv(wait) {
+  async resetEnv(wait, keepMutableContent, force) {
     await this._checkRDE();
-    await this._waitForCMStatus();
-    await this._resetEnv();
-    if (wait) {
-      return await this._waitForCMStatus();
+
+    // later we should fold everything into the RDE API and not use the CM API
+    if (keepMutableContent || force) {
+      const result = await this._rdeClient.doPost(`/runtime/reset`, {
+        'keep-mutable-content': keepMutableContent,
+        force,
+      });
+
+      if (result.status !== 201) {
+        throw await this._createError(result);
+      }
+
+      const namespace = await this._getNamespace();
+      const tries = 3;
+      for (let i = 0; i < tries; i++) {
+        await sleepSeconds(5);
+        await this._waitForEnvRunning(namespace);
+      }
+    } else {
+      await this._waitForCMStatus();
+      await this._cloudManagerClient.doPut(`/reset`);
+      if (wait) {
+        return await this._waitForCMStatus();
+      }
     }
   }
 
-  async _resetEnv() {
-    await this._cloudManagerClient.doPut(`/reset`);
+  async cleanEnv(wait, params) {
+    await this._checkRDE();
+    await this._waitForEnvReady();
+    await this._cleanEnv();
+    if (wait) {
+      await this._waitForEnvReady();
+    }
+  }
+
+  async _cleanEnv(params) {
+    const queryString = this.createUrlQueryStr(params);
+    await this._rdeClient.doPut(`/clean${queryString}`);
   }
 
   async _waitForCMStatus() {

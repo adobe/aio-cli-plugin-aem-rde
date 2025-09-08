@@ -24,18 +24,24 @@ class ResetCommand extends BaseCommand {
     try {
       const result = this.jsonResult();
       this.doLog(`Reset cm-p${this._programId}-e${this._environmentId}`);
-      this.spinnerStart('resetting environment');
+      this.spinnerStart('resetting environment ...  ');
       const status = await this.withCloudSdk((cloudSdkAPI) =>
-        cloudSdkAPI.resetEnv(flags.wait)
+        cloudSdkAPI.resetEnv(
+          flags.wait,
+          flags['keep-mutable-content'],
+          flags.force
+        )
       );
       this.spinnerStop();
       if (flags.wait) {
         if (status === 'ready') {
           result.status = 'reset';
           this.doLog(`Environment reset.`);
+          this.notify('reset', 'RDE environment is reset.');
         } else if (status === 'reset_failed') {
           result.status = 'reset_failed';
           this.doLog(`Failed to reset the environment.`);
+          this.notify('reset failed', 'RDE environment failed to reset.');
         }
       } else {
         result.status = 'resetting';
@@ -61,6 +67,20 @@ Object.assign(ResetCommand, {
     organizationId: commonFlags.organizationId,
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
+    'keep-mutable-content': Flags.boolean({
+      description: 'Reset the RDE but keep mutable content.',
+      required: false,
+      default: false,
+      multiple: false,
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      multiple: false,
+      required: false,
+      default: false,
+      description:
+        'Force resets the RDE, not re-using a previously generated base repository. Can be used in case of issues but takes longer.',
+    }),
     wait: Flags.boolean({
       description:
         'Do or do not wait for completion of the reset operation. Progress can be manually checked using the "status" command.',

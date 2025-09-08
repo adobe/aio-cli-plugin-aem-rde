@@ -25,6 +25,7 @@ class RestartCommand extends BaseCommand {
       this.spinnerStop();
       result.status = 'restarted';
       this.doLog(`Environment restarted.`);
+      this.notify('restarted', 'RDE environment is restarted.');
       return result;
     } catch (err) {
       this.spinnerStop();

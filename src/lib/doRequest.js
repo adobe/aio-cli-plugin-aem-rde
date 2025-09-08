@@ -33,7 +33,8 @@ class DoRequest {
       (response) =>
         response &&
         ((response.status >= 200 && response.status < 300) ||
-          response.status === 404),
+          response.status === 404 ||
+          response.status === 451), // 451 Unavailable For Legal Reasons, EAP early access),
       1,
       5
     );
@@ -46,27 +47,27 @@ class DoRequest {
   }
 
   async doPost(path, body) {
-    const ret = this.doRequest('post', path, body);
-    if (ret) {
-      return ret;
-    }
-    throw new internalCodes.NETWORK_ERROR({
-      messageValues: this._baseUrl + path,
-    });
+    return this.do('post', path, body);
   }
 
   async doPut(path, body) {
-    const ret = this.doRequest('put', path, body);
-    if (ret) {
-      return ret;
-    }
-    throw new internalCodes.NETWORK_ERROR({
-      messageValues: this._baseUrl + path,
-    });
+    return this.do('put', path, body);
+  }
+
+  async doOptions(path, body) {
+    return this.do('options', path, body);
+  }
+
+  async doPatch(path, body) {
+    return this.do('patch', path, body);
   }
 
   async doDelete(path) {
-    const ret = this.doRequest('delete', path);
+    return this.do('delete', path);
+  }
+
+  async do(method, path, body) {
+    const ret = this.doRequest(method, path, body);
     if (ret) {
       return ret;
     }

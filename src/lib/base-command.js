@@ -16,6 +16,7 @@ const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
 const spinner = require('ora')();
 const chalk = require('chalk');
+const notifier = require('node-notifier');
 
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
@@ -110,8 +111,12 @@ class BaseCommand extends Command {
     handleError(err, this.error);
   }
 
+  rdeIdentification() {
+    return `${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+  }
+
   getLogHeader() {
-    return `Running ${!this.id ? this.constructor.name : this.id} on ${concatEnvironemntId(this._programId, this._environmentId)}${this.printNamesWhenAvailable()}`;
+    return `Running ${!this.id ? this.constructor.name : this.id} on ${this.rdeIdentification()}`;
   }
 
   printNamesWhenAvailable() {
@@ -141,6 +146,13 @@ class BaseCommand extends Command {
     spinner.stop();
   }
 
+  notify(title, message) {
+    if (Config.get('rde_enableNotifications')) {
+      title = `${this.rdeIdentification()} - ${title}`;
+      notifier.notify({ title, message });
+    }
+  }
+
   /**
    *
    */
@@ -162,9 +174,10 @@ class BaseCommand extends Command {
    *
    */
   async getTokenAndKey() {
-    // TODO - support context flag
     let contextName =
-      (await context.getCurrent()) || 'aio-cli-plugin-cloudmanager';
+      this.flags?.context ||
+      (await context.getCurrent()) ||
+      'aio-cli-plugin-cloudmanager';
     let contextData = await context.get(contextName);
 
     if (!contextData?.data) {
@@ -296,11 +309,31 @@ class BaseCommand extends Command {
     };
     return result;
   }
+
+  formatElapsedTime(startTime, endTime) {
+    const ms = endTime - startTime;
+    if (ms < 1000) {
+      return `${ms}ms`;
+    } else if (ms < 60000) {
+      return `${(ms / 1000).toFixed(2)}s`;
+    } else {
+      return `${(ms / 60000).toFixed(2)}m`;
+    }
+  }
 }
 
 Object.assign(BaseCommand, {
   description: 'Enable json output for all commands by default.',
   enableJsonFlag: true,
+  flags: {
+    context: Flags.string({
+      aliases: ['ctx', 'imsContextName'],
+      description: 'The IMS context used to retrieve login information',
+      multiple: false,
+      required: false,
+      helpGroup: 'GLOBAL',
+    }),
+  },
 });
 
 module.exports = {

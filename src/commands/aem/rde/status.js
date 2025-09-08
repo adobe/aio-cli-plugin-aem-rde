@@ -11,18 +11,43 @@
  */
 'use strict';
 
-const { BaseCommand, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  commonFlags,
+  Flags,
+} = require('../../../lib/base-command');
 const { loadAllArtifacts, groupArtifacts } = require('../../../lib/rde-utils');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
+const { sleepMillis } = require('../../../lib/utils');
+
 class StatusCommand extends BaseCommand {
   async runCommand(args, flags) {
     try {
       this.doLog(`Info for cm-p${this._programId}-e${this._environmentId}`);
-      this.spinnerStart('retrieving environment status information');
-      const status = await this.withCloudSdk((cloudSdkAPI) =>
-        loadAllArtifacts(cloudSdkAPI)
-      );
+
+      let status;
+      if (flags?.wait) {
+        this.spinnerStart(
+          'retrieving environment status information - waiting for ready state'
+        );
+        while (true) {
+          status = await this.withCloudSdk((cloudSdkAPI) =>
+            loadAllArtifacts(cloudSdkAPI)
+          );
+          if (status.status === 'Ready') {
+            break;
+          }
+          await sleepMillis(10000);
+        }
+        this.notify('ready', 'RDE environment is ready');
+      } else {
+        this.spinnerStart('retrieving environment status information');
+        status = await this.withCloudSdk((cloudSdkAPI) =>
+          loadAllArtifacts(cloudSdkAPI)
+        );
+      }
+
       this.spinnerStop();
       this.doLog(`Environment: ${status.status}`, true);
       const result = this.jsonResult(status.status);
@@ -87,10 +112,18 @@ Object.assign(StatusCommand, {
     programId: commonFlags.programId,
     environmentId: commonFlags.environmentId,
     quiet: commonFlags.quiet,
+    wait: Flags.boolean({
+      description: 'Wait for the environment to be ready',
+      char: 'w',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
   },
   usage: [
     'status              # output as textual content',
     'status --json       # output as json object',
+    'status --wait       # wait for the environment to be ready',
   ],
   aliases: [],
 });
