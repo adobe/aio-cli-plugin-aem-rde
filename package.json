@@ -73,7 +73,8 @@
     "commands": "./src/commands",
     "bin": "aio",
     "experimental-features": [
-      "aem:rde:inspect"
+      "aem:rde:inspect",
+      "aem:rde:snapshot"
     ],
     "hooks": {
       "init": "./src/lib/hooks/experimental-features-init-hook"
@@ -84,6 +85,9 @@
       },
       "aem:rde:inspect": {
         "description": "Inspects the RapidDev Environments (experimental)."
+      },
+      "aem:rde:snapshot": {
+        "description": "Provides functionality for managing the RapidDev Environments snapshots (experimental)."
       }
     }
   }
