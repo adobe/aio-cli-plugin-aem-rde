@@ -6,10 +6,12 @@ AEM Rapid Development Environments.
 # Requirements
 
 - [Adobe I/O CLI](https://github.com/adobe/aio-cli)
+  - 10.3.x or higher
+  - 11.x or higher
 - Node.js version compatibility:
-  - 16.x -- 16.13.0 or higher.
   - 18.x -- 18.0.0 or higher.
   - 20.x -- 20.11.0 or higher.
+  - 22.x -- 22.15.0 or higher.
   - Use with odd Node versions is _not_ recommended.
 
 # Installation
