@@ -7,7 +7,9 @@
     "npm": ">= 8.0.0",
     "node": "^18 || ^20 || >= 22.15 <23"
   },
+  "//": "!!! - chalk in newer version 5.6.1 is compromised of Shai Hulud worm, check when upgrading to not introduce a compromised version",
   "dependencies": {
+    "chalk": "^4.1.2",
     "@adobe/aio-lib-cloudmanager": "^3.1.0",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-core-errors": "^4.0.1",
@@ -17,7 +19,6 @@
     "@oclif/core": "^1.20.4",
     "adm-zip": "^0.5.9",
     "archiver": "^6.0.0",
-    "chalk": "^4.1.2",
     "cli-progress": "^3.11.2",
     "form-data": "^4.0.0",
     "inquirer": "^8.2.6",
