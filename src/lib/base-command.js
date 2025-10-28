@@ -242,6 +242,13 @@ class BaseCommand extends Command {
     accessToken,
     apiKey
   ) {
+    const devConsoleUrlOverridden = Config.get('cloudmanager_devconsoleurl');
+    if (devConsoleUrlOverridden) {
+      this.doLog(
+        '\nUsing Developer Console URL from config: ' + devConsoleUrlOverridden
+      );
+      return devConsoleUrlOverridden;
+    }
     const sdk = await this.initSdk(cloudManagerUrl, orgId, accessToken, apiKey);
     return sdk.getDeveloperConsoleUrl(programId, environmentId);
   }
