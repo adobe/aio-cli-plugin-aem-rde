@@ -88,6 +88,10 @@ class CloudSdkAPI {
     );
   }
 
+  async getAemThreaddumps(serviceName) {
+    return await this._rdeClient.doGet(`/runtime/${serviceName}/threaddumps`);
+  }
+
   async createAemLog(serviceName, data) {
     return await this._rdeClient.doPost(`/runtime/${serviceName}/logs`, data);
   }
@@ -396,7 +400,7 @@ class CloudSdkAPI {
     let errMessage = response.statusText;
     try {
       errMessage = await response.text();
-    } catch (err) {}
+    } catch (err) { }
 
     if (errMessage) {
       switch (errMessage) {
