@@ -14,7 +14,13 @@
 const fs = require('fs');
 const { codes: internalCodes } = require('../../../lib/internal-errors');
 const { throwAioError } = require('../../../lib/error-helpers');
-const { BaseCommand, commonFlags } = require('../../../lib/base-command');
+const {
+  BaseCommand,
+  commonFlags,
+  Flags,
+} = require('../../../lib/base-command');
+const { createFetch } = require('@adobe/aio-lib-core-networking');
+const fetch = createFetch();
 
 class TheaddumpCommand extends BaseCommand {
   async runCommand(args, flags) {
@@ -25,12 +31,54 @@ class TheaddumpCommand extends BaseCommand {
       );
 
       if (response.status === 200) {
-        const text = await response.text();
-        const now = new Date();
-        const date = now.toISOString().split('T')[0].replace(/-/g, '');
-        const time = now.toTimeString().split(' ')[0].replace(/:/g, '');
-        const filename = `jstack.threaddump_${date}_${time}.dump`;
-        fs.writeFileSync(filename, text);
+        const threadDumpContent = await response.text();
+        const timestamp = new Date().toISOString();
+        
+        
+        if(!flags.skipAnalysis) {
+          // Get MARKETPLACE_TOKEN from environment
+          const marketplaceToken = process.env.MARKETPLACE_TOKEN;
+          if (!marketplaceToken) {
+            throw new Error('MARKETPLACE_TOKEN environment variable is not set');
+          }
+
+          // Prepare the request payload
+          const payload = {
+            thread_dump_content: threadDumpContent,
+            dump_label: `${flags.target}_dump`,
+            timestamp: timestamp
+          };
+
+          // Call the thread dump analysis API
+          const apiResponse = await fetch(
+            'https://aem-agent-marketplace-apim-stage-ddse.azure-api.net/api/agents?operation=thread_dump_analysis',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-GATEWAY-SESSION': 'accept',
+                'Authorization': `Bearer ${marketplaceToken}`
+              },
+              body: JSON.stringify(payload)
+            }
+          );
+
+          if (!apiResponse.ok) {
+            throw new Error(
+              `API request failed with status ${apiResponse.status}: ${apiResponse.statusText}`
+            );
+          }
+
+          const apiResult = await apiResponse.json();
+          this.doLog('Thread dump analysis completed successfully');
+          const jsonResult = JSON.stringify(apiResult, null, 2);
+          fs.writeFileSync(`threaddump_${timestamp}_analyzed.json`, jsonResult);
+        }
+        
+        if(flags.saveRaw) {
+          this.doLog('Thread dump raw saved to file');
+          fs.writeFileSync(`jstack.threaddump_${timestamp}.dump`, threadDumpContent);
+        }
       } else {
         throw new internalCodes.UNEXPECTED_API_ERROR({
           messageValues: [response.status, response.statusText],
@@ -59,7 +107,27 @@ Object.assign(TheaddumpCommand, {
     environmentId: commonFlags.environmentId,
     target: commonFlags.targetInspect,
     quiet: commonFlags.quiet,
+    saveRaw: Flags.boolean({
+      description: 'Save the raw thread dump to a file.',
+      char: 'r',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
+    skipAnalysis: Flags.boolean({
+      description: 'Skip the analysis of the thread dump.',
+      char: 'n',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
   },
+  usage: [
+    'threadumps                # create a thread dump and analyze it',
+    'threadumps --saveRaw      # save the raw thread dump to a file',
+    'threadumps --skipAnalysis # skip the analysis of the thread dump',
+  ],
+  aliases: [],
 });
 
 module.exports = TheaddumpCommand;
