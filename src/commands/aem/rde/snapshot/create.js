@@ -128,7 +128,8 @@ class CreateSnapshots extends BaseCommand {
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       } else {
         spinnies?.stopAll('fail');
-        const msg = 'Could not get the progress of the snapshot creation. We will automatically retry the snapshot creation in the next few minutes. Please check the snapshot creation status using the list of snapshots to check on the state.';
+        const msg =
+          'Could not get the progress of the snapshot creation. We will automatically retry the snapshot creation in the next few minutes. Please check the snapshot creation status using the list of snapshots to check on the state.';
         this.doLog(chalk.red(msg));
         this.notify('failed', msg);
         spinnies?.stopAll('fail');
@@ -148,7 +149,8 @@ class CreateSnapshots extends BaseCommand {
       }
       if (lastProgress === -2) {
         spinnies?.stopAll('fail');
-        const msg = 'Snapshot creation failed. We will automatically retry the snapshot creation in the next few minutes. Please check the snapshot creation status using the list of snapshots to check on the state.';
+        const msg =
+          'Snapshot creation failed. We will automatically retry the snapshot creation in the next few minutes. Please check the snapshot creation status using the list of snapshots to check on the state.';
         this.doLog(chalk.red(msg));
         this.notify('failed', msg);
         throw new snapshotCodes.SNAPSHOT_CREATION_FAILED();
