@@ -46,7 +46,8 @@ class TheaddumpCommand extends BaseCommand {
           const payload = {
             thread_dump_content: threadDumpContent,
             dump_label: `${flags.target}_dump`,
-            timestamp: timestamp
+            timestamp: timestamp,
+            mode: flags.verbose ? 'verbose' : 'compact'
           };
 
           // Call the thread dump analysis API
@@ -73,6 +74,12 @@ class TheaddumpCommand extends BaseCommand {
           this.doLog('Thread dump analysis completed successfully');
           const jsonResult = JSON.stringify(apiResult, null, 2);
           fs.writeFileSync(`threaddump_${timestamp}_analyzed.json`, jsonResult);
+
+          if(apiResult?.analysis) {
+            this.doLog(apiResult.analysis);
+            const formattedAnalysis = apiResult.analysis.replace(/\\n/g, '\n');
+            fs.writeFileSync(`threaddump_${timestamp}_analysis.md`, formattedAnalysis);
+          }
         }
         
         if(flags.saveRaw) {
@@ -121,11 +128,19 @@ Object.assign(TheaddumpCommand, {
       required: false,
       default: false,
     }),
+    verbose: Flags.boolean({
+      description: 'Create a verbose analysis report.',
+      char: 'v',
+      multiple: false,
+      required: false,
+      default: false,
+    }),
   },
   usage: [
-    'threadumps                # create a thread dump and analyze it',
-    'threadumps --saveRaw      # save the raw thread dump to a file',
-    'threadumps --skipAnalysis # skip the analysis of the thread dump',
+    'threadump                # create a thread dump and analyze it',
+    'threadump --saveRaw      # save the raw thread dump to a file',
+    'threadump --skipAnalysis # skip the analysis of the thread dump',
+    'threadump --verbose      # create a verbose analysis report',
   ],
   aliases: [],
 });
