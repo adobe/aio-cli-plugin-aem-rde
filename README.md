@@ -17,13 +17,13 @@ AEM Rapid Development Environments.
 # Installation
 
 ```
-$ aio plugins:install @adobe/aio-cli-plugin-aem-rde
+aio plugins:install @adobe/aio-cli-plugin-aem-rde
 ```
 
 # Updating
 
 ```
-$ aio plugins:update
+aio plugins:update
 ```
 
 # Getting started
@@ -34,8 +34,8 @@ The plugin needs to be configured to point to an existing RDE environment. To do
 As a user, use below command to do so.
 
 ```
-$ aio login
-$ aio aem:rde:setup
+aio login
+aio aem:rde:setup
 ```
 
 The setup command offers the following functionality:
@@ -53,9 +53,9 @@ The setup command offers the following functionality:
 For build environments, include below into the scripts.
 
 ```
- $ aio config:set cloudmanager_orgid <org-id>
- $ aio config:set cloudmanager_programid <program-id>
- $ aio config:set cloudmanager_environmentid <env-id>
+aio config:set cloudmanager_orgid <org-id>
+aio config:set cloudmanager_programid <program-id>
+aio config:set cloudmanager_environmentid <env-id>
 ```
 
 > **Note**:
@@ -70,7 +70,7 @@ For build environments, include below into the scripts.
 If you want to enable this experimental feature, run the following command:
 
 ```
-$ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
+aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 ```
 
 #### Enable `aio aem rde snapshot` commands
@@ -78,7 +78,7 @@ $ aio config set -l -j aem-rde.experimental-features '["aem:rde:inspect"]'
 If you want to enable this experimental feature, run the following command:
 
 ```
-$ aio config set -l -j aem-rde.experimental-features '["aem:rde:snapshot"]'
+aio config set -l -j aem-rde.experimental-features '["aem:rde:snapshot"]'
 ```
 
 This command creates a local configuration file `.aio` that contains the information to activate the experimental feature.
