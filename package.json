@@ -78,7 +78,8 @@
       "aem:rde:snapshot"
     ],
     "hooks": {
-      "init": "./src/lib/hooks/experimental-features-init-hook"
+      "init": "./src/lib/hooks/experimental-features-init-hook",
+      "prerun": "./src/lib/hooks/snapshots-beta"
     },
     "topics": {
       "aem:rde": {
