@@ -11,10 +11,11 @@
  */
 
 // 3rd party dependencies
+const path = require('path');
 const { Command, Flags, CliUx } = require('@oclif/core');
 const jwt = require('jsonwebtoken');
 const inquirer = require('inquirer');
-const spinner = require('ora')();
+const ora = require('ora');
 const chalk = require('chalk');
 const notifier = require('node-notifier');
 
@@ -29,11 +30,19 @@ const { concatEnvironemntId } = require('../lib/utils');
 const { codes: configurationCodes } = require('../lib/configuration-errors');
 const { codes: validationCodes } = require('../lib/validation-errors');
 const { handleError } = require('./error-helpers');
+const {
+  getAcceptedFeatures,
+  saveAcceptedFeature,
+  promptForFeatureAcceptance,
+  getDisclaimerForFeature,
+} = require('./experimental-features');
 
 class BaseCommand extends Command {
-  constructor(argv, config, error) {
+  constructor(argv, config, error, features) {
     super(argv, config);
     this.error = error || this.error;
+    this.features = features;
+    this.spinner = ora();
   }
 
   async run() {
@@ -73,6 +82,7 @@ class BaseCommand extends Command {
       Config.set('rde_lastaction', Date.now());
     }
 
+    this._printExperimentalFeatureDisclaimers(this.features);
     return await this.runCommand(args, flags);
   }
 
@@ -101,14 +111,16 @@ class BaseCommand extends Command {
    * @param args the arguments passed to the command
    * @param flags the flags passed to the command
    */
-  runCommand(args, flags) {
+  async runCommand(args, flags) {
     throw new Error(
       'You have to implement the method runCommand(args, flags) in the subclass!'
     );
   }
 
   async catch(err) {
-    handleError(err, this.error);
+    handleError(err, (input, options) =>
+      this.error(input, Object.assign({ cause: err }, options))
+    );
   }
 
   rdeIdentification() {
@@ -134,16 +146,28 @@ class BaseCommand extends Command {
 
   spinnerStart(message) {
     if (!(this.flags?.quiet || this.flags?.json)) {
-      spinner.start(message);
+      this.spinner.start(message);
     }
   }
 
   spinnerIsSpinning() {
-    return spinner.isSpinning;
+    return this.spinner.isSpinning;
   }
 
   spinnerStop() {
-    spinner.stop();
+    this.spinner.stop();
+  }
+
+  spinnerResume() {
+    this.spinner.start();
+  }
+
+  onBeforePrompt() {
+    this.spinnerStop();
+  }
+
+  onAfterPrompt() {
+    this.spinnerResume();
   }
 
   notify(title, message) {
@@ -254,58 +278,119 @@ class BaseCommand extends Command {
   }
 
   async withCloudSdk(fn) {
-    if (!this._cloudSdkAPI) {
-      if (!this._programId) {
-        throw new validationCodes.MISSING_PROGRAM_ID();
-      }
-      if (!this._environmentId) {
-        throw new validationCodes.MISSING_ENVIRONMENT_ID();
-      }
-      const { accessToken, apiKey, data } = await this.getTokenAndKey();
-      const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
-      const orgId = this.getCliOrgId();
-      const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
-      let cacheEntry = Config.get(cacheKey);
-      // TODO: prune expired cache entries
-      if (
-        !cacheEntry ||
-        new Date(cacheEntry.expiry).valueOf() < Date.now() ||
-        !cacheEntry.devConsoleUrl
-      ) {
-        const developerConsoleUrl = await this.getDeveloperConsoleUrl(
-          cloudManagerUrl,
-          orgId,
-          this._programId,
-          this._environmentId,
-          accessToken,
-          apiKey
-        );
-        const url = new URL(developerConsoleUrl);
-        url.hash = '';
-        const devConsoleUrl = url.toString();
-        url.pathname = '/api/rde';
-        const rdeApiUrl = url.toString();
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 1); // cache for at most one day
-        cacheEntry = {
-          expiry: expiry.toISOString(),
-          rdeApiUrl,
-          devConsoleUrl,
-        };
-        Config.set(cacheKey, cacheEntry);
-      }
-      this._cloudSdkAPI = new CloudSdkAPI(
-        `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
-        cacheEntry.devConsoleUrl,
-        cacheEntry.rdeApiUrl,
-        apiKey,
+    if (!this._programId) {
+      throw new validationCodes.MISSING_PROGRAM_ID();
+    }
+    if (!this._environmentId) {
+      throw new validationCodes.MISSING_ENVIRONMENT_ID();
+    }
+    const { accessToken, apiKey, data } = await this.getTokenAndKey();
+    const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
+    const orgId = this.getCliOrgId();
+    const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
+    let cacheEntry = Config.get(cacheKey);
+    // TODO: prune expired cache entries
+    if (
+      !cacheEntry ||
+      new Date(cacheEntry.expiry).valueOf() < Date.now() ||
+      !cacheEntry.devConsoleUrl
+    ) {
+      const developerConsoleUrl = await this.getDeveloperConsoleUrl(
+        cloudManagerUrl,
         orgId,
         this._programId,
         this._environmentId,
-        accessToken
+        accessToken,
+        apiKey
       );
+      const url = new URL(developerConsoleUrl);
+      url.hash = '';
+      const devConsoleUrl = url.toString();
+      url.pathname = '/api/rde';
+      const rdeApiUrl = url.toString();
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 1); // cache for at most one day
+      cacheEntry = {
+        expiry: expiry.toISOString(),
+        rdeApiUrl,
+        devConsoleUrl,
+      };
+      Config.set(cacheKey, cacheEntry);
     }
-    return fn(this._cloudSdkAPI);
+
+    let customHeaders = {};
+    const cacheDir = this._pluginCacheDir();
+    if (this.features) {
+      const accepted = getAcceptedFeatures(cacheDir);
+      customHeaders = this.features
+        ? this._getExperimentalFeaturesHeader(accepted, ...this.features)
+        : {};
+    }
+
+    const response = await fn(
+      this._getCloudSdkAPI(
+        cloudManagerUrl,
+        cacheEntry,
+        apiKey,
+        orgId,
+        accessToken,
+        customHeaders
+      )
+    );
+    if (!this.features || response?.status !== 451) {
+      return response;
+    }
+    if (this.flags?.json || this.flags?.quiet) {
+      throw new configurationCodes.NON_EAP();
+    }
+    this.onBeforePrompt();
+    const accepted = await promptForFeatureAcceptance(this.features);
+    this.onAfterPrompt(accepted);
+    if (!accepted) {
+      throw new configurationCodes.NON_EAP();
+    }
+
+    if (cacheDir) {
+      saveAcceptedFeature(cacheDir, this.features);
+    }
+    const retryResponse = await fn(
+      this._getCloudSdkAPI(
+        cloudManagerUrl,
+        cacheEntry,
+        apiKey,
+        orgId,
+        accessToken,
+        this._getExperimentalFeaturesHeader(
+          getAcceptedFeatures(cacheDir),
+          ...this.features
+        )
+      )
+    );
+    if (retryResponse?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    }
+    return retryResponse;
+  }
+
+  _getCloudSdkAPI(
+    cloudManagerUrl,
+    cacheEntry,
+    apiKey,
+    orgId,
+    accessToken,
+    customHeaders
+  ) {
+    return new CloudSdkAPI(
+      `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
+      cacheEntry.devConsoleUrl,
+      cacheEntry.rdeApiUrl,
+      apiKey,
+      orgId,
+      this._programId,
+      this._environmentId,
+      accessToken,
+      customHeaders
+    );
   }
 
   jsonResult(serverStatus) {
@@ -326,6 +411,41 @@ class BaseCommand extends Command {
     } else {
       return `${(ms / 60000).toFixed(2)}m`;
     }
+  }
+
+  _printExperimentalFeatureDisclaimers(features) {
+    if (features?.length > 0) {
+      const cacheDir = this._pluginCacheDir();
+      const acceptedFeatures = getAcceptedFeatures(cacheDir);
+      features.forEach((feature) => {
+        if (acceptedFeatures.includes(feature)) {
+          const disclaimerForFeature = getDisclaimerForFeature(feature);
+          if (disclaimerForFeature) {
+            this.logToStderr(
+              '\n' + chalk.bold.yellowBright(disclaimerForFeature) + '\n'
+            );
+          }
+        }
+      });
+    }
+  }
+
+  _pluginCacheDir() {
+    return this.config?.cacheDir
+      ? path.join(this.config.cacheDir, 'aio-cli-plugin-aem-rde')
+      : null;
+  }
+
+  _getExperimentalFeaturesHeader(enabledFeatures, ...requiredFeatures) {
+    if (
+      requiredFeatures.length === 0 ||
+      !requiredFeatures.every((f) => enabledFeatures.includes(f))
+    ) {
+      return {};
+    }
+    return {
+      'x-enable-experimental-features': requiredFeatures.join(','),
+    };
   }
 }
 

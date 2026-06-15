@@ -31,6 +31,7 @@ class CloudSdkAPI {
    * @param {string} programId The ID of the program that contains the environment.
    * @param {string} environmentId The ID of the environment.
    * @param {string} accessToken The bearer token used to authenticate requests to the API.
+   * @param {object} customHeaders Additional headers to send with RDE API calls.
    */
   constructor(
     cloudManagerUrl,
@@ -40,7 +41,8 @@ class CloudSdkAPI {
     orgId,
     programId,
     environmentId,
-    accessToken
+    accessToken,
+    customHeaders = {}
   ) {
     const authorizationHeaders = {
       Authorization: `Bearer ${accessToken}`,
@@ -60,11 +62,11 @@ class CloudSdkAPI {
     this._devConsoleClient = new DoRequest(devConsoleUrl, authorizationHeaders);
     this._rdeClient = new DoRequest(
       `${rdeUrl}/program/${programId}/environment/${environmentId}`,
-      authorizationHeaders
+      Object.assign(authorizationHeaders, customHeaders)
     );
     this._snapshotClient = new DoRequest(
       `${rdeUrl}/snapshots`,
-      authorizationHeaders
+      Object.assign(authorizationHeaders, customHeaders)
     );
     this.programId = programId;
     this.environmentId = environmentId;

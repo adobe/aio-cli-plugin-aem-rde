@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const RestoreSnapshot = require('../../../../../src/commands/aem/rde/snapshot/restore');
+const { codes: configurationCodes } = require('../../../../../src/lib/configuration-errors');
 const Spinnies = require('spinnies');
 const assert = require('assert');
 
@@ -15,9 +16,13 @@ function createCloudSdkAPIStub(sinon, command, methods) {
   Object.keys(methods).forEach((k) => {
     cloudSdkApiStub[k] = methods[k];
   });
-  sinon
-    .stub(command, 'withCloudSdk')
-    .callsFake(async (fn) => fn(cloudSdkApiStub));
+  sinon.stub(command, 'withCloudSdk').callsFake(async (fn) => {
+    const response = await fn(cloudSdkApiStub);
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    }
+    return response;
+  });
   return [command, cloudSdkApiStub];
 }
 
@@ -324,6 +329,28 @@ describe('RestoreSnapshot', function () {
         'AEM instances are receiving a deployment and new packages are not accepted temporarily until the instances are done.'
       );
       await checkError(500, '', 'An unknown error occurred.');
+    });
+
+    it('loops until artifacts are Ready', async function () {
+      let artifactsCallCount = 0;
+      prepareStubs({
+        restoreSnapshot: stub(stubbedCreateResponseSuccess),
+        getSnapshotProgress: stub(getSnapshotProgressResponse()),
+        getArtifacts: sinon.stub().callsFake(async () => {
+          artifactsCallCount++;
+          return {
+            status: 200,
+            json: async () =>
+              artifactsCallCount === 1
+                ? { status: 'Not Ready', items: [] }
+                : { status: 'Ready', items: [] },
+          };
+        }),
+      });
+
+      const result = await command.runCommand([], {});
+      assert.equal(artifactsCallCount, 2);
+      expect(result.totalseconds).to.be.a('number');
     });
   });
 });

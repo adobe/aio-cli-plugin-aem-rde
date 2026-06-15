@@ -17,9 +17,13 @@ function createCloudSdkAPIStub(sinon, command, methods) {
   Object.keys(methods).forEach((k) => {
     cloudSdkApiStub[k] = methods[k];
   });
-  sinon
-    .stub(command, 'withCloudSdk')
-    .callsFake(async (fn) => fn(cloudSdkApiStub));
+  sinon.stub(command, 'withCloudSdk').callsFake(async (fn) => {
+    const response = await fn(cloudSdkApiStub);
+    if (response?.status === 451) {
+      throw new configErrors.codes.NON_EAP();
+    }
+    return response;
+  });
   return [command, cloudSdkApiStub];
 }
 
