@@ -2,6 +2,7 @@ const assert = require('assert');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const UnDeleteSnapshot = require('../../../../../src/commands/aem/rde/snapshot/undelete');
+const { codes: configurationCodes } = require('../../../../../src/lib/configuration-errors');
 const { snapshotsResponse, snapshots } = require('./snapshots.mocks');
 
 /**
@@ -15,9 +16,13 @@ function createCloudSdkAPIStub(sinon, command, methods) {
   Object.keys(methods).forEach((k) => {
     cloudSdkApiStub[k] = methods[k];
   });
-  sinon
-    .stub(command, 'withCloudSdk')
-    .callsFake(async (fn) => fn(cloudSdkApiStub));
+  sinon.stub(command, 'withCloudSdk').callsFake(async (fn) => {
+    const response = await fn(cloudSdkApiStub);
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    }
+    return response;
+  });
   return [command, cloudSdkApiStub];
 }
 

@@ -23,31 +23,33 @@ const chalk = require('chalk');
 
 const { sleepMillis } = require('../../../../lib/utils');
 const { loadAllArtifacts } = require('../../../../lib/rde-utils');
-
-const Spinnies = require('spinnies');
+const Spinnies = require('../../../../lib/spinnies-wrapper');
 
 class RestoreSnapshot extends BaseCommand {
   constructor(argv, config, sleepTime = 5000) {
-    super(argv, config);
+    super(argv, config, null, ['snapshots']);
     this.sleepTime = sleepTime;
   }
 
   async runCommand(args, flags) {
-    const spinnies = this.getSpinnies(flags);
-    if (!flags.status) {
-      spinnies?.add('spinner-requesting', {
-        text: `Requesting to restore snapshot ${args.name} (<1m) ...`,
+    this._spinnies = this.getSpinnies(flags);
+    const initSpinnies = (sp) => {
+      if (!flags.status) {
+        sp?.add('spinner-requesting', {
+          text: `Requesting to restore snapshot ${args.name} (<1m) ...`,
+        });
+      }
+      sp?.add('spinner-backend', {
+        text: 'Waiting for backend to pick up the job to restore the snapshot (<1min) ...',
       });
-    }
-    spinnies?.add('spinner-backend', {
-      text: 'Waiting for backend to pick up the job to restore the snapshot (<1min) ...',
-    });
-    spinnies?.add('spinner-restore', {
-      text: 'Restoring snapshot to RDE (2-5m) ...',
-    });
-    spinnies?.add('spinner-restart', {
-      text: 'Wait for the RDE to restart (5-10m)...',
-    });
+      sp?.add('spinner-restore', {
+        text: 'Restoring snapshot to RDE (2-5m) ...',
+      });
+      sp?.add('spinner-restart', {
+        text: 'Wait for the RDE to restart (5-10m)...',
+      });
+    };
+    initSpinnies(this._spinnies);
 
     const result = this.jsonResult();
     const startTime = Date.now();
@@ -61,48 +63,46 @@ class RestoreSnapshot extends BaseCommand {
       );
     } catch (err) {
       result.error = err;
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throwAioError(
         err,
         new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
       );
     }
     let actionid;
-    if (response?.status === 451) {
-      throw new configurationCodes.NON_EAP();
-    } else if (response?.status === 200) {
+    if (response?.status === 200) {
       const json = await response.json();
       actionid = json?.actionid;
       const took = this.formatElapsedTime(startTime, Date.now());
-      spinnies?.succeed('spinner-requesting', {
+      this._spinnies?.succeed('spinner-requesting', {
         text: `Requested to restore the snapshot successfully. (${took})`,
         successColor: 'greenBright',
       });
     } else if (response?.status === 400) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
       const json = await response.json();
       if (
         json.details === 'The requested environment or program does not exist.'
       ) {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
       } else if (json.details === 'The requested snapshot does not exist.') {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       } else if (json.details === 'The snapshot is in deleted state.') {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_DELETED();
       }
     } else if (response?.status === 406) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new snapshotCodes.INVALID_STATE();
     } else if (response?.status === 503) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new validationCodes.DEPLOYMENT_IN_PROGRESS();
     } else {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new internalCodes.UNKNOWN();
     }
 
@@ -121,7 +121,7 @@ class RestoreSnapshot extends BaseCommand {
         );
       } catch (err) {
         result.error = err;
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throwAioError(
           err,
           new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
@@ -132,11 +132,13 @@ class RestoreSnapshot extends BaseCommand {
         const json = await progressResponse.json();
         lastProgress = json?.progressPercentage;
       } else if (progressResponse.status === 404) {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       } else {
-        spinnies?.stopAll('fail');
-        this.doLog('Could not get the progress of the snapshot application.');
+        this._spinnies?.stopAll('fail');
+        this.doLog(
+          `Could not get the progress of the snapshot application. Status code: ${progressResponse.status}`
+        );
         throw new internalCodes.UNKNOWN();
       }
 
@@ -145,14 +147,14 @@ class RestoreSnapshot extends BaseCommand {
           result.waitingforbackend,
           Date.now()
         );
-        spinnies?.succeed('spinner-backend', {
+        this._spinnies?.succeed('spinner-backend', {
           text: `Backend picked up the job to restore the snapshot. (${took})`,
           successColor: 'greenBright',
         });
         result.processnigsnapshotstarted = new Date();
       }
       if (lastProgress === -2) {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         this.doLog(chalk.red('Snapshot creation failed.'));
         this.notify('failed', 'Snapshot creation failed.');
         throw new snapshotCodes.SNAPSHOT_RESTORE_FAILED();
@@ -165,7 +167,7 @@ class RestoreSnapshot extends BaseCommand {
         result.processnigsnapshotstarted,
         Date.now()
       );
-      spinnies?.succeed('spinner-restore', {
+      this._spinnies?.succeed('spinner-restore', {
         text: `Restored snapshot to RDE successfully. (${took})`,
         successColor: 'greenBright',
       });
@@ -186,7 +188,7 @@ class RestoreSnapshot extends BaseCommand {
       result.processnigsnapshotended,
       Date.now()
     );
-    spinnies?.succeed('spinner-restart', {
+    this._spinnies?.succeed('spinner-restart', {
       text: `RDE restarted successfully. (${took})`,
       successColor: 'greenBright',
     });
@@ -207,6 +209,16 @@ class RestoreSnapshot extends BaseCommand {
     result.totalseconds = (result.endTime - startTime) / 1000;
     this.notify('restored', 'Snapshot restored.');
     return result;
+  }
+
+  onBeforePrompt() {
+    this._spinnies?.suspendAll();
+  }
+
+  onAfterPrompt(accepted) {
+    if (accepted && this._spinnies) {
+      this._spinnies.resumeAll();
+    }
   }
 
   getSpinnies(flags) {

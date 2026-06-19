@@ -22,29 +22,31 @@ const chalk = require('chalk');
 
 const { sleepMillis } = require('../../../../lib/utils');
 const { loadAllArtifacts } = require('../../../../lib/rde-utils');
-
-const Spinnies = require('spinnies');
+const Spinnies = require('../../../../lib/spinnies-wrapper');
 
 class CreateSnapshots extends BaseCommand {
   constructor(argv, config, sleepTime = 5000) {
-    super(argv, config);
+    super(argv, config, null, ['snapshots']);
     this.sleepTime = sleepTime;
   }
 
   async runCommand(args, flags) {
-    const spinnies = this.getSpinnies(flags);
-    spinnies?.add('spinner-requesting', {
-      text: `Requesting to create snapshot ${args.name} (<1m) ...`,
-    });
-    spinnies?.add('spinner-backend', {
-      text: 'Waiting for backend to pick up the job to create the snapshot (<1min) ...',
-    });
-    spinnies?.add('spinner-create', {
-      text: 'Locking RDE and create the snapshot (2-5m) ...',
-    });
-    spinnies?.add('spinner-restart', {
-      text: 'Unlocking the RDE (1-2m)...',
-    });
+    this._spinnies = this.getSpinnies(flags);
+    const initSpinnies = (sp) => {
+      sp?.add('spinner-requesting', {
+        text: `Requesting to create snapshot ${args.name} (<1m) ...`,
+      });
+      sp?.add('spinner-backend', {
+        text: 'Waiting for backend to pick up the job to create the snapshot (<1min) ...',
+      });
+      sp?.add('spinner-create', {
+        text: 'Locking RDE and create the snapshot (2-5m) ...',
+      });
+      sp?.add('spinner-restart', {
+        text: 'Unlocking the RDE (1-2m)...',
+      });
+    };
+    initSpinnies(this._spinnies);
 
     const result = this.jsonResult();
     const startTime = Date.now();
@@ -58,40 +60,38 @@ class CreateSnapshots extends BaseCommand {
         })
       );
     } catch (err) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throwAioError(
         err,
         new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
       );
     }
     let actionid;
-    if (response?.status === 451) {
-      throw new configurationCodes.NON_EAP();
-    } else if (response?.status === 200 || response?.status === 201) {
+    if (response?.status === 200 || response?.status === 201) {
       const json = await response.json();
       actionid = json?.actionid;
       const took = this.formatElapsedTime(startTime, Date.now());
-      spinnies?.succeed('spinner-requesting', {
+      this._spinnies?.succeed('spinner-requesting', {
         text: `Requested to create the snapshot successfully. (${took})`,
         successColor: 'greenBright',
       });
     } else if (response?.status === 400) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new configurationCodes.DIFFERENT_ENV_TYPE();
     } else if (response?.status === 404) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new configurationCodes.PROGRAM_OR_ENVIRONMENT_NOT_FOUND();
     } else if (response?.status === 409) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new snapshotCodes.ALREADY_EXISTS();
     } else if (response?.status === 503) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new snapshotCodes.INVALID_STATE();
     } else if (response?.status === 507) {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new snapshotCodes.SNAPSHOT_LIMIT();
     } else {
-      spinnies?.stopAll('fail');
+      this._spinnies?.stopAll('fail');
       throw new internalCodes.UNKNOWN();
     }
 
@@ -112,7 +112,7 @@ class CreateSnapshots extends BaseCommand {
         );
       } catch (err) {
         result.error = err;
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throwAioError(
           err,
           new internalCodes.INTERNAL_SNAPSHOT_ERROR({ messageValues: err })
@@ -124,12 +124,12 @@ class CreateSnapshots extends BaseCommand {
         lastProgress = currentProgress;
         currentProgress = json?.progressPercentage;
       } else if (progressResponse.status === 404) {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new snapshotCodes.SNAPSHOT_NOT_FOUND();
       } else {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         this.doLog('Could not get the progress of the snapshot creation.');
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         throw new internalCodes.UNKNOWN();
       }
 
@@ -138,14 +138,14 @@ class CreateSnapshots extends BaseCommand {
           result.waitingforbackend,
           Date.now()
         );
-        spinnies?.succeed('spinner-backend', {
+        this._spinnies?.succeed('spinner-backend', {
           text: `Backend picked up the job to create the snapshot. (${took})`,
           successColor: 'greenBright',
         });
         result.processnigsnapshotstarted = new Date();
       }
       if (lastProgress === -2) {
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         this.doLog(chalk.red('Snapshot creation failed.'));
         this.notify('failed', 'Snapshot creation failed.');
         throw new snapshotCodes.SNAPSHOT_CREATION_FAILED();
@@ -155,7 +155,7 @@ class CreateSnapshots extends BaseCommand {
         lastProgressChange = new Date();
       } else if (lastProgressChange.getTime() + 1000 * 60 * 15 < Date.now()) {
         // If the progress hasn't changed in 15 minutes, we assume the process is stuck.
-        spinnies?.stopAll('fail');
+        this._spinnies?.stopAll('fail');
         this.doLog(
           chalk.red(
             'The snapshot creation seems stuck. Either the snapshot is huge and takes a long time, or the backend is not responding. Please monitor snapshot creation using the list of snapshots to check on the state. If the snapshot is stuck for more than an hour, please contact support.'
@@ -173,7 +173,7 @@ class CreateSnapshots extends BaseCommand {
         result.processnigsnapshotstarted,
         Date.now()
       );
-      spinnies?.succeed('spinner-create', {
+      this._spinnies?.succeed('spinner-create', {
         text: `Created snapshot successfully. (${took})`,
         successColor: 'greenBright',
       });
@@ -194,7 +194,7 @@ class CreateSnapshots extends BaseCommand {
       result.processnigsnapshotended,
       Date.now()
     );
-    spinnies?.succeed('spinner-restart', {
+    this._spinnies?.succeed('spinner-restart', {
       text: `RDE unlocked successfully. (${took})`,
       successColor: 'greenBright',
     });
@@ -215,6 +215,16 @@ class CreateSnapshots extends BaseCommand {
     result.startTime = new Date(startTime);
     this.notify('restored', 'Snapshot created.');
     return result;
+  }
+
+  onBeforePrompt() {
+    this._spinnies?.suspendAll();
+  }
+
+  onAfterPrompt(accepted) {
+    if (this._spinnies) {
+      this._spinnies.resumeAll();
+    }
   }
 
   getSpinnies(flags) {

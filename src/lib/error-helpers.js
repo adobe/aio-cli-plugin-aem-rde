@@ -48,7 +48,7 @@ function handleError(_error, errorFn) {
       break;
   }
 
-  errorFn(_error.message, {
+  errorFn(_error, {
     code: _error.code,
     exit: exitCode,
   });

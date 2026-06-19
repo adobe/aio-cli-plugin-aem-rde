@@ -57,17 +57,18 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.GENERAL,
+        cause: err,
       },
     ];
     assert(
       errorSpy.calledWith(...errorFnExpectedArgs),
-      `Error function was called with arguments ${errorSpy.getCall(
-        -1
-      )} but it was expected ${JSON.stringify(errorFnExpectedArgs)}`
+      `Error function was called with arguments ${
+        errorSpy.getCall(-1).args
+      } but it was expected ${JSON.stringify(errorFnExpectedArgs)}`
     );
   });
 
@@ -80,10 +81,11 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.CONFIGURATION,
+        cause: err,
       },
     ];
     assert(
@@ -103,10 +105,11 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.DEPLOYMENT_ERROR,
+        cause: err,
       },
     ];
     assert(
@@ -126,10 +129,11 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.DEPLOYMENT_WARNING,
+        cause: err,
       },
     ];
     assert(
@@ -151,10 +155,11 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.INTERNAL,
+        cause: err,
       },
     ];
     assert(
@@ -174,10 +179,11 @@ describe('BaseCommand catch errors', function () {
       'Error function should be called once'
     );
     const errorFnExpectedArgs = [
-      err.message,
+      err,
       {
         code: err.code,
         exit: exitCodes.VALIDATION,
+        cause: err,
       },
     ];
     assert(
@@ -352,11 +358,11 @@ describe('Authentication tests', function () {
     }
     assert.equal(err.code, 'CLI_AUTH_CONTEXT_NO_CLIENT_ID');
   });
-  it('throw error on calling runCommand method', function () {
+  it('throw error on calling runCommand method', async function () {
     let err;
     try {
       const command = new BaseCommandAuthMock.BaseCommand();
-      command.runCommand();
+      await command.runCommand();
     } catch (e) {
       err = e;
     }
@@ -388,5 +394,120 @@ describe('Authentication tests', function () {
     const callbackStub = sinon.stub();
     await command.withCloudSdk(callbackStub);
     assert.ok(callbackStub.calledOnce);
+  });
+});
+
+describe('withCloudSdk experimental feature retry', function () {
+  const sb = require('sinon').createSandbox();
+
+  let promptAccepted;
+  let acceptedFeaturesResult;
+  let savedFeatures;
+
+  const BaseCommand451Mock = proxyquire('../../src/lib/base-command', {
+    '@adobe/aio-lib-ims': {
+      context: {
+        get: () => ({ data: { client_id: 'test_id' }, local: false }),
+        getCurrent: () => undefined,
+      },
+      getToken: () =>
+        require('jsonwebtoken').sign({ client_id: 'test_id' }, 'key', {}),
+    },
+    '@adobe/aio-lib-core-config': {
+      get: () => null,
+      set: () => {},
+    },
+    '@adobe/aio-lib-cloudmanager': {
+      init: () => ({
+        getDeveloperConsoleUrl: () => 'http://dev-console.example.com/#hash',
+      }),
+    },
+    './experimental-features': {
+      getAcceptedFeatures: () => acceptedFeaturesResult,
+      saveAcceptedFeature: (dir, features) => {
+        savedFeatures = features;
+        acceptedFeaturesResult = [...acceptedFeaturesResult, ...features];
+      },
+      promptForFeatureAcceptance: async () => promptAccepted,
+      getDisclaimerForFeature: () => '',
+    },
+  });
+
+  class TestCommandWithFeatures extends BaseCommand451Mock.BaseCommand {
+    constructor(features) {
+      super([], { cacheDir: '/test-cache' }, null, features || ['snapshots']);
+      this._programId = 'progId';
+      this._environmentId = 'envId';
+      this.flags = {};
+    }
+
+    runCommand() {}
+    onBeforePrompt() {}
+    onAfterPrompt() {}
+  }
+
+  beforeEach(function () {
+    promptAccepted = true;
+    acceptedFeaturesResult = [];
+    savedFeatures = null;
+  });
+
+  afterEach(() => sb.restore());
+
+  it('retries with updated headers after user accepts EAP terms on 451', async function () {
+    const command = new TestCommandWithFeatures();
+    let callCount = 0;
+    const fn = sb.stub().callsFake(async () => ({
+      status: ++callCount === 1 ? 451 : 200,
+    }));
+
+    const response = await command.withCloudSdk(fn);
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(fn.callCount, 2);
+    assert.deepStrictEqual(savedFeatures, ['snapshots']);
+  });
+
+  it('throws NON_EAP immediately when --json flag is set and 451 is received', async function () {
+    const command = new TestCommandWithFeatures();
+    command.flags = { json: true };
+    const fn = sb.stub().resolves({ status: 451 });
+
+    let err;
+    try {
+      await command.withCloudSdk(fn);
+    } catch (e) {
+      err = e;
+    }
+    assert.strictEqual(err?.code, 'NON_EAP');
+    assert.strictEqual(fn.callCount, 1);
+  });
+
+  it('throws NON_EAP when user rejects EAP terms', async function () {
+    promptAccepted = false;
+    const command = new TestCommandWithFeatures();
+    const fn = sb.stub().resolves({ status: 451 });
+
+    let err;
+    try {
+      await command.withCloudSdk(fn);
+    } catch (e) {
+      err = e;
+    }
+    assert.strictEqual(err?.code, 'NON_EAP');
+    assert.strictEqual(savedFeatures, null);
+  });
+
+  it('throws NON_EAP when retry also returns 451', async function () {
+    const command = new TestCommandWithFeatures();
+    const fn = sb.stub().resolves({ status: 451 });
+
+    let err;
+    try {
+      await command.withCloudSdk(fn);
+    } catch (e) {
+      err = e;
+    }
+    assert.strictEqual(err?.code, 'NON_EAP');
+    assert.strictEqual(fn.callCount, 2);
   });
 });

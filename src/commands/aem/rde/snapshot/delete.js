@@ -21,6 +21,10 @@ const { throwAioError } = require('../../../../lib/error-helpers');
 const chalk = require('chalk');
 
 class DeleteSnapshots extends BaseCommand {
+  constructor(argv, config) {
+    super(argv, config, null, ['snapshots']);
+  }
+
   async runCommand(args, flags) {
     if (flags.all) {
       await this.deleteAllSnapshots(flags.force);
@@ -45,12 +49,10 @@ class DeleteSnapshots extends BaseCommand {
       this.spinnerStop();
     }
 
-    if (response?.status === 451) {
-      throw new configurationCodes.NON_EAP();
-    } else if (response.status === 200) {
+    if (response.status === 200) {
       const json = await response.json();
       this.spinnerStop();
-      if (json?.items?.length === 0) {
+      if (json?.length === 0) {
         this.doLog('There are no snapshots yet.');
       } else {
         const promises =
@@ -77,9 +79,7 @@ class DeleteSnapshots extends BaseCommand {
       );
     }
     this.spinnerStop();
-    if (response?.status === 451) {
-      throw new configurationCodes.NON_EAP();
-    } else if (response?.status === 200 || response?.status === 201) {
+    if (response?.status === 200 || response?.status === 201) {
       if (force) {
         this.doLog(
           chalk.green(

@@ -2,6 +2,7 @@ const assert = require('assert');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const DeleteSnapshot = require('../../../../../src/commands/aem/rde/snapshot/delete');
+const { codes: configurationCodes } = require('../../../../../src/lib/configuration-errors');
 const { snapshotsResponse, snapshots } = require('./snapshots.mocks');
 
 /**
@@ -15,9 +16,13 @@ function createCloudSdkAPIStub(sinon, command, methods) {
   Object.keys(methods).forEach((k) => {
     cloudSdkApiStub[k] = methods[k];
   });
-  sinon
-    .stub(command, 'withCloudSdk')
-    .callsFake(async (fn) => fn(cloudSdkApiStub));
+  sinon.stub(command, 'withCloudSdk').callsFake(async (fn) => {
+    const response = await fn(cloudSdkApiStub);
+    if (response?.status === 451) {
+      throw new configurationCodes.NON_EAP();
+    }
+    return response;
+  });
   return [command, cloudSdkApiStub];
 }
 
@@ -112,7 +117,7 @@ describe('DeleteSnapshots', function () {
 
       if (isSingle) {
         assert.equal(cloudSdkApiStub.deleteSnapshot.callCount, 1);
-      }else{
+      } else {
         assert.equal(cloudSdkApiStub.deleteSnapshot.callCount, snapshots.length);
       }
 
@@ -168,14 +173,15 @@ describe('DeleteSnapshots', function () {
           'The given environment is not an RDE'
         ));
 
-      it('reacts to error code 500 appropriately', async () =>
+      it('reacts to error code 451 (early access) appropriately', async () => {
         executeWithErrorExpected(
           'snap1',
           false,
           451,
           null,
           'The feature is part of the EAP program and not available for general use.'
-        ));
+        );
+      });
 
       it('reacts to error code 503 appropriately', async () =>
         executeWithErrorExpected(
@@ -241,6 +247,21 @@ describe('DeleteSnapshots', function () {
           null,
           'The RDE is not in a state where a snapshot can be created or restored.'
         ));
+
+      it('does nothing if there are no snapshots', async () => {
+        [command, cloudSdkApiStub] = createCloudSdkAPIStub(sinon, command, {
+          getSnapshots: sinon.stub().resolves({
+            status: 200,
+            json: async () => [],
+          }),
+          deleteSnapshot: sinon.stub(),
+        });
+
+        await command.runCommand({}, { all: true });
+
+        sinon.assert.calledOnce(cloudSdkApiStub.getSnapshots);
+        sinon.assert.notCalled(cloudSdkApiStub.deleteSnapshot);
+      });
     });
   });
 });
