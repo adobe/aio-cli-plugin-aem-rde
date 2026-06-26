@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand } = require('../../../../lib/base-command');
+const { BaseCommand, commonFlags } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const {
@@ -74,7 +74,11 @@ Object.assign(UndeleteSnapshots, {
     },
   ],
   aliases: [],
-  flags: {},
+  flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
+  },
 });
 
 module.exports = UndeleteSnapshots;
