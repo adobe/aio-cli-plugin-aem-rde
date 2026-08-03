@@ -57,7 +57,8 @@
   },
   "scripts": {
     "testpattern": "nyc --all --exclude 'eslint_rules/*' --exclude 'coverage/*' --exclude 'src/index.js' --exclude 'test/*' --reporter=text --reporter=html mocha ",
-    "test": "nyc --all --exclude 'eslint_rules/*' --exclude 'coverage/*' --exclude 'src/index.js' --exclude 'test/*' --reporter=text --reporter=html mocha 'test/**/*.test.js'",
+    "test": "nyc --all --exclude 'eslint_rules/*' --exclude 'coverage/*' --exclude 'src/index.js' --exclude 'test/*' --reporter=text --reporter=html mocha 'test/**/*.test.js' --ignore 'test/e2e/**'",
+    "test:e2e": "mocha 'test/e2e/**/*.e2e.test.js' --timeout 1800000 --exit",
     "prettier": "prettier --write .",
     "format": "prettier --config .prettierrc --check ./src",
     "lint": "eslint src --ext .js --rulesdir eslint_rules"

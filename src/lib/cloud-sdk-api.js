@@ -322,7 +322,7 @@ class CloudSdkAPI {
     deploymentCallback
   ) {
     if (fileSize > 0) {
-      uploadCallbacks.start(fileSize);
+      uploadCallbacks?.start(fileSize);
       const result = await this._rdeClient.doPost(`/runtime/updates`, {
         service: target,
         fileSize,
@@ -346,13 +346,13 @@ class CloudSdkAPI {
         };
 
         let progress = getProgressBytes(res.copyProgress);
-        uploadCallbacks.progress(progress);
+        uploadCallbacks?.progress(progress);
         let time = 0;
         while (res.copyId !== copyId || res.copyStatus === 'pending') {
           await sleepSeconds(1);
           if (time++ > 30 && progress === 0) {
             await client.abortCopyFromURL(copyId);
-            uploadCallbacks.abort();
+            uploadCallbacks?.abort();
             break;
           }
           res = await client.getProperties();
@@ -365,25 +365,25 @@ class CloudSdkAPI {
             // numbers yet. Fake progress is limited to max 1/3 of the file
             // size.
             const fakeProgress = Math.round((time * fileSize) / 60);
-            uploadCallbacks.progress(Math.max(progress, fakeProgress));
+            uploadCallbacks?.progress(Math.max(progress, fakeProgress));
           }
         }
 
         if (res.copyStatus !== 'success') {
-          uploadCallbacks.abort();
-          uploadCallbacks.start(
+          uploadCallbacks?.abort();
+          uploadCallbacks?.start(
             fileSize,
             'Direct URL transfer failed. Attempting download of the provided URL and upload of the file to RDE.'
           );
           const con = await fetch(url);
           await client.uploadStream(con.body, fileSize, 1024 * 1024, 4, {
             onProgress: (progress) =>
-              uploadCallbacks.progress(progress.loadedBytes),
+              uploadCallbacks?.progress(progress.loadedBytes),
           });
         }
         return await this._putUpdate(changeId, deploymentCallback);
       } else {
-        uploadCallbacks.abort();
+        uploadCallbacks?.abort();
         throw await this._createError(result);
       }
     } else {

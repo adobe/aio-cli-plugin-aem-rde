@@ -111,6 +111,79 @@ A more detailed test report can be found in the `coverage/index.html` file.
 2. Run `npm install` in the folder.
 3. Run `aio plugins:link .` inside your folder.
 
+## End-to-end (E2E) testing
+
+In addition to the mocked unit tests above, this repo has a local, opt-in E2E suite (`test/e2e/`) that runs the real CLI against a real RDE environment, including the full snapshot lifecycle (`create` / `restore` / `delete` / `undelete`), installing an osgi-bundle/content-package (and inspecting/deleting it), tailing logs, and checking update history.
+
+> **⚠️ Warning**: `snapshot restore` replaces the environment's content/deployment state, and both `snapshot create` and `snapshot restore` lock the RDE for several minutes while running. **Only ever point this suite at a disposable/scratch RDE environment that you don't mind being reset or temporarily locked** - never a shared or important one.
+
+These tests are never run as part of `npm test` or CI. They are gated behind explicit environment variables so they can't be triggered by accident.
+
+### One-time setup
+
+The E2E suite reads/writes its `.aio` config from a dedicated **workspace directory**, kept separate from any `.aio` you may already have at this repo's root for your own day-to-day use of the plugin. By default this is `test/workspace/` (already gitignored, since it's covered by the root `.gitignore`'s `.aio` rule); override it with `RDE_E2E_WORKSPACE_DIR` (resolved relative to the repo root) if you'd rather use somewhere else.
+
+Run these once, before running the E2E suite:
+
+```
+npm install
+aio login
+mkdir -p test/workspace
+cd test/workspace
+node ../../bin/run aem:rde:setup
+```
+
+`aem:rde:setup` walks you through picking an org/program/environment and stores the choice locally in `test/workspace/.aio` - point it at your disposable/scratch RDE. Alternatively, set the IDs directly using the real `aio` CLI (`config:set`/`config set` are core `aio` commands, not part of this plugin, so they must be run via `aio`, not `./bin/run`) **from inside `test/workspace/`**, so the values land in the same local `.aio` file:
+
+```
+cd test/workspace
+aio config:set -l cloudmanager_orgid <org-id>
+aio config:set -l cloudmanager_programid <program-id>
+aio config:set -l cloudmanager_environmentid <environment-id>
+```
+
+Enable the (experimental) snapshot and inspect commands:
+
+```
+cd test/workspace
+aio config set -l -j aem-rde.experimental-features '["aem:rde:snapshot", "aem:rde:inspect"]'
+```
+
+Then run any snapshot command once via `./bin/run`, interactively (no `--json`/`--quiet`), and accept the beta disclaimer when prompted:
+
+```
+cd test/workspace
+node ../../bin/run aem:rde:snapshot
+```
+
+This persists your acceptance locally, so subsequent scripted `--json` runs (used by the E2E suite) never need to prompt.
+
+> **Note**: commands run via `./bin/run` use colon-separated IDs (`aem:rde:snapshot`), not the space-separated form (`aem rde snapshot`) you may be used to from the real `aio` CLI - `./bin/run` only loads this plugin standalone, without the space topic-separator the `aio` CLI host configures. The E2E suite itself (`test/e2e/lib/*.js`) already accounts for this, and always spawns `bin/run` with the resolved workspace directory as its `cwd` so it picks up `test/workspace/.aio` regardless of where you run `npm run test:e2e` from.
+
+### Running the suite
+
+The suite is gated by these environment variables:
+
+- `RDE_E2E_PROGRAM_ID` (required) - the program ID of your disposable/scratch RDE.
+- `RDE_E2E_ENVIRONMENT_ID` (required) - the environment ID of your disposable/scratch RDE.
+- `RDE_E2E_CONFIRM=yes` (required) - explicit acknowledgment that this run may mutate/lock a real environment.
+- `RDE_E2E_CONTEXT` (optional) - passed as `--context` if you use a non-default IMS context/login.
+
+If any of the required variables are missing, the suite reports itself as skipped instead of running.
+
+> **Note**: the snapshot commands don't accept `--programId`/`--environmentId`/`--organizationId` flags at all (only `status` does) - they always target whatever is in the persisted `cloudmanager_programid`/`cloudmanager_environmentid` config. So rather than passing `RDE_E2E_PROGRAM_ID`/`RDE_E2E_ENVIRONMENT_ID` as flags, the suite checks that they **match** the config set up above, and skips (instead of running against the wrong environment) if they don't.
+
+```
+RDE_E2E_PROGRAM_ID=12345 \
+RDE_E2E_ENVIRONMENT_ID=67890 \
+RDE_E2E_CONFIRM=yes \
+npm run test:e2e
+```
+
+Snapshot `create`/`restore` can realistically take 5-20 minutes against a real backend, so the suite uses generous per-step timeouts; a full run of the snapshot lifecycle spec can take up to ~30 minutes. The test-created snapshot is always cleaned up (soft-delete then force-delete) in an `after()` hook, even if an earlier step in the test fails.
+
+The install spec (`test/e2e/install.e2e.test.js`) deploys a small, publicly available osgi-bundle and content-package (the Adobe WKND reference site) straight from Maven Central by URL, so no binaries need to be downloaded locally or committed to the repo. The osgi-bundle install is cleaned up via `aem:rde:delete` afterwards; the content-package install is **not** cleaned up, since `aem:rde:delete` doesn't support removing content-packages - it accumulates on the target RDE across repeated runs, which is expected for a disposable/scratch environment.
+
 ## Exit Codes
 
 Primarily for scripting application purposes, the following exit codes are used:
