@@ -44,7 +44,11 @@ const NO_ACTIVE_LOG = 'No active log configuration found.';
   });
 
   it('creates a log tail and cleans it up on Ctrl+C', async function () {
-    this.timeout(e2e.timeoutMs.short);
+    // the SIGINT listener in logs.js is only registered after the
+    // create-log network call resolves, so this test's own wait below has
+    // to comfortably outlast that call - give the overall test extra room
+    // beyond the usual "short" budget to cover it plus the exit race below.
+    this.timeout(e2e.timeoutMs.short + 30000);
 
     const child = spawnCli(
       ['aem:rde:logs', '-i', '', '--target', 'author', ...e2e.commonFlags],
@@ -58,9 +62,14 @@ const NO_ACTIVE_LOG = 'No active log configuration found.';
       child.on('exit', (code, signal) => resolve({ code, signal }));
     });
 
-    // give the command a moment to create the log configuration and enter
-    // its polling loop before we interrupt it, like a real Ctrl+C would.
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // Give the command enough time to create the log configuration and
+    // register its SIGINT handler before we interrupt it, like a real
+    // Ctrl+C would. A short, fixed wait here previously raced the
+    // create-log call on a loaded backend: if SIGINT arrived before the
+    // handler was registered, the process died ungracefully (Node's default
+    // SIGINT behavior) and the just-created log configuration was left
+    // dangling server-side, breaking later runs of this suite.
+    await new Promise((resolve) => setTimeout(resolve, 10000));
     child.kill('SIGINT');
 
     const timeout = new Promise((_, reject) =>
