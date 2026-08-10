@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, Flags, cli } = require('../../../../lib/base-command');
+const { BaseCommand, Flags, cli, commonFlags } = require('../../../../lib/base-command');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { throwAioError } = require('../../../../lib/error-helpers');
 const {
@@ -137,6 +137,9 @@ Object.assign(ListSnapshots, {
   args: [],
   aliases: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     sort: Flags.string({
       description:
         'Sort the table by a table header, prefixed by a minus symbol for reverse sorting',
