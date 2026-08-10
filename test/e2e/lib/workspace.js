@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const hjson = require('hjson');
 
 const REPO_ROOT = path.join(__dirname, '..', '..', '..');
 const DEFAULT_WORKSPACE_DIR = path.join(REPO_ROOT, 'test', 'workspace');
@@ -38,6 +39,9 @@ function resolveWorkspaceDir() {
  * time, which would be the E2E test runner's own cwd, not the workspace
  * directory we actually want to inspect.
  *
+ * @adobe/aio-lib-core-config persists `.aio` using hjson (unquoted keys),
+ * not strict JSON, so a plain JSON.parse fails on any real config file.
+ *
  * @param {string} workspaceDir
  * @returns {object} parsed contents, or {} if missing/unparsable
  */
@@ -47,7 +51,7 @@ function readLocalAioConfig(workspaceDir) {
     return {};
   }
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return hjson.parse(fs.readFileSync(file, 'utf8'));
   } catch {
     return {};
   }

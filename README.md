@@ -182,6 +182,8 @@ npm run test:e2e
 
 Snapshot `create`/`restore` can realistically take 5-20 minutes against a real backend, so the suite uses generous per-step timeouts; a full run of the snapshot lifecycle spec can take up to ~30 minutes. The test-created snapshot is always cleaned up (soft-delete then force-delete) in an `after()` hook, even if an earlier step in the test fails.
 
+For a much cheaper run while iterating - e.g. on the status/install/logs/history specs - use `npm run test:e2e:fast`, which is identical but skips `test/e2e/snapshot-lifecycle.e2e.test.js` (the same env vars apply).
+
 The install spec (`test/e2e/install.e2e.test.js`) deploys a small, publicly available osgi-bundle and content-package (the Adobe WKND reference site) straight from Maven Central by URL, so no binaries need to be downloaded locally or committed to the repo. The osgi-bundle install is cleaned up via `aem:rde:delete` afterwards; the content-package install is **not** cleaned up, since `aem:rde:delete` doesn't support removing content-packages - it accumulates on the target RDE across repeated runs, which is expected for a disposable/scratch environment.
 
 ## Exit Codes
@@ -198,3 +200,5 @@ Primarily for scripting application purposes, the following exit codes are used:
 # Releasing a new version
 
 Please read the [RELEASE.md](https://github.com/adobe/aio-cli-plugin-aem-rde/blob/main/RELEASE.md)
+
+RDE_E2E_PROGRAM_ID=152255 RDE_E2E_ENVIRONMENT_ID=356415 RDE_E2E_CONTEXT=aio-rde-e2e-stage RDE_E2E_CONFIRM=yes npm run test:e2e   
