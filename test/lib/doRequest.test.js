@@ -140,7 +140,7 @@ describe('doRequest', function () {
     assert.match(options.headers['x-request-id'], UUID_RE);
     assert.deepEqual(result, { status: 200, response: 'ok' });
   });
-  it('doRequest without a request id does not set the header', async function () {
+  it('doRequest without a request id generates one', async function () {
     const dr = new DoRequest('http://example.com');
     const body = new FormData();
     body.append('foo', 'bar');
@@ -149,7 +149,15 @@ describe('doRequest', function () {
     assert.equal(url, 'http://example.com/postPath');
     assert.equal(options.method, 'post');
     assert.equal(options.body, body);
-    assert.equal(options.headers['x-request-id'], undefined);
+    assert.match(options.headers['x-request-id'], UUID_RE);
+  });
+  it('doRequest preserves a caller-provided x-request-id header', async function () {
+    const dr = new DoRequest('http://example.com', {
+      'x-request-id': 'caller-supplied-id',
+    });
+    await dr.doRequest('get', '/path');
+    const [, options] = fetchStub.firstCall.args;
+    assert.equal(options.headers['x-request-id'], 'caller-supplied-id');
   });
   it('withRetries returns undefined on exhaustion by default', async function () {
     const closure = sinon.stub().resolves({ status: 404 });

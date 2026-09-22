@@ -120,8 +120,10 @@ class DoRequest {
     // clone the base headers so per-request additions (e.g. content-type,
     // x-request-id) don't leak into other requests made with this client
     const headers = { ...this._headers };
-    if (requestId && !headers[REQUEST_ID_HEADER]) {
-      headers[REQUEST_ID_HEADER] = requestId;
+    if (!headers[REQUEST_ID_HEADER]) {
+      // always ensure a request id is sent, even if the caller invoked
+      // doRequest() directly without providing one
+      headers[REQUEST_ID_HEADER] = requestId || crypto.randomUUID();
     }
     const options = {
       method,
