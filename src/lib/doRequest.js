@@ -19,6 +19,54 @@ const fetch = createFetch();
 const REQUEST_ID_HEADER = 'x-request-id';
 
 /**
+ * Error codes that indicate the TLS handshake itself failed, rather than the
+ * request being rejected by the server. In corporate environments these are
+ * almost always caused by an HTTPS-inspecting proxy presenting a certificate
+ * signed by an internal CA that Node.js does not trust: Node maintains its own
+ * CA bundle and, unlike browsers, does not read the operating system trust
+ * store.
+ */
+const TLS_ERROR_CODES = new Set([
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'CERT_SIGNATURE_FAILURE',
+  'CERT_UNTRUSTED',
+  'CERT_HAS_EXPIRED',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+  'EPROTO',
+]);
+
+/**
+ * Extracts the most specific error code available from a failed fetch.
+ *
+ * Depending on the fetch implementation the underlying cause is either
+ * attached as `cause` (undici/global fetch) or set directly on the error
+ * (node-fetch), so both are inspected.
+ *
+ * @param {Error} error the error thrown by fetch
+ * @returns {string} the error code, or 'UNKNOWN' when none is available
+ */
+function getErrorCode(error) {
+  return error?.cause?.code || error?.code || 'UNKNOWN';
+}
+
+/**
+ * Extracts the most descriptive message available from a failed fetch.
+ *
+ * Global fetch masks all transport failures as 'fetch failed' and puts the
+ * real reason on `cause`, so the cause message is preferred when present.
+ *
+ * @param {Error} error the error thrown by fetch
+ * @returns {string} the error message
+ */
+function getErrorMessage(error) {
+  return error?.cause?.message || error?.message || String(error);
+}
+
+/**
  * Reads a header from a fetch Response in a way that tolerates plain
  * objects (as used in tests) as well as the real Headers API.
  *
@@ -136,7 +184,29 @@ class DoRequest {
       options.body = JSON.stringify(body);
       options.headers['content-type'] = 'application/json';
     }
-    return fetch(url, options);
+
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      // fetch rejects (rather than returning a response) when the request
+      // never completed: DNS failure, refused/reset connection, proxy issue
+      // or a failed TLS handshake. Without this, such failures escape as an
+      // opaque 'fetch failed' and get re-wrapped as an unexpected API error,
+      // hiding the actual cause from the user.
+      const code = getErrorCode(error);
+      const errorDetails = [
+        url,
+        getErrorMessage(error),
+        code,
+        headers[REQUEST_ID_HEADER],
+      ];
+      if (TLS_ERROR_CODES.has(code)) {
+        throw new internalCodes.TLS_ERROR({ messageValues: errorDetails });
+      }
+      throw new internalCodes.CONNECTION_ERROR({
+        messageValues: errorDetails,
+      });
+    }
   }
 }
 

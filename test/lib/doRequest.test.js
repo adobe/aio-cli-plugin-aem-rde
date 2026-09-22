@@ -89,6 +89,67 @@ describe('doRequest', function () {
     assert.equal(err.code, 'NETWORK_ERROR');
     assert.match(err.message, /x-request-id: [0-9a-f-]{36}/i);
   });
+  it('surfaces a TLS_ERROR with a NODE_EXTRA_CA_CERTS hint when the handshake fails', async function () {
+    // global fetch masks transport failures as 'fetch failed' and puts the
+    // real reason on `cause`, which is what an intercepting proxy produces
+    const tlsError = new TypeError('fetch failed');
+    tlsError.cause = Object.assign(
+      new Error('unable to verify the first certificate'),
+      { code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' }
+    );
+    const tlsStub = sinon.stub().rejects(tlsError);
+    const { DoRequest: TlsDoRequest } = proxyquire('../../src/lib/doRequest', {
+      '@adobe/aio-lib-core-networking': {
+        createFetch: function () {
+          return tlsStub;
+        },
+      },
+      './utils': { sleepSeconds: sinon.stub().resolves() },
+    });
+    const dr = new TlsDoRequest('http://example.com');
+    let err;
+    try {
+      await dr.doGet('/', {});
+    } catch (e) {
+      err = e;
+    }
+    assert.ok(err);
+    assert.equal(err.code, 'TLS_ERROR');
+    assert.match(err.message, /UNABLE_TO_VERIFY_LEAF_SIGNATURE/);
+    assert.match(err.message, /unable to verify the first certificate/);
+    assert.match(err.message, /NODE_EXTRA_CA_CERTS/);
+    assert.match(err.message, /x-request-id: [0-9a-f-]{36}/i);
+  });
+  it('surfaces a CONNECTION_ERROR for non-TLS transport failures', async function () {
+    // node-fetch style error, where the code sits directly on the error
+    const connError = Object.assign(
+      new Error('connect ECONNREFUSED 10.0.0.1:83'),
+      { code: 'ECONNREFUSED' }
+    );
+    const connStub = sinon.stub().rejects(connError);
+    const { DoRequest: ConnDoRequest } = proxyquire('../../src/lib/doRequest', {
+      '@adobe/aio-lib-core-networking': {
+        createFetch: function () {
+          return connStub;
+        },
+      },
+      './utils': { sleepSeconds: sinon.stub().resolves() },
+    });
+    const dr = new ConnDoRequest('http://example.com');
+    let err;
+    try {
+      await dr.doGet('/', {});
+    } catch (e) {
+      err = e;
+    }
+    assert.ok(err);
+    assert.equal(err.code, 'CONNECTION_ERROR');
+    assert.match(err.message, /ECONNREFUSED/);
+    assert.match(err.message, /HTTPS_PROXY/);
+    assert.match(err.message, /x-request-id: [0-9a-f-]{36}/i);
+    // a handshake/connection failure is not worth retrying five times
+    assert.equal(connStub.callCount, 1);
+  });
   it('doPost', async function () {
     const body = { fake: 'body' };
     const dr = new DoRequest('http://example.com');
