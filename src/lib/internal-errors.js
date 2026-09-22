@@ -54,11 +54,15 @@ E('ENVIRONMENT_NOT_HIBERNATED', 'No namespace was found.');
 E('ENVIRONMENT_NOT_RUNNING', 'No namespace was found.');
 E(
   'NETWORK_ERROR',
-  'Could not communicate with the server on %s. Please, try again later.'
+  'Could not communicate with the server on %s. This may be caused by a network, proxy, or TLS issue. x-request-id: %s. Please, try again later and if the error persists, report it along with the x-request-id.'
 );
 E(
   'UNEXPECTED_API_ERROR',
   'There was an unexpected API error code %s with message %s. Please, try again later and if the error persists, report it.'
+);
+E(
+  'HTTP_ERROR',
+  'The request to %s failed with HTTP status %s %s. x-request-id: %s. Please, try again later and if the error persists, report it along with the x-request-id.'
 );
 E(
   'INTERNAL_REQUEST_LOGS_DISABLE_ERROR',

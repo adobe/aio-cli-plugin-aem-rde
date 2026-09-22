@@ -9,11 +9,33 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+const crypto = require('crypto');
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const FormData = require('form-data');
 const { sleepSeconds } = require('./utils');
 const { codes: internalCodes } = require('./internal-errors');
 const fetch = createFetch();
+
+const REQUEST_ID_HEADER = 'x-request-id';
+
+/**
+ * Reads a header from a fetch Response in a way that tolerates plain
+ * objects (as used in tests) as well as the real Headers API.
+ *
+ * @param {object} response the fetch response (or response-like object)
+ * @param {string} name the header name to read
+ * @returns {string|undefined} the header value, if present
+ */
+function getResponseHeader(response, name) {
+  const headers = response && response.headers;
+  if (!headers) {
+    return undefined;
+  }
+  if (typeof headers.get === 'function') {
+    return headers.get(name) || undefined;
+  }
+  return headers[name];
+}
 
 class DoRequest {
   /**
@@ -28,21 +50,37 @@ class DoRequest {
   }
 
   async doGet(path, body) {
+    const requestId = crypto.randomUUID();
+    const isDone = (response) =>
+      response &&
+      ((response.status >= 200 && response.status < 300) ||
+        response.status === 404 ||
+        response.status === 451); // 451 Unavailable For Legal Reasons, EAP early access),
     const ret = await withRetries(
-      async () => await this.doRequest('get', path, body),
-      (response) =>
-        response &&
-        ((response.status >= 200 && response.status < 300) ||
-          response.status === 404 ||
-          response.status === 451), // 451 Unavailable For Legal Reasons, EAP early access),
+      async () => await this.doRequest('get', path, body, requestId),
+      isDone,
       1,
-      5
+      5,
+      true
     );
-    if (ret) {
+    if (isDone(ret)) {
       return ret;
     }
+    if (ret) {
+      // we did get a response back, it just wasn't one of the codes we
+      // treat as a completed request (e.g. an auth failure or a 5xx),
+      // so surface the real status instead of masking it as a NETWORK_ERROR
+      throw new internalCodes.HTTP_ERROR({
+        messageValues: [
+          this._baseUrl + path,
+          ret.status,
+          ret.statusText,
+          getResponseHeader(ret, REQUEST_ID_HEADER) || requestId,
+        ],
+      });
+    }
     throw new internalCodes.NETWORK_ERROR({
-      messageValues: this._baseUrl + path,
+      messageValues: [this._baseUrl + path, requestId],
     });
   }
 
@@ -67,20 +105,27 @@ class DoRequest {
   }
 
   async do(method, path, body) {
-    const ret = this.doRequest(method, path, body);
+    const requestId = crypto.randomUUID();
+    const ret = await this.doRequest(method, path, body, requestId);
     if (ret) {
       return ret;
     }
     throw new internalCodes.NETWORK_ERROR({
-      messageValues: this._baseUrl + path,
+      messageValues: [this._baseUrl + path, requestId],
     });
   }
 
-  async doRequest(method, path, body) {
+  async doRequest(method, path, body, requestId) {
     const url = `${this._baseUrl}${path}`;
+    // clone the base headers so per-request additions (e.g. content-type,
+    // x-request-id) don't leak into other requests made with this client
+    const headers = { ...this._headers };
+    if (requestId && !headers[REQUEST_ID_HEADER]) {
+      headers[REQUEST_ID_HEADER] = requestId;
+    }
     const options = {
       method,
-      headers: this._headers,
+      headers,
     };
 
     if (body instanceof FormData) {
@@ -98,20 +143,29 @@ class DoRequest {
  * @param successPredicate
  * @param retryIntervalSeconds
  * @param maxRetries
+ * @param returnLastResultOnFailure when true, return the last result obtained
+ *   from closure() even if it never satisfied successPredicate, instead of
+ *   returning undefined. Defaults to false to preserve existing behavior for
+ *   callers that rely on an undefined return to detect exhausted retries.
  */
 async function withRetries(
   closure,
   successPredicate,
   retryIntervalSeconds,
-  maxRetries
+  maxRetries,
+  returnLastResultOnFailure = false
 ) {
+  let result;
   for (let i = 0; i < maxRetries; i++) {
-    const result = await closure();
+    result = await closure();
     if (successPredicate(result)) {
       return result;
     }
-    await sleepSeconds(retryIntervalSeconds);
+    if (i < maxRetries - 1) {
+      await sleepSeconds(retryIntervalSeconds);
+    }
   }
+  return returnLastResultOnFailure ? result : undefined;
 }
 
 module.exports = {
