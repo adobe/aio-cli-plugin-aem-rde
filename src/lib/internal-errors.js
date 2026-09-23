@@ -54,11 +54,23 @@ E('ENVIRONMENT_NOT_HIBERNATED', 'No namespace was found.');
 E('ENVIRONMENT_NOT_RUNNING', 'No namespace was found.');
 E(
   'NETWORK_ERROR',
-  'Could not communicate with the server on %s. Please, try again later.'
+  'Could not communicate with the server on %s. This may be caused by a network, proxy, or TLS issue. x-request-id: %s. Please, try again later and if the error persists, report it along with the x-request-id.'
 );
 E(
   'UNEXPECTED_API_ERROR',
   'There was an unexpected API error code %s with message %s. Please, try again later and if the error persists, report it.'
+);
+E(
+  'HTTP_ERROR',
+  'The request to %s failed with HTTP status %s %s. x-request-id: %s. Please, try again later and if the error persists, report it along with the x-request-id.'
+);
+E(
+  'CONNECTION_ERROR',
+  'Could not connect to %s: %s (%s). x-request-id: %s. The request never reached the server, which usually points to a network, proxy or VPN issue. If you are behind a corporate proxy, make sure HTTPS_PROXY (and NO_PROXY, if applicable) are set for this shell. Please, try again later and if the error persists, report it along with the x-request-id.'
+);
+E(
+  'TLS_ERROR',
+  'The TLS connection to %s failed: %s (%s). x-request-id: %s. This usually means HTTPS traffic is being intercepted by a proxy that presents a certificate Node.js does not trust. Note that Node.js does not use the operating system certificate store, so a certificate trusted by your browser still has to be provided separately: ask your IT team for the corporate root CA certificate and point NODE_EXTRA_CA_CERTS at it (for example NODE_EXTRA_CA_CERTS=/path/to/corporate-root-ca.pem) before running the command again.'
 );
 E(
   'INTERNAL_REQUEST_LOGS_DISABLE_ERROR',
