@@ -18,26 +18,13 @@ const chalk = require('chalk');
 
 const CACHE_FILE = 'experimental-features.json';
 
-const TERMS = {
-  snapshots: {
-    terms:
-      'RDE Snapshots is a public beta feature. By using the RDE Snapshots Beta,\n' +
-      'you acknowledge that it is still in development and that you should not\n' +
-      'rely on the correct functioning of the technology or availability of data.\n' +
-      'While we have tested this feature extensively, there is a small possibility\n' +
-      'that your RDE could become unstable. If this occurs, a reset will restore\n' +
-      'it to a working state.\n' +
-      '\n' +
-      'Your participation directly helps Adobe identify and resolve\n' +
-      'issues — bringing this feature closer to General Availability.\n' +
-      '\n' +
-      'Continue?',
-    disclaimer:
-      'RDE Snapshots is a public beta feature. By using the RDE Snapshots Beta,\n' +
-      'you acknowledge that it is still in development and that you should not\n' +
-      'rely on the correct functioning of the technology or availability of data.',
-  },
-};
+/**
+ * TERMS allows defining named objects, each of which requires a {@code terms}
+ * and a {@code disclaimer} field.
+ * <br>
+ * @type {{[featureName: string]: {terms: string, disclaimer: string}}}
+ */
+const TERMS = {};
 
 function getAcceptedFeatures(cacheDir) {
   try {
