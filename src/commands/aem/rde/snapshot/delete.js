@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../../lib/base-command');
+const { BaseCommand, Flags, commonFlags } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const {
@@ -131,6 +131,9 @@ Object.assign(DeleteSnapshots, {
   ],
   aliases: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     all: Flags.boolean({
       description: 'Mark all snapshots as deleted.',
       char: 'a',

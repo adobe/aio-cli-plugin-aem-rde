@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../../lib/base-command');
+const { BaseCommand, Flags, commonFlags } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const {
@@ -245,6 +245,9 @@ Object.assign(CreateSnapshots, {
   ],
   aliases: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     description: Flags.string({
       description: 'A brief description of the snapshot.',
       char: 'd',
