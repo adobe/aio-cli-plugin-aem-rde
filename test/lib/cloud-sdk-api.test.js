@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
-const { concatEnvironemntId } = require('../../src/lib/utils');
 
 const fetch = sinon.stub();
 const sleep = sinon.stub().resolves();
@@ -28,7 +27,7 @@ const { CloudSdkAPI } = proxyquire('../../src/lib/cloud-sdk-api', {
     },
   },
   './doRequest': { DoRequest },
-  './utils': { sleepSeconds: sleep, concatEnvironemntId },
+  './utils': { sleepSeconds: sleep },
   './rde-utils': {
     handleRetryAfter: async (start, poll) => {
       const previous = start ? await start() : undefined;
@@ -40,7 +39,6 @@ const { CloudSdkAPI } = proxyquire('../../src/lib/cloud-sdk-api', {
 const origin = 'https://author-p123-e456.adobeaemcloud.com';
 const prefix = '/adobe/experimental/devconsole-expires-20261015/devconsole';
 const apiBase = origin + prefix;
-const consoleBase = 'https://dev-console.example.invalid';
 const cmBase = 'https://cloudmanager.adobe.io/api/program/123/environment/456';
 const sasUrl = 'https://storage.example.invalid/update?sig=test';
 
@@ -54,18 +52,16 @@ function response(status = 200, json = {}, headers = {}) {
   };
 }
 
-function client(apiFirst = true) {
+function client() {
   return new CloudSdkAPI(
     cmBase,
-    apiFirst ? apiBase : consoleBase,
-    `${consoleBase}/api/rde`,
+    apiBase,
     'test-api-key',
     'test-org',
     '123',
     '456',
     'test-token',
-    { 'x-enable-experimental-features': 'snapshots' },
-    apiFirst
+    { 'x-enable-experimental-features': 'snapshots' }
   );
 }
 
@@ -80,146 +76,133 @@ describe('CloudSdkAPI routing', function () {
     fetch.resolves(response());
   });
 
-  for (const apiFirst of [false, true]) {
-    const runtimeBase = apiFirst
-      ? `${apiBase}/runtime`
-      : `${consoleBase}/api/rde/program/123/environment/456/runtime`;
-    const updatesBase = apiFirst
-      ? `${apiBase}/rde-updates`
-      : `${runtimeBase}/updates`;
-    const snapshotsBase = apiFirst
-      ? `${apiBase}/rde-snapshots`
-      : `${consoleBase}/api/rde/snapshots`;
+  const runtimeBase = `${apiBase}/runtime`;
+  const updatesBase = `${apiBase}/rde-updates`;
+  const snapshotsBase = `${apiBase}/rde-snapshots`;
 
-    describe(apiFirst ? 'API-first' : 'legacy compatibility', function () {
-      for (const [name, args, method, path] of [
-        [
-          'getAemLogs',
-          ['publish', { filter: 'custom' }],
-          'get',
-          '/publish/logs?filter=custom',
-        ],
-        ['getAemLog', ['author', 'log/1'], 'get', '/author/logs/log%2F1'],
-        ['getAemLogTail', ['preview', '1'], 'get', '/preview/logs/1/tail'],
-        ['createAemLog', ['author', { names: [] }], 'post', '/author/logs'],
-        ['deleteAemLog', ['publish', '1'], 'delete', '/publish/logs/1'],
-        ['getRequestLogs', ['author', {}], 'get', '/author/request-logs?'],
-        ['getRequestLog', ['author', '1'], 'get', '/author/request-logs/1'],
-        [
-          'enableRequestLogs',
-          ['author', { includePathPatterns: ['.*'] }],
-          'post',
-          '/author/request-logs',
-        ],
-        ['disableRequestLogs', ['author'], 'delete', '/author/request-logs'],
-        ['getInventories', ['author', {}], 'get', '/author/inventory?'],
-        ['getInventory', ['author', '1'], 'get', '/author/inventory/1'],
-        [
-          'getOsgiBundles',
-          ['author', { scope: 'custom' }],
-          'get',
-          '/author/osgi-bundles?scope=custom',
-        ],
-        ['getOsgiBundle', ['author', '1'], 'get', '/author/osgi-bundles/1'],
-        [
-          'getOsgiComponents',
-          ['author', {}],
-          'get',
-          '/author/osgi-components?',
-        ],
-        [
-          'getOsgiComponent',
-          ['author', 'component/name'],
-          'get',
-          '/author/osgi-components/component%2Fname',
-        ],
-        [
-          'getOsgiConfigurations',
-          ['author', {}],
-          'get',
-          '/author/osgi-configurations?',
-        ],
-        [
-          'getOsgiConfiguration',
-          ['author', 'config/pid'],
-          'get',
-          '/author/osgi-configurations/config%2Fpid',
-        ],
-        ['getOsgiServices', ['author', {}], 'get', '/author/osgi-services?'],
-        ['getOsgiService', ['author', '1'], 'get', '/author/osgi-services/1'],
-      ]) {
-        it(`routes ${name} with its existing authentication and payload`, async function () {
-          await client(apiFirst)[name](...args);
-          assert.equal(fetch.callCount, 1);
-          const [url, options] = fetch.firstCall.args;
-          assert.equal(url, runtimeBase + path);
-          assert.equal(options.method, method);
-          assert.equal(options.headers.Authorization, 'Bearer test-token');
-          assert.equal(
-            options.headers['x-enable-experimental-features'],
-            'snapshots'
-          );
-          if (method === 'post') {
-            assert.deepEqual(JSON.parse(options.body), args[1]);
-          }
-        });
-      }
+  describe('API-first', function () {
+    for (const [name, args, method, path] of [
+      [
+        'getAemLogs',
+        ['publish', { filter: 'custom' }],
+        'get',
+        '/publish/logs?filter=custom',
+      ],
+      ['getAemLog', ['author', 'log/1'], 'get', '/author/logs/log%2F1'],
+      ['getAemLogTail', ['preview', '1'], 'get', '/preview/logs/1/tail'],
+      ['createAemLog', ['author', { names: [] }], 'post', '/author/logs'],
+      ['deleteAemLog', ['publish', '1'], 'delete', '/publish/logs/1'],
+      ['getRequestLogs', ['author', {}], 'get', '/author/request-logs?'],
+      ['getRequestLog', ['author', '1'], 'get', '/author/request-logs/1'],
+      [
+        'enableRequestLogs',
+        ['author', { includePathPatterns: ['.*'] }],
+        'post',
+        '/author/request-logs',
+      ],
+      ['disableRequestLogs', ['author'], 'delete', '/author/request-logs'],
+      ['getInventories', ['author', {}], 'get', '/author/inventory?'],
+      ['getInventory', ['author', '1'], 'get', '/author/inventory/1'],
+      [
+        'getOsgiBundles',
+        ['author', { scope: 'custom' }],
+        'get',
+        '/author/osgi-bundles?scope=custom',
+      ],
+      ['getOsgiBundle', ['author', '1'], 'get', '/author/osgi-bundles/1'],
+      ['getOsgiComponents', ['author', {}], 'get', '/author/osgi-components?'],
+      [
+        'getOsgiComponent',
+        ['author', 'component/name'],
+        'get',
+        '/author/osgi-components/component%2Fname',
+      ],
+      [
+        'getOsgiConfigurations',
+        ['author', {}],
+        'get',
+        '/author/osgi-configurations?',
+      ],
+      [
+        'getOsgiConfiguration',
+        ['author', 'config/pid'],
+        'get',
+        '/author/osgi-configurations/config%2Fpid',
+      ],
+      ['getOsgiServices', ['author', {}], 'get', '/author/osgi-services?'],
+      ['getOsgiService', ['author', '1'], 'get', '/author/osgi-services/1'],
+    ]) {
+      it(`routes ${name} with its existing authentication and payload`, async function () {
+        await client()[name](...args);
+        assert.equal(fetch.callCount, 1);
+        const [url, options] = fetch.firstCall.args;
+        assert.equal(url, runtimeBase + path);
+        assert.equal(options.method, method);
+        assert.equal(options.headers.Authorization, 'Bearer test-token');
+        assert.equal(
+          options.headers['x-enable-experimental-features'],
+          'snapshots'
+        );
+        if (method === 'post') {
+          assert.deepEqual(JSON.parse(options.body), args[1]);
+        }
+      });
+    }
 
-      for (const [name, args, path] of [
-        ['getChanges', [], ''],
-        ['getChange', ['update/1'], '/update%2F1'],
-        ['getStatus', [], '/artifacts'],
-        ['getArtifacts', ['next cursor'], '/artifacts?cursor=next+cursor'],
-        ['getLogs', ['1'], '/1/logs'],
-      ]) {
-        it(`routes ${name} through the updates collection`, async function () {
-          await client(apiFirst)[name](...args);
-          assert.equal(fetch.firstCall.args[0], updatesBase + path);
-          assert.equal(fetch.firstCall.args[1].method, 'get');
-        });
-      }
+    for (const [name, args, path] of [
+      ['getChanges', [], ''],
+      ['getChange', ['update/1'], '/update%2F1'],
+      ['getStatus', [], '/artifacts'],
+      ['getArtifacts', ['next cursor'], '/artifacts?cursor=next+cursor'],
+      ['getLogs', ['1'], '/1/logs'],
+    ]) {
+      it(`routes ${name} through the updates collection`, async function () {
+        await client()[name](...args);
+        assert.equal(fetch.firstCall.args[0], updatesBase + path);
+        assert.equal(fetch.firstCall.args[1].method, 'get');
+      });
+    }
 
-      for (const [name, args, method, path] of [
-        ['getSnapshots', [], 'get', '?programId=123&environmentId=456'],
-        [
-          'createSnapshot',
-          ['test', { description: 'my snapshot' }],
-          'post',
-          '?description=my+snapshot&snapshot-name=test&programId=123&environmentId=456',
-        ],
-        [
-          'deleteSnapshot',
-          ['test/name', true],
-          'delete',
-          '/test%2Fname?force=true&programId=123&environmentId=456',
-        ],
-        [
-          'undeleteSnapshot',
-          ['test/name'],
-          'put',
-          '/test%2Fname?programId=123&environmentId=456',
-        ],
-        [
-          'restoreSnapshot',
-          ['test/name', { 'only-mutable-content': true }],
-          'post',
-          '/test%2Fname/restore?programId=123&environmentId=456',
-        ],
-      ]) {
-        it(`routes ${name} with snapshot identity and wire properties preserved`, async function () {
-          await client(apiFirst)[name](...args);
-          const [url, options] = fetch.firstCall.args;
-          assert.equal(url, snapshotsBase + path);
-          assert.equal(options.method, method);
-          if (name === 'restoreSnapshot') {
-            assert.deepEqual(JSON.parse(options.body), {
-              'only-mutable-content': true,
-            });
-          }
-        });
-      }
-    });
-  }
+    for (const [name, args, method, path] of [
+      ['getSnapshots', [], 'get', '?programId=123&environmentId=456'],
+      [
+        'createSnapshot',
+        ['test', { description: 'my snapshot' }],
+        'post',
+        '?description=my+snapshot&snapshot-name=test&programId=123&environmentId=456',
+      ],
+      [
+        'deleteSnapshot',
+        ['test/name', true],
+        'delete',
+        '/test%2Fname?force=true&programId=123&environmentId=456',
+      ],
+      [
+        'undeleteSnapshot',
+        ['test/name'],
+        'put',
+        '/test%2Fname?programId=123&environmentId=456',
+      ],
+      [
+        'restoreSnapshot',
+        ['test/name', { 'only-mutable-content': true }],
+        'post',
+        '/test%2Fname/restore?programId=123&environmentId=456',
+      ],
+    ]) {
+      it(`routes ${name} with snapshot identity and wire properties preserved`, async function () {
+        await client()[name](...args);
+        const [url, options] = fetch.firstCall.args;
+        assert.equal(url, snapshotsBase + path);
+        assert.equal(options.method, method);
+        if (name === 'restoreSnapshot') {
+          assert.deepEqual(JSON.parse(options.body), {
+            'only-mutable-content': true,
+          });
+        }
+      });
+    }
+  });
 
   it('polls snapshot progress on rde-runtime with the existing action parameters', async function () {
     await client().getSnapshotProgress(
@@ -240,7 +223,7 @@ describe('CloudSdkAPI routing', function () {
     fetch
       .onSecondCall()
       .resolves(response(200, { status: { releaseState: 'running' } }));
-    assert.equal(await client()._waitForEnv(undefined, 'running'), 'running');
+    assert.equal(await client()._waitForEnv('running'), 'running');
     assert(
       fetch
         .getCalls()
@@ -251,7 +234,7 @@ describe('CloudSdkAPI routing', function () {
 
   it('rejects a legacy status payload instead of silently polling it forever', async function () {
     fetch.resolves(response(200, { releases: { status: {} } }));
-    await assert.rejects(client()._waitForEnv(undefined, 'running'), {
+    await assert.rejects(client()._waitForEnv('running'), {
       code: 'UNEXPECTED_API_ERROR',
     });
   });
@@ -440,38 +423,6 @@ describe('CloudSdkAPI routing', function () {
     assert.equal(fetch.firstCall.args[1].method, 'delete');
     assert.equal(fetch.secondCall.args[0], `${apiBase}/rde-updates/1`);
   });
-
-  for (const action of ['restartEnv', 'resetEnv']) {
-    it(`preserves legacy namespace discovery and lifecycle polling for ${action}`, async function () {
-      fetch.callsFake(async (url, options) => {
-        if (url === `${consoleBase}/api/status`) {
-          return response(200, { availableNamespaces: ['test-namespace'] });
-        }
-        return response(options.method === 'post' ? 201 : 200, {
-          releases: { status: { 'cm-p123-e456': { releaseState: 'running' } } },
-        });
-      });
-      await client(false)[action](true, true, false);
-      assert(
-        fetch
-          .getCalls()
-          .some((call) => call.args[0] === `${consoleBase}/api/status`)
-      );
-      assert.equal(
-        fetch
-          .getCalls()
-          .filter(
-            (call) =>
-              call.args[0] ===
-              `${consoleBase}/api/releases/test-namespace/status`
-          ).length,
-        3
-      );
-      assert(
-        fetch.getCalls().every((call) => call.args[0].startsWith(consoleBase))
-      );
-    });
-  }
 
   it('keeps a forced reset on rde-runtime even without preserving mutable content', async function () {
     fetch.callsFake(async (url, options) =>

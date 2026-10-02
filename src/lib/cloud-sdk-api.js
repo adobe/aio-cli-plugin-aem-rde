@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter } = require('./rde-utils');
-const { sleepSeconds, concatEnvironemntId } = require('./utils');
+const { sleepSeconds } = require('./utils');
 const { DoRequest } = require('./doRequest');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: validationCodes } = require('./validation-errors');
@@ -24,27 +24,23 @@ class CloudSdkAPI {
    * Initializes a CloudSdkAPI object and returns it.
    *
    * @param {string} cloudManagerUrl the cloudmanager api endpoint
-   * @param {string} devConsoleUrl the dev console url for the environment
-   * @param {object} rdeUrl the RDE API endpoint for the environment
+   * @param {string} devConsoleUrl the API-first Developer Console endpoint for the environment
    * @param {string} apiKey the cloudmanager api key
    * @param {string} orgId the cloudmanager org id
    * @param {string} programId The ID of the program that contains the environment.
    * @param {string} environmentId The ID of the environment.
    * @param {string} accessToken The bearer token used to authenticate requests to the API.
    * @param {object} customHeaders Additional headers to send with RDE API calls.
-   * @param {boolean} apiFirst Use the environment API-first URL instead of legacy console routes.
    */
   constructor(
     cloudManagerUrl,
     devConsoleUrl,
-    rdeUrl,
     apiKey,
     orgId,
     programId,
     environmentId,
     accessToken,
-    customHeaders = {},
-    apiFirst = false
+    customHeaders = {}
   ) {
     const authorizationHeaders = {
       Authorization: `Bearer ${accessToken}`,
@@ -62,29 +58,22 @@ class CloudSdkAPI {
       )
     );
     const headers = { ...authorizationHeaders, ...customHeaders };
-    const legacyRuntimeUrl = `${rdeUrl}/program/${programId}/environment/${environmentId}/runtime`;
-    this._apiFirst = apiFirst;
-    this._devConsoleClient = new DoRequest(devConsoleUrl, headers);
-    this._runtimeClient = new DoRequest(
-      apiFirst ? `${devConsoleUrl}/runtime` : legacyRuntimeUrl,
-      headers
-    );
+    this._runtimeClient = new DoRequest(`${devConsoleUrl}/runtime`, headers);
     this._environmentClient = new DoRequest(
-      apiFirst ? `${devConsoleUrl}/rde-runtime` : legacyRuntimeUrl,
+      `${devConsoleUrl}/rde-runtime`,
       headers
     );
     this._updatesClient = new DoRequest(
-      apiFirst ? `${devConsoleUrl}/rde-updates` : `${legacyRuntimeUrl}/updates`,
+      `${devConsoleUrl}/rde-updates`,
       headers
     );
     this._releasesClient = new DoRequest(`${devConsoleUrl}/releases`, headers);
     this._snapshotClient = new DoRequest(
-      apiFirst ? `${devConsoleUrl}/rde-snapshots` : `${rdeUrl}/snapshots`,
+      `${devConsoleUrl}/rde-snapshots`,
       headers
     );
     this.programId = programId;
     this.environmentId = environmentId;
-    this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
   async getAemLogs(serviceName, params) {
@@ -495,23 +484,20 @@ class CloudSdkAPI {
     return json;
   }
 
-  async _waitForEnvRunning(namespace) {
-    await this._waitForEnv(namespace, 'running');
+  async _waitForEnvRunning() {
+    await this._waitForEnv('running');
   }
 
-  async _waitForEnvHibernated(namespace) {
-    await this._waitForEnv(namespace, 'hibernated');
+  async _waitForEnvHibernated() {
+    await this._waitForEnv('hibernated');
   }
 
-  async _waitForEnvRunningOrHibernated(namespace) {
-    return await this._waitForEnv(namespace, 'running', 'hibernated');
+  async _waitForEnvRunningOrHibernated() {
+    return await this._waitForEnv('running', 'hibernated');
   }
 
-  async _waitForEnv(namespace, ...allowedStates) {
+  async _waitForEnv(...allowedStates) {
     const getReleaseState = (json) => {
-      if (!this._apiFirst) {
-        return json.releases?.status[this._cmReleaseId]?.releaseState;
-      }
       const state = json.status?.releaseState;
       if (typeof state !== 'string') {
         throw new internalCodes.UNEXPECTED_API_ERROR({
@@ -522,49 +508,24 @@ class CloudSdkAPI {
     };
     const json = await this._waitForJson(
       (json) => allowedStates.includes(getReleaseState(json)),
-      () =>
-        this._apiFirst
-          ? this._releasesClient.doGet('/status')
-          : this._devConsoleClient.doGet(`/api/releases/${namespace}/status`)
+      () => this._releasesClient.doGet('/status')
     );
     return getReleaseState(json);
   }
 
-  async _hibernateEnv(namespace) {
-    await this._setEnvStatus(namespace, `hibernate`);
+  async _hibernateEnv() {
+    await this._setEnvStatus('hibernate');
   }
 
-  async _dehibernateEnv(namespace) {
-    await this._setEnvStatus(namespace, `dehibernate`);
+  async _dehibernateEnv() {
+    await this._setEnvStatus('dehibernate');
   }
 
-  async _setEnvStatus(namespace, target) {
+  async _setEnvStatus(target) {
     await this._waitForJson(
       (status) => status.ok,
-      async () =>
-        await (this._apiFirst
-          ? this._releasesClient.doPost(`/${target}`)
-          : this._devConsoleClient.doPost(
-              `/api/releases/${namespace}/${target}/${this._cmReleaseId}`
-            ))
+      () => this._releasesClient.doPost(`/${target}`)
     );
-  }
-
-  async _getNamespace() {
-    const nameSpaceRequest = await this._devConsoleClient.doGet(`/api/status`);
-    if (nameSpaceRequest.status === 200) {
-      const nameSpaceStatus = await nameSpaceRequest.json();
-      if (
-        nameSpaceStatus.availableNamespaces &&
-        nameSpaceStatus.availableNamespaces[0]
-      ) {
-        return nameSpaceStatus.availableNamespaces[0];
-      } else {
-        throw new internalCodes.NAMESPACE_NOT_FOUND();
-      }
-    } else {
-      throw await this._createError(nameSpaceRequest);
-    }
   }
 
   async _checkRDE() {
@@ -574,22 +535,21 @@ class CloudSdkAPI {
     }
   }
 
-  async _startEnv(namespace) {
-    await this._dehibernateEnv(namespace);
-    await this._waitForEnvRunning(namespace);
+  async _startEnv() {
+    await this._dehibernateEnv();
+    await this._waitForEnvRunning();
   }
 
-  async _stopEnv(namespace) {
-    await this._hibernateEnv(namespace);
-    await this._waitForEnvHibernated(namespace);
+  async _stopEnv() {
+    await this._hibernateEnv();
+    await this._waitForEnvHibernated();
   }
 
   async startEnv() {
     await this._checkRDE();
-    const namespace = this._apiFirst ? undefined : await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated();
     if (status === 'hibernated') {
-      await this._startEnv(namespace);
+      await this._startEnv();
     } else {
       throw new internalCodes.ENVIRONMENT_NOT_HIBERNATED();
     }
@@ -597,10 +557,9 @@ class CloudSdkAPI {
 
   async stopEnv() {
     await this._checkRDE();
-    const namespace = this._apiFirst ? undefined : await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated();
     if (status === 'running') {
-      await this._stopEnv(namespace);
+      await this._stopEnv();
     } else {
       throw new internalCodes.ENVIRONMENT_NOT_RUNNING();
     }
@@ -611,11 +570,10 @@ class CloudSdkAPI {
     if (response.status !== 201) {
       throw await this._createError(response);
     }
-    const namespace = this._apiFirst ? undefined : await this._getNamespace();
     const tries = 3;
     for (let i = 0; i < tries; i++) {
       await sleepSeconds(5);
-      await this._waitForEnvRunning(namespace);
+      await this._waitForEnvRunning();
     }
   }
 
@@ -633,11 +591,10 @@ class CloudSdkAPI {
         throw await this._createError(result);
       }
 
-      const namespace = this._apiFirst ? undefined : await this._getNamespace();
       const tries = 3;
       for (let i = 0; i < tries; i++) {
         await sleepSeconds(5);
-        await this._waitForEnvRunning(namespace);
+        await this._waitForEnvRunning();
       }
     } else {
       await this._waitForCMStatus();

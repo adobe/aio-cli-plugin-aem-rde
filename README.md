@@ -61,18 +61,9 @@ aio config:set cloudmanager_environmentid <env-id>
 > **Note**:
 > Working with multiple environments: it is highly recommend to use the flag `-l` or `--local` together with the `config:set` so that the configuration is stored in the local directory (i.e. the config is only effective in the current directory). For details on different config locations refer to [aio-lib-core-config's README](https://github.com/adobe/aio-lib-core-config#persistent-file-locations). Also, make use of the possibility to store the login information in seperate contexts locally. [Follow the RDE documentation](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/implementing/developing/rapid-development-environments#installing-the-rde-command-line-tools) for further information, take a close look to the step 3 details.
 
-### Configuration for experimental commands
+### API-first Developer Console routing
 
-#### API-first Developer Console routing
-
-Enable API-first routing explicitly:
-
-```
-aio config set -l -j aem-rde.api-first true
-```
-
-The default is `false`, retaining legacy Developer Console routing. API-first
-mode uses the author environment host and
+Developer Console requests use the author environment host and
 `/adobe/experimental/devconsole-expires-20261015/devconsole`; it does not discover
 a Developer Console URL or namespace through Cloud Manager. Stage IMS contexts
 use the author hostname suffix `-cmstg`. Author, publish, and preview inspection
@@ -86,10 +77,8 @@ requests all use the author host, with the target tier in the request path.
 | Logs, request logs, inventory, OSGi inspection | `/runtime/{target}` |
 | Lifecycle actions and completion polling | `/releases` |
 
-API-first mode does not use `cloudmanager_devconsoleurl` or the legacy console URL
-cache, and does not fall back to legacy endpoints after an API error. Disable it
-explicitly with `aio config set -l -j aem-rde.api-first false` to use legacy
-routing and its existing overrides.
+Routing is API-first without a configuration flag or legacy fallback.
+`cloudmanager_devconsoleurl` and the legacy console URL cache are not used.
 
 Cloud Manager program/environment setup and the default reset remain unchanged.
 Deployment uploads still use the Azure SAS URL returned by update registration.
@@ -98,8 +87,10 @@ Reset sends `keep-mutable-content`, and snapshot restore sends
 
 The experimental registry must expose the RDE runtime/snapshot `0.0.82` contracts
 and the lifecycle/update operations from `0.0.80`. The experimental prefix expires
-on October 15, 2026; its availability and renewal must be confirmed before enabling
-this mode in a released CLI.
+on October 15, 2026; its availability and renewal must be confirmed before releasing
+the CLI. Release only after the API-first endpoints are online.
+
+### Configuration for experimental commands
 
 ⚠️ **WARNING**: These are **experimental features**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
 

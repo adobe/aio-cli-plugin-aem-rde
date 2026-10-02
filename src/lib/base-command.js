@@ -22,7 +22,6 @@ const notifier = require('node-notifier');
 // Adobe dependencies
 const { getToken, context } = require('@adobe/aio-lib-ims');
 const Config = require('@adobe/aio-lib-core-config');
-const { init } = require('@adobe/aio-lib-cloudmanager');
 
 // internals
 const { CloudSdkAPI } = require('../lib/cloud-sdk-api');
@@ -259,35 +258,6 @@ class BaseCommand extends Command {
     return { accessToken, apiKey, local, data };
   }
 
-  /**
-   * @param cloudManagerUrl
-   * @param orgId
-   * @param accessToken
-   * @param apiKey
-   */
-  async initSdk(cloudManagerUrl, orgId, accessToken, apiKey) {
-    return await init(orgId, apiKey, accessToken, cloudManagerUrl);
-  }
-
-  async getDeveloperConsoleUrl(
-    cloudManagerUrl,
-    orgId,
-    programId,
-    environmentId,
-    accessToken,
-    apiKey
-  ) {
-    const devConsoleUrlOverridden = Config.get('cloudmanager_devconsoleurl');
-    if (devConsoleUrlOverridden) {
-      this.doLog(
-        '\nUsing Developer Console URL from config: ' + devConsoleUrlOverridden
-      );
-      return devConsoleUrlOverridden;
-    }
-    const sdk = await this.initSdk(cloudManagerUrl, orgId, accessToken, apiKey);
-    return sdk.getDeveloperConsoleUrl(programId, environmentId);
-  }
-
   async withCloudSdk(fn) {
     if (!this._programId) {
       throw new validationCodes.MISSING_PROGRAM_ID();
@@ -298,52 +268,7 @@ class BaseCommand extends Command {
     const { accessToken, apiKey, data } = await this.getTokenAndKey();
     const cloudManagerUrl = this.getBaseUrl(data?.env === 'stage');
     const orgId = this.getCliOrgId();
-    const apiFirst = Config.get('aem-rde.api-first');
-    if (
-      apiFirst !== undefined &&
-      apiFirst !== null &&
-      typeof apiFirst !== 'boolean'
-    ) {
-      throw new configurationCodes.INVALID_API_FIRST_CONFIG();
-    }
-    let cacheEntry;
-    if (apiFirst) {
-      cacheEntry = {
-        apiFirst: true,
-        devConsoleUrl: this.getApiFirstUrl(data?.env === 'stage'),
-      };
-    } else {
-      const cacheKey = `aem-rde.dev-console-url-cache.${concatEnvironemntId(this._programId, this._environmentId)}`;
-      cacheEntry = Config.get(cacheKey);
-      // TODO: prune expired cache entries
-      if (
-        !cacheEntry ||
-        new Date(cacheEntry.expiry).valueOf() < Date.now() ||
-        !cacheEntry.devConsoleUrl
-      ) {
-        const developerConsoleUrl = await this.getDeveloperConsoleUrl(
-          cloudManagerUrl,
-          orgId,
-          this._programId,
-          this._environmentId,
-          accessToken,
-          apiKey
-        );
-        const url = new URL(developerConsoleUrl);
-        url.hash = '';
-        const devConsoleUrl = url.toString();
-        url.pathname = '/api/rde';
-        const rdeApiUrl = url.toString();
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 1); // cache for at most one day
-        cacheEntry = {
-          expiry: expiry.toISOString(),
-          rdeApiUrl,
-          devConsoleUrl,
-        };
-        Config.set(cacheKey, cacheEntry);
-      }
-    }
+    const devConsoleUrl = this.getApiFirstUrl(data?.env === 'stage');
 
     let customHeaders = {};
     const cacheDir = this._pluginCacheDir();
@@ -357,7 +282,7 @@ class BaseCommand extends Command {
     const response = await fn(
       this._getCloudSdkAPI(
         cloudManagerUrl,
-        cacheEntry,
+        devConsoleUrl,
         apiKey,
         orgId,
         accessToken,
@@ -383,7 +308,7 @@ class BaseCommand extends Command {
     const retryResponse = await fn(
       this._getCloudSdkAPI(
         cloudManagerUrl,
-        cacheEntry,
+        devConsoleUrl,
         apiKey,
         orgId,
         accessToken,
@@ -401,7 +326,7 @@ class BaseCommand extends Command {
 
   _getCloudSdkAPI(
     cloudManagerUrl,
-    cacheEntry,
+    devConsoleUrl,
     apiKey,
     orgId,
     accessToken,
@@ -409,15 +334,13 @@ class BaseCommand extends Command {
   ) {
     return new CloudSdkAPI(
       `${cloudManagerUrl}/api/program/${this._programId}/environment/${this._environmentId}`,
-      cacheEntry.devConsoleUrl,
-      cacheEntry.rdeApiUrl,
+      devConsoleUrl,
       apiKey,
       orgId,
       this._programId,
       this._environmentId,
       accessToken,
-      customHeaders,
-      cacheEntry.apiFirst === true
+      customHeaders
     );
   }
 

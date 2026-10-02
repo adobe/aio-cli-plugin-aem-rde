@@ -225,11 +225,6 @@ describe('Authentication tests', function () {
       get: getConfigStub,
       set: sinon.stub(),
     },
-    '@adobe/aio-lib-cloudmanager': {
-      init: () => ({
-        getDeveloperConsoleUrl: () => 'http://example.com',
-      }),
-    },
   });
 
   class TestCommand extends BaseCommandAuthMock.BaseCommand {
@@ -387,8 +382,8 @@ describe('Authentication tests', function () {
     const command = await createCommand();
     const flags = {
       organizationId: 'orgId',
-      programId: 'progId',
-      environmentId: 'envId',
+      programId: '123',
+      environmentId: '456',
     };
     command.setupParams(flags);
     const callbackStub = sinon.stub();
@@ -417,11 +412,6 @@ describe('withCloudSdk experimental feature retry', function () {
       get: () => null,
       set: () => {},
     },
-    '@adobe/aio-lib-cloudmanager': {
-      init: () => ({
-        getDeveloperConsoleUrl: () => 'http://dev-console.example.com/#hash',
-      }),
-    },
     './experimental-features': {
       getAcceptedFeatures: () => acceptedFeaturesResult,
       saveAcceptedFeature: (dir, features) => {
@@ -437,7 +427,6 @@ describe('withCloudSdk experimental feature retry', function () {
     const sb = require('sinon').createSandbox();
     const getConfig = sb.stub();
     const setConfig = sb.stub();
-    const initSdk = sb.stub();
     let stage;
     let command;
     const { BaseCommand: ApiFirstCommand } = proxyquire(
@@ -456,18 +445,16 @@ describe('withCloudSdk experimental feature retry', function () {
           get: getConfig,
           set: setConfig,
         },
-        '@adobe/aio-lib-cloudmanager': {
-          init: initSdk,
-        },
       }
     );
 
     beforeEach(function () {
       getConfig.reset();
       setConfig.reset();
-      initSdk.reset();
       stage = false;
-      getConfig.withArgs('aem-rde.api-first').returns(true);
+      getConfig
+        .withArgs('cloudmanager_devconsoleurl')
+        .returns('https://stale-console.example.invalid');
       getConfig.withArgs('aem-rde.dev-console-url-cache.cm-p123-e456').returns({
         expiry: '2999-01-01',
         devConsoleUrl: 'https://stale-console.example.invalid',
@@ -489,9 +476,8 @@ describe('withCloudSdk experimental feature retry', function () {
           api._updatesClient._baseUrl,
           `https://author-p123-e456${suffix}.adobeaemcloud.com/adobe/experimental/devconsole-expires-20261015/devconsole/rde-updates`
         );
-        assert.equal(api._apiFirst, true);
-        assert.equal(initSdk.callCount, 0);
         assert.equal(setConfig.callCount, 0);
+        assert.equal(getConfig.calledWith('cloudmanager_devconsoleurl'), false);
         assert.equal(
           getConfig.calledWith('aem-rde.dev-console-url-cache.cm-p123-e456'),
           false
@@ -499,32 +485,24 @@ describe('withCloudSdk experimental feature retry', function () {
       });
     }
 
-    it('rejects a string instead of silently ignoring an invalid JSON boolean', async function () {
-      getConfig.withArgs('aem-rde.api-first').returns('true');
-      await assert.rejects(
-        command.withCloudSdk(() => {}),
-        {
-          code: 'INVALID_API_FIRST_CONFIG',
-        }
-      );
-    });
-
-    it('rejects nonnumeric environment coordinates before constructing an API-first host', async function () {
-      command._environmentId = '../another-environment';
-      await assert.rejects(
-        command.withCloudSdk(() => {}),
-        {
-          code: 'INVALID_API_FIRST_ENVIRONMENT',
-        }
-      );
-    });
+    for (const field of ['_programId', '_environmentId']) {
+      it(`rejects nonnumeric ${field} before constructing an API-first host`, async function () {
+        command[field] = '../another-environment';
+        await assert.rejects(
+          command.withCloudSdk(() => {}),
+          {
+            code: 'INVALID_API_FIRST_ENVIRONMENT',
+          }
+        );
+      });
+    }
   });
 
   class TestCommandWithFeatures extends BaseCommand451Mock.BaseCommand {
     constructor(features) {
       super([], { cacheDir: '/test-cache' }, null, features || ['snapshots']);
-      this._programId = 'progId';
-      this._environmentId = 'envId';
+      this._programId = '123';
+      this._environmentId = '456';
       this.flags = {};
     }
 

@@ -112,10 +112,6 @@ E(
   'The feature is part of the EAP program and not available for general use. Please contact your Adobe representative for more information on how to join the early access program.'
 );
 E(
-  'INVALID_API_FIRST_CONFIG',
-  'aem-rde.api-first must be a JSON boolean. Use "aio config set -j aem-rde.api-first true" or false.'
-);
-E(
   'INVALID_API_FIRST_ENVIRONMENT',
   'API-first routing requires numeric programId and environmentId values.'
 );
