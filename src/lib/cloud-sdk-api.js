@@ -12,7 +12,7 @@
 const { createFetch } = require('@adobe/aio-lib-core-networking');
 const { ShareFileClient } = require('@azure/storage-file-share');
 const { handleRetryAfter } = require('./rde-utils');
-const { sleepSeconds, concatEnvironemntId } = require('./utils');
+const { sleepSeconds } = require('./utils');
 const { DoRequest } = require('./doRequest');
 const { codes: internalCodes } = require('./internal-errors');
 const { codes: validationCodes } = require('./validation-errors');
@@ -24,8 +24,7 @@ class CloudSdkAPI {
    * Initializes a CloudSdkAPI object and returns it.
    *
    * @param {string} cloudManagerUrl the cloudmanager api endpoint
-   * @param {string} devConsoleUrl the dev console url for the environment
-   * @param {object} rdeUrl the RDE API endpoint for the environment
+   * @param {string} devConsoleUrl the API-first Developer Console endpoint for the environment
    * @param {string} apiKey the cloudmanager api key
    * @param {string} orgId the cloudmanager org id
    * @param {string} programId The ID of the program that contains the environment.
@@ -36,7 +35,6 @@ class CloudSdkAPI {
   constructor(
     cloudManagerUrl,
     devConsoleUrl,
-    rdeUrl,
     apiKey,
     orgId,
     programId,
@@ -59,133 +57,140 @@ class CloudSdkAPI {
         authorizationHeaders
       )
     );
-    this._devConsoleClient = new DoRequest(devConsoleUrl, authorizationHeaders);
-    this._rdeClient = new DoRequest(
-      `${rdeUrl}/program/${programId}/environment/${environmentId}`,
-      Object.assign(authorizationHeaders, customHeaders)
+    const headers = { ...authorizationHeaders, ...customHeaders };
+    this._runtimeClient = new DoRequest(`${devConsoleUrl}/runtime`, headers);
+    this._environmentClient = new DoRequest(
+      `${devConsoleUrl}/rde-runtime`,
+      headers
     );
+    this._updatesClient = new DoRequest(
+      `${devConsoleUrl}/rde-updates`,
+      headers
+    );
+    this._releasesClient = new DoRequest(`${devConsoleUrl}/releases`, headers);
     this._snapshotClient = new DoRequest(
-      `${rdeUrl}/snapshots`,
-      Object.assign(authorizationHeaders, customHeaders)
+      `${devConsoleUrl}/rde-snapshots`,
+      headers
     );
     this.programId = programId;
     this.environmentId = environmentId;
-    this._cmReleaseId = concatEnvironemntId(programId, environmentId);
   }
 
   async getAemLogs(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/logs${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/logs${queryString}`
     );
   }
 
   async getAemLog(serviceName, id) {
-    return await this._rdeClient.doGet(`/runtime/${serviceName}/logs/${id}`);
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/logs/${encodeURIComponent(id)}`
+    );
   }
 
   async getAemLogTail(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/logs/${id}/tail`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/logs/${encodeURIComponent(id)}/tail`
     );
   }
 
   async createAemLog(serviceName, data) {
-    return await this._rdeClient.doPost(`/runtime/${serviceName}/logs`, data);
+    return await this._runtimeClient.doPost(`/${serviceName}/logs`, data);
   }
 
   async deleteAemLog(serviceName, id) {
-    return await this._rdeClient.doDelete(`/runtime/${serviceName}/logs/${id}`);
+    return await this._runtimeClient.doDelete(
+      `/${serviceName}/logs/${encodeURIComponent(id)}`
+    );
   }
 
   async getRequestLogs(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/request-logs${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/request-logs${queryString}`
     );
   }
 
   async getRequestLog(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/request-logs/${id}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/request-logs/${encodeURIComponent(id)}`
     );
   }
 
   async enableRequestLogs(serviceName, data) {
-    return await this._rdeClient.doPost(
-      `/runtime/${serviceName}/request-logs`,
+    return await this._runtimeClient.doPost(
+      `/${serviceName}/request-logs`,
       data
     );
   }
 
   async disableRequestLogs(serviceName) {
-    return await this._rdeClient.doDelete(
-      `/runtime/${serviceName}/request-logs`
-    );
+    return await this._runtimeClient.doDelete(`/${serviceName}/request-logs`);
   }
 
   async getInventories(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/inventory${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/inventory${queryString}`
     );
   }
 
   async getInventory(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/inventory/${id}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/inventory/${encodeURIComponent(id)}`
     );
   }
 
   async getOsgiBundles(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-bundles${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-bundles${queryString}`
     );
   }
 
   async getOsgiBundle(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-bundles/${id}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-bundles/${encodeURIComponent(id)}`
     );
   }
 
   async getOsgiComponents(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-components${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-components${queryString}`
     );
   }
 
   async getOsgiComponent(serviceName, componentName) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-components/${componentName}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-components/${encodeURIComponent(componentName)}`
     );
   }
 
   async getOsgiConfigurations(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-configurations${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-configurations${queryString}`
     );
   }
 
   async getOsgiConfiguration(serviceName, pId) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-configurations/${pId}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-configurations/${encodeURIComponent(pId)}`
     );
   }
 
   async getOsgiServices(serviceName, params) {
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-services${queryString}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-services${queryString}`
     );
   }
 
   async getOsgiService(serviceName, id) {
-    return await this._rdeClient.doGet(
-      `/runtime/${serviceName}/osgi-services/${id}`
+    return await this._runtimeClient.doGet(
+      `/${serviceName}/osgi-services/${encodeURIComponent(id)}`
     );
   }
 
@@ -198,7 +203,7 @@ class CloudSdkAPI {
       actionid,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._rdeClient.doGet(`/runtime/status${queryString}`);
+    return await this._environmentClient.doGet(`/status${queryString}`);
   }
 
   async getSnapshots() {
@@ -217,7 +222,9 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doDelete(`/${name}${queryString}`);
+    return await this._snapshotClient.doDelete(
+      `/${encodeURIComponent(name)}${queryString}`
+    );
   }
 
   async undeleteSnapshot(name) {
@@ -226,7 +233,9 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     };
     const queryString = this.createUrlQueryStr(params);
-    return await this._snapshotClient.doPut(`/${name}${queryString}`);
+    return await this._snapshotClient.doPut(
+      `/${encodeURIComponent(name)}${queryString}`
+    );
   }
 
   async createSnapshot(name, params) {
@@ -246,32 +255,30 @@ class CloudSdkAPI {
       environmentId: this.environmentId,
     });
     return await this._snapshotClient.doPost(
-      `/${name}/restore${queryString}`,
+      `/${encodeURIComponent(name)}/restore${queryString}`,
       params
     );
   }
 
   async getLogs(id) {
-    return await this._rdeClient.doGet(`/runtime/updates/${id}/logs`);
+    return await this._updatesClient.doGet(`/${encodeURIComponent(id)}/logs`);
   }
 
   async getChanges() {
-    return await this._rdeClient.doGet(`/runtime/updates`);
+    return await this._updatesClient.doGet('');
   }
 
   async getChange(id) {
-    return await this._rdeClient.doGet(`/runtime/updates/${id}`);
+    return await this._updatesClient.doGet(`/${encodeURIComponent(id)}`);
   }
 
   async getStatus() {
-    return await this._rdeClient.doGet(`/runtime/updates/artifacts`);
+    return await this._updatesClient.doGet('/artifacts');
   }
 
   async getArtifacts(cursor) {
     const queryString = this.createUrlQueryStr({ cursor });
-    return await this._rdeClient.doGet(
-      `/runtime/updates/artifacts${queryString}`
-    );
+    return await this._updatesClient.doGet(`/artifacts${queryString}`);
   }
 
   async deployFile(
@@ -285,7 +292,7 @@ class CloudSdkAPI {
     uploadCallbacks,
     deploymentCallback
   ) {
-    const result = await this._rdeClient.doPost(`/runtime/updates`, {
+    const result = await this._updatesClient.doPost('', {
       service: target,
       fileSize,
       type,
@@ -323,7 +330,7 @@ class CloudSdkAPI {
   ) {
     if (fileSize > 0) {
       uploadCallbacks?.start(fileSize);
-      const result = await this._rdeClient.doPost(`/runtime/updates`, {
+      const result = await this._updatesClient.doPost('', {
         service: target,
         fileSize,
         type,
@@ -416,8 +423,8 @@ class CloudSdkAPI {
 
   async _putUpdate(changeId, callbackProgress) {
     const change = await handleRetryAfter(
-      () => this._rdeClient.doPut(`/runtime/updates/${changeId}`),
-      () => this._rdeClient.doGet(`/runtime/updates/${changeId}`),
+      () => this._updatesClient.doPut(`/${encodeURIComponent(changeId)}`),
+      () => this._updatesClient.doGet(`/${encodeURIComponent(changeId)}`),
       callbackProgress
     );
     if (change.status === 200) {
@@ -430,14 +437,14 @@ class CloudSdkAPI {
   async delete(id, force) {
     const change = await handleRetryAfter(
       () =>
-        this._rdeClient.doDelete(
-          `/runtime/updates/artifacts/${id}` + (force ? `?force=true` : '')
+        this._updatesClient.doDelete(
+          `/artifacts/${encodeURIComponent(id)}` + (force ? `?force=true` : '')
         ),
       (previousResponse) =>
         previousResponse
           .json()
           .then((json) =>
-            this._rdeClient.doGet(`/runtime/updates/${json.updateId}`)
+            this._updatesClient.doGet(`/${encodeURIComponent(json.updateId)}`)
           )
     );
     if (change.status === 200) {
@@ -477,61 +484,48 @@ class CloudSdkAPI {
     return json;
   }
 
-  async _waitForEnvRunning(namespace) {
-    await this._waitForEnv(namespace, 'running');
+  async _waitForEnvRunning() {
+    await this._waitForEnv('running');
   }
 
-  async _waitForEnvHibernated(namespace) {
-    await this._waitForEnv(namespace, 'hibernated');
+  async _waitForEnvHibernated() {
+    await this._waitForEnv('hibernated');
   }
 
-  async _waitForEnvRunningOrHibernated(namespace) {
-    return await this._waitForEnv(namespace, 'running', 'hibernated');
+  async _waitForEnvRunningOrHibernated() {
+    return await this._waitForEnv('running', 'hibernated');
   }
 
-  async _waitForEnv(namespace, ...allowedStates) {
-    const getReleaseState = (json) =>
-      json.releases?.status[this._cmReleaseId]?.releaseState;
+  async _waitForEnv(...allowedStates) {
+    const getReleaseState = (json) => {
+      const state = json.status?.releaseState;
+      if (typeof state !== 'string') {
+        throw new internalCodes.UNEXPECTED_API_ERROR({
+          messageValues: [200, 'Release status response has no releaseState'],
+        });
+      }
+      return state;
+    };
     const json = await this._waitForJson(
       (json) => allowedStates.includes(getReleaseState(json)),
-      () => this._devConsoleClient.doGet(`/api/releases/${namespace}/status`)
+      () => this._releasesClient.doGet('/status')
     );
     return getReleaseState(json);
   }
 
-  async _hibernateEnv(namespace) {
-    await this._setEnvStatus(namespace, `hibernate`);
+  async _hibernateEnv() {
+    await this._setEnvStatus('hibernate');
   }
 
-  async _dehibernateEnv(namespace) {
-    await this._setEnvStatus(namespace, `dehibernate`);
+  async _dehibernateEnv() {
+    await this._setEnvStatus('dehibernate');
   }
 
-  async _setEnvStatus(namespace, target) {
+  async _setEnvStatus(target) {
     await this._waitForJson(
       (status) => status.ok,
-      async () =>
-        await this._devConsoleClient.doPost(
-          `/api/releases/${namespace}/${target}/${this._cmReleaseId}`
-        )
+      () => this._releasesClient.doPost(`/${target}`)
     );
-  }
-
-  async _getNamespace() {
-    const nameSpaceRequest = await this._devConsoleClient.doGet(`/api/status`);
-    if (nameSpaceRequest.status === 200) {
-      const nameSpaceStatus = await nameSpaceRequest.json();
-      if (
-        nameSpaceStatus.availableNamespaces &&
-        nameSpaceStatus.availableNamespaces[0]
-      ) {
-        return nameSpaceStatus.availableNamespaces[0];
-      } else {
-        throw new internalCodes.NAMESPACE_NOT_FOUND();
-      }
-    } else {
-      throw await this._createError(nameSpaceRequest);
-    }
   }
 
   async _checkRDE() {
@@ -541,22 +535,21 @@ class CloudSdkAPI {
     }
   }
 
-  async _startEnv(namespace) {
-    await this._dehibernateEnv(namespace);
-    await this._waitForEnvRunning(namespace);
+  async _startEnv() {
+    await this._dehibernateEnv();
+    await this._waitForEnvRunning();
   }
 
-  async _stopEnv(namespace) {
-    await this._hibernateEnv(namespace);
-    await this._waitForEnvHibernated(namespace);
+  async _stopEnv() {
+    await this._hibernateEnv();
+    await this._waitForEnvHibernated();
   }
 
   async startEnv() {
     await this._checkRDE();
-    const namespace = await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated();
     if (status === 'hibernated') {
-      await this._startEnv(namespace);
+      await this._startEnv();
     } else {
       throw new internalCodes.ENVIRONMENT_NOT_HIBERNATED();
     }
@@ -564,25 +557,23 @@ class CloudSdkAPI {
 
   async stopEnv() {
     await this._checkRDE();
-    const namespace = await this._getNamespace();
-    const status = await this._waitForEnvRunningOrHibernated(namespace);
+    const status = await this._waitForEnvRunningOrHibernated();
     if (status === 'running') {
-      await this._stopEnv(namespace);
+      await this._stopEnv();
     } else {
       throw new internalCodes.ENVIRONMENT_NOT_RUNNING();
     }
   }
 
   async restartEnv() {
-    const response = await this._rdeClient.doPost(`/runtime/restart`, {});
+    const response = await this._environmentClient.doPost('/restart', {});
     if (response.status !== 201) {
       throw await this._createError(response);
     }
-    const namespace = await this._getNamespace();
     const tries = 3;
     for (let i = 0; i < tries; i++) {
       await sleepSeconds(5);
-      await this._waitForEnvRunning(namespace);
+      await this._waitForEnvRunning();
     }
   }
 
@@ -591,7 +582,7 @@ class CloudSdkAPI {
 
     // later we should fold everything into the RDE API and not use the CM API
     if (keepMutableContent || force) {
-      const result = await this._rdeClient.doPost(`/runtime/reset`, {
+      const result = await this._environmentClient.doPost('/reset', {
         'keep-mutable-content': keepMutableContent,
         force,
       });
@@ -600,11 +591,10 @@ class CloudSdkAPI {
         throw await this._createError(result);
       }
 
-      const namespace = await this._getNamespace();
       const tries = 3;
       for (let i = 0; i < tries; i++) {
         await sleepSeconds(5);
-        await this._waitForEnvRunning(namespace);
+        await this._waitForEnvRunning();
       }
     } else {
       await this._waitForCMStatus();
@@ -613,20 +603,6 @@ class CloudSdkAPI {
         return await this._waitForCMStatus();
       }
     }
-  }
-
-  async cleanEnv(wait, params) {
-    await this._checkRDE();
-    await this._waitForEnvReady();
-    await this._cleanEnv();
-    if (wait) {
-      await this._waitForEnvReady();
-    }
-  }
-
-  async _cleanEnv(params) {
-    const queryString = this.createUrlQueryStr(params);
-    await this._rdeClient.doPut(`/clean${queryString}`);
   }
 
   async _waitForCMStatus() {
