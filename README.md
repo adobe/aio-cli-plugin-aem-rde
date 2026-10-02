@@ -63,6 +63,44 @@ aio config:set cloudmanager_environmentid <env-id>
 
 ### Configuration for experimental commands
 
+#### API-first Developer Console routing
+
+Enable API-first routing explicitly:
+
+```
+aio config set -l -j aem-rde.api-first true
+```
+
+The default is `false`, retaining legacy Developer Console routing. API-first
+mode uses the author environment host and
+`/adobe/experimental/devconsole-expires-20261015/devconsole`; it does not discover
+a Developer Console URL or namespace through Cloud Manager. Stage IMS contexts
+use the author hostname suffix `-cmstg`. Author, publish, and preview inspection
+requests all use the author host, with the target tier in the request path.
+
+| Operations | API-first topic |
+| --- | --- |
+| Deployment registration, history, status, logs, artifact listing/deletion | `/rde-updates` |
+| Snapshots | `/rde-snapshots` |
+| Restart, reset, snapshot progress | `/rde-runtime` |
+| Logs, request logs, inventory, OSGi inspection | `/runtime/{target}` |
+| Lifecycle actions and completion polling | `/releases` |
+
+API-first mode does not use `cloudmanager_devconsoleurl` or the legacy console URL
+cache, and does not fall back to legacy endpoints after an API error. Disable it
+explicitly with `aio config set -l -j aem-rde.api-first false` to use legacy
+routing and its existing overrides.
+
+Cloud Manager program/environment setup and the default reset remain unchanged.
+Deployment uploads still use the Azure SAS URL returned by update registration.
+Reset sends `keep-mutable-content`, and snapshot restore sends
+`only-mutable-content`; both retain the existing JSON wire names.
+
+The experimental registry must expose the RDE runtime/snapshot `0.0.82` contracts
+and the lifecycle/update operations from `0.0.80`. The experimental prefix expires
+on October 15, 2026; its availability and renewal must be confirmed before enabling
+this mode in a released CLI.
+
 ⚠️ **WARNING**: These are **experimental features**! It may not work, may not (yet) be available and may be removed without notice. ⚠️
 
 #### Enable `aio aem rde inspect` commands
