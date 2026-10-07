@@ -7,6 +7,12 @@ const path = require('path');
 const BIN_RUN = path.join(REPO_ROOT, 'bin', 'run');
 const DEFAULT_TIMEOUT_MS = 60 * 1000;
 const MAX_BUFFER = 32 * 1024 * 1024;
+// Every e2e spec passes the same value to both mocha's own this.timeout()
+// and here as opts.timeoutMs. Shaving a small buffer off the exec-level
+// timeout means a genuine stall reliably hits *this* timeout first - giving
+// a real rejected error (with stdout/stderr attached) - instead of racing
+// mocha's own blunt "Timeout of Nms exceeded" with no diagnostics.
+const TIMEOUT_SAFETY_BUFFER_MS = 5000;
 
 /**
  * Runs the plugin's own bin/run (i.e. `node ./bin/run <args>`), which reads
@@ -28,7 +34,10 @@ const MAX_BUFFER = 32 * 1024 * 1024;
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
  */
 function runCli(args, opts = {}) {
-  const timeout = opts.timeoutMs || DEFAULT_TIMEOUT_MS;
+  const timeout = Math.max(
+    1000,
+    (opts.timeoutMs || DEFAULT_TIMEOUT_MS) - TIMEOUT_SAFETY_BUFFER_MS
+  );
   const cwd = opts.cwd || resolveWorkspaceDir();
   return new Promise((resolve, reject) => {
     execFile(
