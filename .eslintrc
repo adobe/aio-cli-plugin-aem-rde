@@ -2,6 +2,7 @@
   "extends": ["@adobe/eslint-config-aio-lib-config", "prettier"],
   "plugins": ["prettier"],
   "rules": {
+    "jest/no-deprecated-functions": "off",
     "prettier/prettier": ["error"]
   },
   "parserOptions": {
