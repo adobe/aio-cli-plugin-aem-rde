@@ -11,7 +11,7 @@
  */
 'use strict';
 
-const { BaseCommand, Flags } = require('../../../../lib/base-command');
+const { BaseCommand, Flags, commonFlags } = require('../../../../lib/base-command');
 const { codes: snapshotCodes } = require('../../../../lib/snapshot-errors');
 const { codes: internalCodes } = require('../../../../lib/internal-errors');
 const { codes: validationCodes } = require('../../../../lib/validation-errors');
@@ -237,6 +237,9 @@ Object.assign(RestoreSnapshot, {
   ],
   aliases: [],
   flags: {
+    organizationId: commonFlags.organizationId,
+    programId: commonFlags.programId,
+    environmentId: commonFlags.environmentId,
     'only-mutable-content': Flags.boolean({
       description: 'Restores the mutable content only.',
       multiple: false,
